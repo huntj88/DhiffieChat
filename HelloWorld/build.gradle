@@ -1,5 +1,5 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.jvm' version '1.4.32'
     id "com.github.johnrengelman.shadow" version "5.1.0"
 }
 
@@ -16,7 +16,11 @@ shadowJar {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
+
+    implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.327')
     implementation "com.amazonaws:aws-lambda-java-core:1.2.0"
+    implementation 'com.amazonaws:aws-java-sdk-s3'
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb'
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.1"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.1"

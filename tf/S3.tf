@@ -22,6 +22,19 @@ resource "aws_s3_bucket" "bucket" {
   }
 }
 
+resource "aws_dynamodb_table" "user-dynamodb-table" {
+  name           = "User"
+  billing_mode   = "PAY_PER_REQUEST"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "HashedIdentity"
+
+  attribute {
+    name = "HashedIdentity"
+    type = "S"
+  }
+}
+
 resource "aws_iam_role" "function_role" {
   name = "function_role"
 
@@ -44,6 +57,14 @@ resource "aws_iam_role" "function_role" {
         Sid    = ""
         Principal = {
           Service = "lambda.amazonaws.com"
+        }
+      },
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "dynamodb.amazonaws.com"
         }
       },
     ]
@@ -79,6 +100,20 @@ resource "aws_iam_policy" "function_policy" {
         Effect   = "Allow"
         Resource = [
           "${aws_s3_bucket.bucket.arn}/*"
+        ]
+      },
+      {
+        Sid = "ReadWriteTable"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
+        ]
+        Effect   = "Allow"
+        Resource = [
+          "arn:aws:dynamodb:us-east-1:654246770704:table/User",
+          "${aws_dynamodb_table.user-dynamodb-table.arn}/User"
         ]
       }
     ]
