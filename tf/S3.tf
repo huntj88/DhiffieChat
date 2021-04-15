@@ -127,9 +127,21 @@ resource "aws_iam_role_policy_attachment" "function-attach" {
 resource "aws_lambda_function" "hello_name_func" {
   description = "Hello name"
   function_name = "helloname"
-  filename = "../HelloWorld/build/libs/HelloWorld-1.0-SNAPSHOT-all.jar"
-  source_code_hash = filebase64sha256("../HelloWorld/build/libs/HelloWorld-1.0-SNAPSHOT-all.jar")
+  filename = "../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar"
+  source_code_hash = filebase64sha256("../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar")
   handler = "me.jameshunt.privatechat.HelloName::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 256
+}
+
+resource "aws_lambda_function" "create_identity" {
+  description = "Create Identity"
+  function_name = "create_identity"
+  filename = "../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar"
+  source_code_hash = filebase64sha256("../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar")
+  handler = "me.jameshunt.privatechat.CreateIdentity::handleRequest"
   role = aws_iam_role.function_role.arn
   runtime = "java8"
   timeout = 30
