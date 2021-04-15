@@ -112,8 +112,7 @@ resource "aws_iam_policy" "function_policy" {
         ]
         Effect   = "Allow"
         Resource = [
-          "arn:aws:dynamodb:us-east-1:654246770704:table/User",
-          "${aws_dynamodb_table.user-dynamodb-table.arn}/User"
+          aws_dynamodb_table.user-dynamodb-table.arn
         ]
       }
     ]
