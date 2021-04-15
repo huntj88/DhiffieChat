@@ -21,6 +21,7 @@ dependencies {
     implementation "com.amazonaws:aws-lambda-java-core:1.2.0"
     implementation 'com.amazonaws:aws-java-sdk-s3'
     implementation 'com.amazonaws:aws-java-sdk-dynamodb'
+    implementation project(':Crypto')
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.1"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.1"

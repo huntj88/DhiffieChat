@@ -1,0 +1,5 @@
+include ':app'
+rootProject.name = "PrivateChat"
+
+include ':Crypto'
+project(':Crypto').projectDir = new File(settingsDir, '../Crypto')
