@@ -1,0 +1,3 @@
+rootProject.name = 'PrivateChatServer'
+include 'HelloWorld'
+
