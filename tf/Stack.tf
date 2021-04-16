@@ -147,3 +147,27 @@ resource "aws_lambda_function" "create_identity" {
   timeout = 30
   memory_size = 256
 }
+
+resource "aws_lambda_function" "get_server_public_key" {
+  description = "Get Server Public Key"
+  function_name = "get_server_public_key"
+  filename = "../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar"
+  source_code_hash = filebase64sha256("../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar")
+  handler = "me.jameshunt.privatechat.GetServerPublicKey::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 256
+}
+
+resource "aws_lambda_function" "scan_qr" {
+  description = "Scan QR"
+  function_name = "scan_qr"
+  filename = "../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar"
+  source_code_hash = filebase64sha256("../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar")
+  handler = "me.jameshunt.privatechat.ScanQR::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 256
+}

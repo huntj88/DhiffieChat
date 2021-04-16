@@ -1,6 +1,8 @@
 package me.jameshunt.privatechat.crypto
 
 import java.security.*
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import java.util.*
 import javax.crypto.*
 import javax.crypto.spec.IvParameterSpec
@@ -69,4 +71,14 @@ object AESCrypto {
         val plainText = cipher.doFinal(Base64.getDecoder().decode(cipherText))
         return String(plainText)
     }
+}
+
+fun String.toPublicKey(): PublicKey {
+    val bytes = Base64.getDecoder().decode(this)
+    return KeyFactory.getInstance("DH").generatePublic(X509EncodedKeySpec(bytes))
+}
+
+fun String.toPrivateKey(): PrivateKey {
+    val bytes = Base64.getDecoder().decode(this)
+    return KeyFactory.getInstance("DH").generatePrivate(PKCS8EncodedKeySpec(bytes))
 }

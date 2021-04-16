@@ -8,6 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import me.jameshunt.privatechat.crypto.AESCrypto
 import me.jameshunt.privatechat.crypto.DHCrypto
+import me.jameshunt.privatechat.crypto.toPrivateKey
+import me.jameshunt.privatechat.crypto.toPublicKey
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -59,7 +61,7 @@ object Server {
     }
 
     private fun getPublicKey(hashedIdentity: String): PublicKey {
-        TODO()
+        return "MIIBojCCARcGCSqGSIb3DQEDATCCAQgCgYEA/X9TgR11EilS30qcLuzk5/YRt1I870QAwx4/gLZRJmlFXUAiUftZPY1Y+r/F9bow9subVWzXgTuAHTRv8mZgt2uZUKWkn5/oBHsQIsJPu6nX/rfGG/g7V+fGqKYVDwT7g/bTxR7DAjVUE1oWkTL2dfOuK2HXKu/yIgMZndFIAccCgYEA9+GghdabPd7LvKtcNrhXuXmUr7v6OuqC+VdMCz0HgmdRWVeOutRZT+ZxBxCBgLRJFnEj6EwoFhO3zwkyjMim4TwWeotUfI0o4KOuHiuzpnWRbqN/C/ohNWLx+2J6ASQ7zKTxvqhRkImog9/hWuWfBpKLZl6Ae1UlZAFMO/7PSSoDgYQAAoGAVjlmBmEKonUv2b0vpbfIImRilwzF/eNwaU8FLtXKF0T5+fYe42izXEYuq/FNABfkFZKbghBtJPHYX0wDS3EvgoDfSUsBKtNJXYQepfirc8bwNCh4FnxC2Fjs0azcxSeYcE9lnG/xilWk8luipN3OACz4ZpOHaRKr0f5vXk1Xxl8=".toPublicKey()
     }
 }
 
@@ -116,10 +118,11 @@ class IdentityManager(private val sharedPreferences: SharedPreferences) {
         val publicBase64 = sharedPreferences.getString("public", null) ?: return null
 
         Log.d("public base64", publicBase64)
+        Log.d("private base64", privateBase64)
         val instance = KeyFactory.getInstance("DH")
         return Identity(
-            privateKey = instance.generatePrivate(PKCS8EncodedKeySpec(decoder.decode(privateBase64))),
-            publicKey = instance.generatePublic(X509EncodedKeySpec(decoder.decode(publicBase64)))
+            privateKey = privateBase64.toPrivateKey(),
+            publicKey = publicBase64.toPublicKey()
         ).also { cached = it }
     }
 
