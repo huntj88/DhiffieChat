@@ -3,9 +3,7 @@ package me.jameshunt.privatechat
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.document.PrimaryKey
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import me.jameshunt.privatechat.crypto.AESCrypto
 import me.jameshunt.privatechat.crypto.DHCrypto
 import me.jameshunt.privatechat.crypto.toPrivateKey
@@ -36,7 +34,7 @@ fun validateAndGetIdentity(hashedIdentity: String, iv: IvParameterSpec, encrypte
 
     val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
     val tokenString = AESCrypto.decrypt(encryptedToken, sharedSecretKey, iv)
-    val token = ObjectMapper().registerKotlinModule().readValue<Token>(tokenString)
+    val token = objectMapper.readValue<Token>(tokenString)
     if (token.expires < Instant.now().minus(5, ChronoUnit.MINUTES)) {
         return null
     }

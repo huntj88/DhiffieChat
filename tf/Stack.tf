@@ -171,3 +171,55 @@ resource "aws_lambda_function" "scan_qr" {
   timeout = 30
   memory_size = 256
 }
+
+resource "aws_api_gateway_rest_api" "chat_gateway" {
+  name        = "chat_gateway"
+  description = "Chat Gateway"
+}
+
+resource "aws_api_gateway_resource" "server_public_key_resource" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  parent_id   = aws_api_gateway_rest_api.chat_gateway.root_resource_id
+  path_part   = "ServerPublicKey"
+}
+
+resource "aws_api_gateway_method" "server_public_key_method" {
+  rest_api_id   = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id   = aws_api_gateway_resource.server_public_key_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_server_public_key_integration" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id = aws_api_gateway_method.server_public_key_method.resource_id
+  http_method = aws_api_gateway_method.server_public_key_method.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_server_public_key.invoke_arn
+}
+
+resource "aws_api_gateway_deployment" "chat_deployment" {
+  depends_on = [
+    aws_api_gateway_integration.get_server_public_key_integration
+  ]
+
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  stage_name  = "test"
+}
+
+resource "aws_lambda_permission" "apigw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_server_public_key.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
+}
+
+output "base_url" {
+  value = aws_api_gateway_deployment.chat_deployment.invoke_url
+}
