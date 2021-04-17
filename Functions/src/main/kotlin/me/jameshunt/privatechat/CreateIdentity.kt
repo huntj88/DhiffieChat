@@ -22,7 +22,10 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
         val data = objectMapper.readValue<RequestData>(request["body"]!!.toString())
 
         if (!doesUserHavePrivateKey(data.publicKey.toPublicKey(), data.iv.toIv(), data.encryptedToken)) {
-            throw Exception("not authed")
+            return GatewayResponse(
+                body = objectMapper.writeValueAsString(mapOf("message" to "Authentication error")),
+                statusCode = 401
+            )
         }
 
         val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()

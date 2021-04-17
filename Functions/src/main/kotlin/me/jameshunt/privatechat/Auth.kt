@@ -9,6 +9,7 @@ import me.jameshunt.privatechat.crypto.AESCrypto
 import me.jameshunt.privatechat.crypto.DHCrypto
 import me.jameshunt.privatechat.crypto.toPrivateKey
 import me.jameshunt.privatechat.crypto.toPublicKey
+import java.security.GeneralSecurityException
 import java.security.KeyPair
 import java.security.MessageDigest
 import java.security.PublicKey
@@ -16,6 +17,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
+import javax.crypto.BadPaddingException
 import javax.crypto.spec.IvParameterSpec
 
 private data class Token(
@@ -35,9 +37,14 @@ data class Identity(val publicKey: PublicKey) {
 }
 
 fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedToken: String): Boolean {
-    val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
-    val tokenString = AESCrypto.decrypt(encryptedToken, sharedSecretKey, iv)
-    val token = objectMapper.readValue<Token>(tokenString)
+    val token = try {
+        val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
+        val tokenString = AESCrypto.decrypt(encryptedToken, sharedSecretKey, iv)
+        objectMapper.readValue<Token>(tokenString)
+    } catch (e: GeneralSecurityException) {
+        e.printStackTrace()
+        return false
+    }
 
     return token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
 }
