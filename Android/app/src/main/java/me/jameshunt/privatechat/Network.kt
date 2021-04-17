@@ -43,7 +43,7 @@ object Network {
 
     private val retrofit = Retrofit.Builder()
         .client(okhttp)
-        .baseUrl("https://a94ckbr7c8.execute-api.us-east-1.amazonaws.com/test/")
+        .baseUrl("https://5070w7s6vb.execute-api.us-east-1.amazonaws.com/test/")
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 

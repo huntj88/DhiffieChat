@@ -103,6 +103,17 @@ resource "aws_iam_policy" "function_policy" {
         ]
       },
       {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Effect   = "Allow"
+        Resource = [
+          "arn:aws:logs:*:*:*"
+        ]
+      },
+      {
         Sid = "ReadWriteTable"
         Action = [
           "dynamodb:GetItem",
@@ -233,10 +244,21 @@ resource "aws_api_gateway_deployment" "chat_deployment" {
   stage_name  = "test"
 }
 
-resource "aws_lambda_permission" "apigw" {
+resource "aws_lambda_permission" "get_server_public_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.get_server_public_key.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "create_identity_gw_permission" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.create_identity.function_name
   principal     = "apigateway.amazonaws.com"
 
   # The "/*/*" portion grants access from any method on any resource
