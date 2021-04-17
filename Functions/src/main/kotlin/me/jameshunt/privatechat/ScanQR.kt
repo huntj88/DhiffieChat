@@ -15,6 +15,8 @@ data class QR(
     var encryptedToken: String = ""
 )
 
+data class Response(val message: String)
+
 class ScanQR: RequestHandler<QR, Response> {
     override fun handleRequest(data: QR, context: Context): Response {
         val identity = validateAndGetIdentity(
