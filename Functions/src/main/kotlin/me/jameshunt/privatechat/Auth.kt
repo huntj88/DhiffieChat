@@ -18,8 +18,11 @@ import javax.crypto.spec.IvParameterSpec
 
 private data class Token(
     val type: String = "Authentication",
-    val expires: Instant
-)
+    val expires: String // instant
+) {
+    val expiresInstant: Instant
+        get() = Instant.parse(expires)
+}
 
 data class Identity(val publicKey: PublicKey) {
     val hashedIdentity: String
@@ -29,13 +32,21 @@ data class Identity(val publicKey: PublicKey) {
             .let { Base64.getEncoder().encodeToString(it) }
 }
 
+fun validateNewIdentity(publicKey: PublicKey, iv: IvParameterSpec, encryptedToken: String): Boolean {
+    val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
+    val tokenString = AESCrypto.decrypt(encryptedToken, sharedSecretKey, iv)
+    val token = objectMapper.readValue<Token>(tokenString)
+
+    return token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
+}
+
 fun validateAndGetIdentity(hashedIdentity: String, iv: IvParameterSpec, encryptedToken: String): Identity? {
     val publicKey = getUserPublicKey(hashedIdentity)
 
     val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
     val tokenString = AESCrypto.decrypt(encryptedToken, sharedSecretKey, iv)
     val token = objectMapper.readValue<Token>(tokenString)
-    if (token.expires < Instant.now().minus(5, ChronoUnit.MINUTES)) {
+    if (token.expiresInstant < Instant.now().minus(5, ChronoUnit.MINUTES)) {
         return null
     }
 

@@ -82,3 +82,5 @@ fun String.toPrivateKey(): PrivateKey {
     val bytes = Base64.getDecoder().decode(this)
     return KeyFactory.getInstance("DH").generatePrivate(PKCS8EncodedKeySpec(bytes))
 }
+
+fun String.toIv(): IvParameterSpec = IvParameterSpec(Base64.getDecoder().decode(this))
