@@ -57,24 +57,6 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-//object Server {
-//    val keyPair = getServerKeyPair()
-//
-//    private fun getServerKeyPair(): KeyPair {
-//        val public = "MIIBojCCARcGCSqGSIb3DQEDATCCAQgCgYEA/X9TgR11EilS30qcLuzk5/YRt1I870QAwx4/gLZRJmlFXUAiUftZPY1Y+r/F9bow9subVWzXgTuAHTRv8mZgt2uZUKWkn5/oBHsQIsJPu6nX/rfGG/g7V+fGqKYVDwT7g/bTxR7DAjVUE1oWkTL2dfOuK2HXKu/yIgMZndFIAccCgYEA9+GghdabPd7LvKtcNrhXuXmUr7v6OuqC+VdMCz0HgmdRWVeOutRZT+ZxBxCBgLRJFnEj6EwoFhO3zwkyjMim4TwWeotUfI0o4KOuHiuzpnWRbqN/C/ohNWLx+2J6ASQ7zKTxvqhRkImog9/hWuWfBpKLZl6Ae1UlZAFMO/7PSSoDgYQAAoGAVjlmBmEKonUv2b0vpbfIImRilwzF/eNwaU8FLtXKF0T5+fYe42izXEYuq/FNABfkFZKbghBtJPHYX0wDS3EvgoDfSUsBKtNJXYQepfirc8bwNCh4FnxC2Fjs0azcxSeYcE9lnG/xilWk8luipN3OACz4ZpOHaRKr0f5vXk1Xxl8="
-//        val private = "MIIBpAIBADCCARcGCSqGSIb3DQEDATCCAQgCgYEA/X9TgR11EilS30qcLuzk5/YRt1I870QAwx4/gLZRJmlFXUAiUftZPY1Y+r/F9bow9subVWzXgTuAHTRv8mZgt2uZUKWkn5/oBHsQIsJPu6nX/rfGG/g7V+fGqKYVDwT7g/bTxR7DAjVUE1oWkTL2dfOuK2HXKu/yIgMZndFIAccCgYEA9+GghdabPd7LvKtcNrhXuXmUr7v6OuqC+VdMCz0HgmdRWVeOutRZT+ZxBxCBgLRJFnEj6EwoFhO3zwkyjMim4TwWeotUfI0o4KOuHiuzpnWRbqN/C/ohNWLx+2J6ASQ7zKTxvqhRkImog9/hWuWfBpKLZl6Ae1UlZAFMO/7PSSoEgYMCgYB9T0DJNCD7JPxcKcx7MEo2m8TtH3JUQofTw79jnJFzyYwYT7EFigzJS8cQ4OqSAC+NP9MOrJp9Mk3ZJ8KbCOL8hwHQwFzoV+bkOfMJ6vbPt1colQ/rTOaP0EDmINTMdhVpMPqlZ7PdoAeT7IcQ8NzT1cWNjomDPAAV3Qwq84pjDQ=="
-//        return KeyPair(public.toPublicKey(), private.toPrivateKey())
-//    }
-//
-//    fun decrypt(clientHeaders: AuthManager.AuthHeaders, clientTestOnlyParamIdentity: Identity): String {
-////        val sharedSecretKey = DHCrypto.agreeSecretKey(keyPair.private, getPublicKey(clientHeaders.hashedIdentity))
-//        val sharedSecretKey = DHCrypto.agreeSecretKey(keyPair.private, clientTestOnlyParamIdentity.publicKey)
-//        return AESCrypto.decrypt(clientHeaders.encryptedToken, sharedSecretKey, clientHeaders.iv)
-//    }
-//
-//}
-
-
 class AuthManager(private val identityManager: IdentityManager) {
     private data class Token(
         val type: String = "Authentication",

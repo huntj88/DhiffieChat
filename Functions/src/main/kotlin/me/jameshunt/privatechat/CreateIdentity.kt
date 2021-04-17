@@ -21,7 +21,7 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
         context.logger.log(objectMapper.writeValueAsBytes(request))
         val data = objectMapper.readValue<RequestData>(request["body"]!!.toString())
 
-        if (!validateNewIdentity(data.publicKey.toPublicKey(), data.iv.toIv(), data.encryptedToken)) {
+        if (!doesUserHavePrivateKey(data.publicKey.toPublicKey(), data.iv.toIv(), data.encryptedToken)) {
             throw Exception("not authed")
         }
 

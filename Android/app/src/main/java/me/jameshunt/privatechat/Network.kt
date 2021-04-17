@@ -22,15 +22,8 @@ import java.time.format.DateTimeFormatter
 
 val moshi: Moshi = Moshi.Builder()
     .add(object {
-        @ToJson
-        fun toJson(instant: Instant): String {
-            return DateTimeFormatter.ISO_INSTANT.format(instant)
-        }
-
-        @FromJson
-        fun fromJson(string: String): Instant {
-            return Instant.parse(string)
-        }
+        @ToJson fun toJson(instant: Instant): String = DateTimeFormatter.ISO_INSTANT.format(instant)
+        @FromJson fun fromJson(string: String): Instant = Instant.parse(string)
     })
     .addLast(KotlinJsonAdapterFactory())
     .build()
@@ -64,7 +57,6 @@ object Network {
     fun createIdentity(createIdentity: CreateIdentity, onResult: () -> Unit) {
         Log.d("create identity", createIdentity.toString())
 
-//        return
         api.createIdentity(createIdentity).enqueue(object: Callback<ResponseMessage> {
             override fun onResponse(call: Call<ResponseMessage>, response: Response<ResponseMessage>) {
                 Log.d("response", response.raw().body!!.toString())
