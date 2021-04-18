@@ -49,11 +49,11 @@ fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedT
     return token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
 }
 
-fun validateAndGetIdentity(hashedIdentity: String, iv: IvParameterSpec, encryptedToken: String): Identity? {
+fun validateAndGetIdentity(hashedIdentity: String, iv: IvParameterSpec, encryptedToken: String): Identity {
     val publicKey = getUserPublicKey(hashedIdentity)
     return when (doesUserHavePrivateKey(publicKey, iv, encryptedToken)) {
         true -> Identity(publicKey = publicKey)
-        false -> null
+        false -> throw Unauthorized()
     }
 }
 

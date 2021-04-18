@@ -5,7 +5,6 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.privatechat.crypto.toIv
 import me.jameshunt.privatechat.crypto.toPublicKey
 
@@ -18,31 +17,18 @@ data class RequestData(
 
 class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        context.logger.log(objectMapper.writeValueAsBytes(request))
-        val data = objectMapper.readValue<RequestData>(request["body"]!!.toString())
+        return awsTransformUnit<RequestData>(request, context) { data ->
+            if (!doesUserHavePrivateKey(data.publicKey.toPublicKey(), data.iv.toIv(), data.encryptedToken)) {
+                throw Unauthorized()
+            }
 
-        if (!doesUserHavePrivateKey(data.publicKey.toPublicKey(), data.iv.toIv(), data.encryptedToken)) {
-            return GatewayResponse(
-                body = objectMapper.writeValueAsString(mapOf("message" to "Authentication error")),
-                statusCode = 401
+            val hashedIdentity = Identity(data.publicKey.toPublicKey()).hashedIdentity
+            val identity = mapOf(
+                "HashedIdentity" to hashedIdentity,
+                "PublicKey" to data.publicKey
             )
-        }
-
-        val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
-        val hashedIdentity = Identity(data.publicKey.toPublicKey()).hashedIdentity
-
-        return try {
-            DynamoDB(defaultClient).getTable("User").putItem(
-                Item.fromMap(
-                    mapOf(
-                        "HashedIdentity" to hashedIdentity,
-                        "PublicKey" to data.publicKey
-                    )
-                )
-            )
-            GatewayResponse(body = objectMapper.writeValueAsString(mapOf("message" to "success")))
-        } catch (e: Exception) {
-            GatewayResponse(body = objectMapper.writeValueAsString(mapOf("message" to (e.message ?: hashedIdentity))))
+            val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
+            DynamoDB(defaultClient).getTable("User").putItem(Item.fromMap(identity))
         }
     }
 }
