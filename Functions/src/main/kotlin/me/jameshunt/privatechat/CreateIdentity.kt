@@ -11,9 +11,9 @@ import me.jameshunt.privatechat.crypto.toPublicKey
 
 
 data class RequestData(
-    var publicKey: String = "",
-    var iv: String = "",
-    var encryptedToken: String = ""
+    val publicKey: String,
+    val iv: String,
+    val encryptedToken: String
 )
 
 class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {

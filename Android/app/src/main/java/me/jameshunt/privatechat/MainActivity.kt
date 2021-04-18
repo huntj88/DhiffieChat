@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
         lifecycle.coroutineScope.launch {
             try {
                 DI.privateChatService.getNewMessages()
+                DI.privateChatService.scanQR("sM1bPmKaaSQiOYlC3z16uWNFIoiLlVHKfPTpafnPqF0=")
             } catch (e: HttpException) {
                 e.printStackTrace()
             }

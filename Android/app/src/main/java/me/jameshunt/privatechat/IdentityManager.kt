@@ -1,6 +1,5 @@
 package me.jameshunt.privatechat
 
-import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.util.Log
 import me.jameshunt.privatechat.crypto.DHCrypto

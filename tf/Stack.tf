@@ -48,6 +48,19 @@ resource "aws_dynamodb_table" "config-dynamodb-table" {
   }
 }
 
+resource "aws_dynamodb_table" "user-relationship-dynamodb-table" {
+  name           = "UserRelationship"
+  billing_mode   = "PAY_PER_REQUEST"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "HashedIdentityUser1"
+
+  attribute {
+    name = "HashedIdentityUser1"
+    type = "S"
+  }
+}
+
 resource "aws_iam_role" "function_role" {
   name = "function_role"
 
@@ -137,7 +150,8 @@ resource "aws_iam_policy" "function_policy" {
         Effect   = "Allow"
         Resource = [
           aws_dynamodb_table.user-dynamodb-table.arn,
-          aws_dynamodb_table.config-dynamodb-table.arn
+          aws_dynamodb_table.config-dynamodb-table.arn,
+          aws_dynamodb_table.user-relationship-dynamodb-table.arn
         ]
       }
     ]
@@ -236,10 +250,34 @@ resource "aws_api_gateway_integration" "create_identity_integration" {
   uri                     = aws_lambda_function.create_identity.invoke_arn
 }
 
+resource "aws_api_gateway_resource" "scan_qr_resource" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  parent_id   = aws_api_gateway_rest_api.chat_gateway.root_resource_id
+  path_part   = "ScanQR"
+}
+
+resource "aws_api_gateway_method" "scan_qr_method" {
+  rest_api_id   = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id   = aws_api_gateway_resource.scan_qr_resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "scan_qr_integration" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id = aws_api_gateway_method.scan_qr_method.resource_id
+  http_method = aws_api_gateway_method.scan_qr_method.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.scan_qr.invoke_arn
+}
+
 resource "aws_api_gateway_deployment" "chat_deployment" {
   depends_on = [
     aws_api_gateway_integration.get_server_public_key_integration,
-    aws_api_gateway_integration.create_identity_integration
+    aws_api_gateway_integration.create_identity_integration,
+    aws_api_gateway_integration.scan_qr_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -261,6 +299,17 @@ resource "aws_lambda_permission" "create_identity_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.create_identity.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "scan_qr_gw_permission" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.scan_qr.function_name
   principal     = "apigateway.amazonaws.com"
 
   # The "/*/*" portion grants access from any method on any resource

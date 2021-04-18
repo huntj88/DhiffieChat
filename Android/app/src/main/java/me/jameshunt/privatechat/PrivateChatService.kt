@@ -6,6 +6,7 @@ import me.jameshunt.privatechat.crypto.toPublicKey
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import java.security.PublicKey
 import java.util.*
 
 
@@ -17,11 +18,21 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         return emptyList()
     }
 
+    suspend fun scanQR(scannedHashedIdentity: String): ResponseMessage {
+        val auth = authManager.getAuthHeaders(getServerPublicKey())
+        val qr = QR(
+            scannedHashedIdentity = scannedHashedIdentity,
+            selfHashedIdentity = authManager.getIdentity().hashedIdentity,
+            iv = Base64.getEncoder().encodeToString(auth.iv.iv),
+            encryptedToken = auth.encryptedToken
+        )
+
+        return api.scanQR(qr)
+    }
+
     private suspend fun createIdentity(): ResponseMessage {
         val encoder = Base64.getEncoder()
-
-        val serverPublicKey = api.getServerPublicKey().publicKey.toPublicKey()
-        val clientHeaders = authManager.getAuthHeaders(serverPublicKey = serverPublicKey)
+        val clientHeaders = authManager.getAuthHeaders(serverPublicKey = getServerPublicKey())
 
         return api.createIdentity(
             CreateIdentity(
@@ -30,6 +41,11 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
                 encryptedToken = clientHeaders.encryptedToken
             )
         )
+    }
+
+    // TODO: caching
+    private suspend fun getServerPublicKey(): PublicKey {
+        return api.getServerPublicKey().publicKey.toPublicKey()
     }
 }
 
@@ -49,4 +65,14 @@ interface PrivateChatApi {
 
     @POST("CreateIdentity")
     suspend fun createIdentity(@Body identity: CreateIdentity): ResponseMessage
+
+    data class QR(
+        val selfHashedIdentity: String,
+        val scannedHashedIdentity: String,
+        val iv: String,
+        val encryptedToken: String
+    )
+
+    @POST("ScanQR")
+    suspend fun scanQR(@Body qr: QR): ResponseMessage
 }

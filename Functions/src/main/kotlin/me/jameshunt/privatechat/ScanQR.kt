@@ -5,29 +5,36 @@ import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import com.fasterxml.jackson.module.kotlin.readValue
+import me.jameshunt.privatechat.crypto.toIv
 import java.util.*
 import javax.crypto.spec.IvParameterSpec
 
 data class QR(
-    var selfHashedIdentity: String = "",
-    var scannedHashedIdentity: String = "",
-    var iv: String = "",
-    var encryptedToken: String = ""
+    val selfHashedIdentity: String,
+    val scannedHashedIdentity: String,
+    val iv: String,
+    val encryptedToken: String
 )
 
 data class Response(val message: String)
 
-class ScanQR: RequestHandler<QR, Response> {
-    override fun handleRequest(data: QR, context: Context): Response {
+class ScanQR: RequestHandler<Map<String, Any?>, GatewayResponse> {
+    override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
+        context.logger.log(objectMapper.writeValueAsBytes(request))
+        val data = objectMapper.readValue<QR>(request["body"]!!.toString())
+        context.logger.log(data.toString())
         val identity = validateAndGetIdentity(
             hashedIdentity = data.selfHashedIdentity,
-            iv = IvParameterSpec(Base64.getDecoder().decode(data.iv)),
+            iv = data.iv.toIv(),
             encryptedToken = data.encryptedToken
-        ) ?: throw Exception("Not authed")
+        ) ?:  return GatewayResponse(
+            body = objectMapper.writeValueAsString(mapOf("message" to "Authentication error")),
+            statusCode = 401
+        )
 
         val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
-        val table = DynamoDB(defaultClient)
-            .getTable("UserRelationship")
+        val table = DynamoDB(defaultClient).getTable("UserRelationship")
 
         // user 1 scanned it, set verified to true
         table.putItem(Item.fromMap(mapOf(
@@ -44,6 +51,6 @@ class ScanQR: RequestHandler<QR, Response> {
             "VerifiedByUser1" to false
         )))
 
-        return Response(message = "Success")
+        return GatewayResponse(body = objectMapper.writeValueAsString(mapOf("message" to "success")))
     }
 }
