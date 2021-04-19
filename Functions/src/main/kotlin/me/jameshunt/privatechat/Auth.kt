@@ -1,7 +1,5 @@
 package me.jameshunt.privatechat
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.dynamodbv2.document.PrimaryKey
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -17,7 +15,6 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
-import javax.crypto.BadPaddingException
 import javax.crypto.spec.IvParameterSpec
 
 private data class Token(
@@ -40,7 +37,7 @@ fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedT
     val token = try {
         val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
         val tokenString = AESCrypto.decrypt(encryptedToken, sharedSecretKey, iv)
-        objectMapper.readValue<Token>(tokenString)
+        Singletons.objectMapper.readValue<Token>(tokenString)
     } catch (e: GeneralSecurityException) {
         e.printStackTrace()
         return false
@@ -58,8 +55,7 @@ fun validateAndGetIdentity(hashedIdentity: String, iv: IvParameterSpec, encrypte
 }
 
 fun getUserPublicKey(hashedIdentity: String): PublicKey {
-    val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
-    return DynamoDB(defaultClient)
+    return Singletons.dynamoDB
         .getTable("User")
         .getItem(PrimaryKey("HashedIdentity", hashedIdentity))
         .asMap()
@@ -87,8 +83,7 @@ fun saveServerKeyPair(keyPair: KeyPair) {
 }
 
 private fun getConfigProperty(name: String, checkExpiration: Boolean): String? {
-    val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
-    return DynamoDB(defaultClient)
+    return Singletons.dynamoDB
         .getTable("Config")
         .getItem(PrimaryKey("Name", name))
         ?.asMap()
@@ -102,8 +97,7 @@ private fun getConfigProperty(name: String, checkExpiration: Boolean): String? {
 }
 
 private fun setConfigProperty(name: String, value: String, expiresAt: Instant?) {
-    val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
-    DynamoDB(defaultClient)
+    Singletons.dynamoDB
         .getTable("Config")
         .putItem(
             Item.fromMap(

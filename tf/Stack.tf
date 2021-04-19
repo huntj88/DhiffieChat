@@ -166,8 +166,8 @@ resource "aws_iam_role_policy_attachment" "function-attach" {
 resource "aws_lambda_function" "create_identity" {
   description = "Create Identity"
   function_name = "create_identity"
-  filename = "../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar"
-  source_code_hash = filebase64sha256("../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar")
+  filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
   handler = "me.jameshunt.privatechat.CreateIdentity::handleRequest"
   role = aws_iam_role.function_role.arn
   runtime = "java8"
@@ -178,8 +178,8 @@ resource "aws_lambda_function" "create_identity" {
 resource "aws_lambda_function" "get_server_public_key" {
   description = "Get Server Public Key"
   function_name = "get_server_public_key"
-  filename = "../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar"
-  source_code_hash = filebase64sha256("../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar")
+  filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
   handler = "me.jameshunt.privatechat.GetServerPublicKey::handleRequest"
   role = aws_iam_role.function_role.arn
   runtime = "java8"
@@ -190,8 +190,8 @@ resource "aws_lambda_function" "get_server_public_key" {
 resource "aws_lambda_function" "scan_qr" {
   description = "Scan QR"
   function_name = "scan_qr"
-  filename = "../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar"
-  source_code_hash = filebase64sha256("../Functions/build/libs/Functions-1.0-SNAPSHOT-all.jar")
+  filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
   handler = "me.jameshunt.privatechat.ScanQR::handleRequest"
   role = aws_iam_role.function_role.arn
   runtime = "java8"

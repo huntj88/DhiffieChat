@@ -1,7 +1,5 @@
 package me.jameshunt.privatechat
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
@@ -27,8 +25,7 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 "HashedIdentity" to hashedIdentity,
                 "PublicKey" to data.publicKey
             )
-            val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
-            DynamoDB(defaultClient).getTable("User").putItem(Item.fromMap(identity))
+            Singletons.dynamoDB.getTable("User").putItem(Item.fromMap(identity))
         }
     }
 }

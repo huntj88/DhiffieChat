@@ -1,7 +1,5 @@
 package me.jameshunt.privatechat
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.dynamodbv2.document.DynamoDB
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
@@ -23,8 +21,7 @@ class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 encryptedToken = data.encryptedToken
             )
 
-            val defaultClient = AmazonDynamoDBClientBuilder.defaultClient()
-            val table = DynamoDB(defaultClient).getTable("UserRelationship")
+            val table = Singletons.dynamoDB.getTable("UserRelationship")
 
             // user 1 scanned it, set verified to true
             val relationshipOne = mapOf(
