@@ -21,11 +21,11 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
             }
 
             val hashedIdentity = Identity(data.publicKey.toPublicKey()).hashedIdentity
-            val identity = mapOf(
+            val user = mapOf(
                 "HashedIdentity" to hashedIdentity,
                 "PublicKey" to data.publicKey
             )
-            Singletons.dynamoDB.getTable("User").putItem(Item.fromMap(identity))
+            Singletons.dynamoDB.getTable("User").putItem(Item.fromMap(user))
         }
     }
 }

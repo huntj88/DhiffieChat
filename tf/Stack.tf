@@ -48,19 +48,6 @@ resource "aws_dynamodb_table" "config-dynamodb-table" {
   }
 }
 
-resource "aws_dynamodb_table" "user-relationship-dynamodb-table" {
-  name           = "UserRelationship"
-  billing_mode   = "PAY_PER_REQUEST"
-  read_capacity  = 1
-  write_capacity = 1
-  hash_key       = "HashedIdentityUser1"
-
-  attribute {
-    name = "HashedIdentityUser1"
-    type = "S"
-  }
-}
-
 resource "aws_iam_role" "function_role" {
   name = "function_role"
 
@@ -150,8 +137,7 @@ resource "aws_iam_policy" "function_policy" {
         Effect   = "Allow"
         Resource = [
           aws_dynamodb_table.user-dynamodb-table.arn,
-          aws_dynamodb_table.config-dynamodb-table.arn,
-          aws_dynamodb_table.user-relationship-dynamodb-table.arn
+          aws_dynamodb_table.config-dynamodb-table.arn
         ]
       }
     ]

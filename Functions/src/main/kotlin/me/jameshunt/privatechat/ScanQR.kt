@@ -1,6 +1,7 @@
 package me.jameshunt.privatechat
 
-import com.amazonaws.services.dynamodbv2.document.Item
+import com.amazonaws.services.dynamodbv2.document.AttributeUpdate
+import com.amazonaws.services.dynamodbv2.document.PrimaryKey
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.jameshunt.privatechat.crypto.toIv
@@ -21,24 +22,17 @@ class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 encryptedToken = data.encryptedToken
             )
 
-            val table = Singletons.dynamoDB.getTable("UserRelationship")
+            val table = Singletons.dynamoDB.getTable("User")
 
-            // user 1 scanned it, set verified to true
-            val relationshipOne = mapOf(
-                "HashedIdentityUser1" to identity.hashedIdentity,
-                "HashedIdentityUser2" to data.scannedHashedIdentity,
-                "VerifiedByUser1" to true
+            table.updateItem(
+                PrimaryKey("HashedIdentity", identity.hashedIdentity),
+                AttributeUpdate("SentRequests").addElements(data.scannedHashedIdentity)
             )
-            table.putItem(Item.fromMap(relationshipOne))
 
-            // user 2 had their QR scanned, but still has to verify
-            // (user1, and user2 are swapped below)
-            val relationshipTwo = mapOf(
-                "HashedIdentityUser1" to data.scannedHashedIdentity,
-                "HashedIdentityUser2" to identity.hashedIdentity,
-                "VerifiedByUser1" to false
+            table.updateItem(
+                PrimaryKey("HashedIdentity", data.scannedHashedIdentity),
+                AttributeUpdate("ReceivedRequests").addElements(identity.hashedIdentity)
             )
-            table.putItem(Item.fromMap(relationshipTwo))
         }
     }
 }
