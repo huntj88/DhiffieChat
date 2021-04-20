@@ -4,9 +4,7 @@ import android.util.Log
 import me.jameshunt.privatechat.PrivateChatApi.*
 import me.jameshunt.privatechat.crypto.AESCrypto
 import me.jameshunt.privatechat.crypto.toPublicKey
-import retrofit2.http.Body
-import retrofit2.http.GET
-import retrofit2.http.POST
+import retrofit2.http.*
 import java.security.PublicKey
 import java.util.*
 
@@ -20,15 +18,11 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
     }
 
     suspend fun scanQR(scannedHashedIdentity: String): ResponseMessage {
-        val userToServerCredentials = authManager.userToOtherAuth(getServerPublicKey())
-        val qr = QR(
-            scannedHashedIdentity = scannedHashedIdentity,
-            selfHashedIdentity = authManager.getIdentity().hashedIdentity,
-            iv = Base64.getEncoder().encodeToString(userToServerCredentials.iv.iv),
-            encryptedToken = userToServerCredentials.encryptedToken
+        val qr = QR(scannedHashedIdentity = scannedHashedIdentity)
+        return api.scanQR(
+            headers = standardHeaders(userToServerHeaders(), userToUserHeaders()),
+            qr = qr
         )
-
-        return api.scanQR(qr)
     }
 
     suspend fun sendImage(otherUserPublicKey: PublicKey, image: ByteArray) {
@@ -56,6 +50,27 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
     private suspend fun getServerPublicKey(): PublicKey {
         return api.getServerPublicKey().publicKey.toPublicKey()
     }
+
+    private fun standardHeaders(vararg additionalHeaders: Map<String, String>): Map<String, String> {
+        val identity = mapOf("HashedIdentity" to authManager.getIdentity().hashedIdentity)
+        return additionalHeaders.fold(identity) { acc, next -> acc + next }
+    }
+
+    private suspend fun userToServerHeaders(): Map<String, String> {
+        val userToServerCredentials = authManager.userToOtherAuth(getServerPublicKey())
+        return mapOf(
+            "userServerIv" to Base64.getEncoder().encodeToString(userToServerCredentials.iv.iv),
+            "userServerEncryptedToken" to userToServerCredentials.encryptedToken
+        )
+    }
+
+    private suspend fun userToUserHeaders(): Map<String, String> {
+        val userToServerCredentials = authManager.userToOtherAuth(getServerPublicKey())
+        return mapOf(
+            "userUserIv" to Base64.getEncoder().encodeToString(userToServerCredentials.iv.iv),
+            "userUserEncryptedToken" to userToServerCredentials.encryptedToken
+        )
+    }
 }
 
 interface PrivateChatApi {
@@ -75,15 +90,10 @@ interface PrivateChatApi {
     @POST("CreateIdentity")
     suspend fun createIdentity(@Body identity: CreateIdentity): ResponseMessage
 
-    data class QR(
-        val selfHashedIdentity: String,
-        val scannedHashedIdentity: String,
-        val iv: String,
-        val encryptedToken: String
-    )
+    data class QR(val scannedHashedIdentity: String)
 
     @POST("ScanQR")
-    suspend fun scanQR(@Body qr: QR): ResponseMessage
+    suspend fun scanQR(@HeaderMap headers: Map<String, String>, @Body qr: QR): ResponseMessage
 
 //    @POST("SendImage")
 //    suspend fun sendImage(@Body ): ResponseMessage
