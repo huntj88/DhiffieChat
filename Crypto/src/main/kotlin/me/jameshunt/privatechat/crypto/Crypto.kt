@@ -60,22 +60,21 @@ object AESCrypto {
         NoSuchPaddingException::class, NoSuchAlgorithmException::class, InvalidAlgorithmParameterException::class,
         InvalidKeyException::class, BadPaddingException::class, IllegalBlockSizeException::class
     )
-    fun encrypt(input: String, key: SecretKey, iv: IvParameterSpec): String {
+    fun encrypt(input: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
         val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.ENCRYPT_MODE, key, iv)
-        val cipherText: ByteArray = cipher.doFinal(input.toByteArray())
-        return Base64.getEncoder().encodeToString(cipherText)
+        val cipherText: ByteArray = cipher.doFinal(input)
+        return Base64.getEncoder().encode(cipherText)
     }
 
     @Throws(
         NoSuchPaddingException::class, NoSuchAlgorithmException::class, InvalidAlgorithmParameterException::class,
         InvalidKeyException::class, BadPaddingException::class, IllegalBlockSizeException::class
     )
-    fun decrypt(cipherText: String, key: SecretKey, iv: IvParameterSpec): String {
+    fun decrypt(cipherInput: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.DECRYPT_MODE, key, iv)
-        val plainText = cipher.doFinal(Base64.getDecoder().decode(cipherText))
-        return String(plainText)
+        return cipher.doFinal(Base64.getDecoder().decode(cipherInput))
     }
 }
 

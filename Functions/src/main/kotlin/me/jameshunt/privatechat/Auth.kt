@@ -36,7 +36,7 @@ data class Identity(val publicKey: PublicKey) {
 fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedToken: String): Boolean {
     val token = try {
         val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
-        val tokenString = AESCrypto.decrypt(encryptedToken, sharedSecretKey, iv)
+        val tokenString = AESCrypto.decrypt(encryptedToken.toByteArray(), sharedSecretKey, iv)
         Singletons.objectMapper.readValue<Token>(tokenString)
     } catch (e: GeneralSecurityException) {
         e.printStackTrace()
