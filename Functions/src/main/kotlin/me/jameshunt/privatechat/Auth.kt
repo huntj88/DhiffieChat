@@ -63,6 +63,14 @@ fun getUserPublicKey(hashedIdentity: String): PublicKey {
         .toPublicKey()
 }
 
+fun getClientPublicKey(hashedIdentity: String): PublicKey {
+    return Singletons.dynamoDB.getTable("User")
+        .getItem(PrimaryKey("HashedIdentity", hashedIdentity))
+        .asMap()["PublicKey"]
+        .let { it as String }
+        .toPublicKey()
+}
+
 fun getServerKeyPair(): KeyPair {
     val existingPrivate = getConfigProperty("PrivateKey", checkExpiration = true)?.toPrivateKey()
     val existingPublic = getConfigProperty("PublicKey", checkExpiration = true)?.toPublicKey()

@@ -10,16 +10,16 @@ data class QR(val scannedHashedIdentity: String)
 
 class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<QR, Unit>(request, context) { data, identity ->
+        return awsTransformAuthed<QR, Unit, Unit>(request, context) { body, _, identity ->
             val table = Singletons.dynamoDB.getTable("User")
 
             table.updateItem(
                 PrimaryKey("HashedIdentity", identity.hashedIdentity),
-                AttributeUpdate("SentRequests").addElements(data.scannedHashedIdentity)
+                AttributeUpdate("SentRequests").addElements(body.scannedHashedIdentity)
             )
 
             table.updateItem(
-                PrimaryKey("HashedIdentity", data.scannedHashedIdentity),
+                PrimaryKey("HashedIdentity", body.scannedHashedIdentity),
                 AttributeUpdate("ReceivedRequests").addElements(identity.hashedIdentity)
             )
         }

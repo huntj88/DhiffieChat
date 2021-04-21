@@ -173,6 +173,18 @@ resource "aws_lambda_function" "get_server_public_key" {
   memory_size = 256
 }
 
+resource "aws_lambda_function" "get_user_public_key" {
+  description = "Get User Public Key"
+  function_name = "get_user_public_key"
+  filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
+  handler = "me.jameshunt.privatechat.GetUserPublicKey::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 256
+}
+
 resource "aws_lambda_function" "scan_qr" {
   description = "Scan QR"
   function_name = "scan_qr"
@@ -211,6 +223,29 @@ resource "aws_api_gateway_integration" "get_server_public_key_integration" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = aws_lambda_function.get_server_public_key.invoke_arn
+}
+
+resource "aws_api_gateway_resource" "user_public_key_resource" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  parent_id   = aws_api_gateway_rest_api.chat_gateway.root_resource_id
+  path_part   = "UserPublicKey"
+}
+
+resource "aws_api_gateway_method" "user_public_key_method" {
+  rest_api_id   = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id   = aws_api_gateway_resource.user_public_key_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_user_public_key_integration" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id = aws_api_gateway_method.user_public_key_method.resource_id
+  http_method = aws_api_gateway_method.user_public_key_method.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_user_public_key.invoke_arn
 }
 
 resource "aws_api_gateway_resource" "create_identity_resource" {
@@ -274,6 +309,17 @@ resource "aws_lambda_permission" "get_server_public_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.get_server_public_key.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "get_user_public_gw_permission" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_user_public_key.function_name
   principal     = "apigateway.amazonaws.com"
 
   # The "/*/*" portion grants access from any method on any resource

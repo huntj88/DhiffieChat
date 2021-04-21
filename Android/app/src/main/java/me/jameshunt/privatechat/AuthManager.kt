@@ -27,14 +27,20 @@ class AuthManager(
         val sharedSecret: SecretKey
     )
 
+    data class MessageCredentials(
+        val hashedIdentity: String,
+        val iv: IvParameterSpec,
+        @Transient
+        val sharedSecret: SecretKey
+    )
+
     private fun Token.toSerialized(): ByteArray = moshi
         .adapter(Token::class.java)
         .toJson(this)
         .toByteArray()
 
     // TODO: caching, return null after expiration
-    // for user-to-server or user-to-user
-    fun userToOtherAuth(serverPublicKey: PublicKey): AuthCredentials {
+    fun userToServerAuth(serverPublicKey: PublicKey): AuthCredentials {
         val sharedSecretKey = DHCrypto.agreeSecretKey(
             prkSelf = identityManager.getIdentity().privateKey,
             pbkPeer = serverPublicKey
@@ -47,6 +53,19 @@ class AuthManager(
             hashedIdentity = identityManager.getIdentity().hashedIdentity,
             iv = iv,
             encryptedToken = encryptedToken.toString(StandardCharsets.UTF_8),
+            sharedSecret = sharedSecretKey
+        )
+    }
+
+    fun userToUserMessage(serverPublicKey: PublicKey): MessageCredentials {
+        val sharedSecretKey = DHCrypto.agreeSecretKey(
+            prkSelf = identityManager.getIdentity().privateKey,
+            pbkPeer = serverPublicKey
+        )
+
+        return MessageCredentials(
+            hashedIdentity = identityManager.getIdentity().hashedIdentity,
+            iv = AESCrypto.generateIv(),
             sharedSecret = sharedSecretKey
         )
     }

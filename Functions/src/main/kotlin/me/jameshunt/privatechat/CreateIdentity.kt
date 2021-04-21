@@ -15,15 +15,15 @@ data class RequestData(
 
 class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransform<RequestData, Unit>(request, context) { data ->
-            if (!doesUserHavePrivateKey(data.publicKey.toPublicKey(), data.iv.toIv(), data.encryptedToken)) {
+        return awsTransform<RequestData, Unit, Unit>(request, context) { body, _ ->
+            if (!doesUserHavePrivateKey(body.publicKey.toPublicKey(), body.iv.toIv(), body.encryptedToken)) {
                 throw Unauthorized()
             }
 
-            val hashedIdentity = Identity(data.publicKey.toPublicKey()).hashedIdentity
+            val hashedIdentity = Identity(body.publicKey.toPublicKey()).hashedIdentity
             val user = mapOf(
                 "HashedIdentity" to hashedIdentity,
-                "PublicKey" to data.publicKey
+                "PublicKey" to body.publicKey
             )
             Singletons.dynamoDB.getTable("User").putItem(Item.fromMap(user))
         }

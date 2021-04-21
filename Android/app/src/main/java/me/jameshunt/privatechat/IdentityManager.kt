@@ -57,8 +57,10 @@ data class Identity(
     val publicKey: PublicKey
 ) {
     val hashedIdentity: String
-        get() = MessageDigest
-            .getInstance("SHA-256")
-            .digest(publicKey.encoded)
-            .let { Base64.getEncoder().encodeToString(it) }
+        get() = publicKey.encoded.toHashedIdentity()
 }
+
+fun ByteArray.toHashedIdentity(): String = MessageDigest
+    .getInstance("SHA-256")
+    .digest(this)
+    .let { Base64.getEncoder().encodeToString(it) }
