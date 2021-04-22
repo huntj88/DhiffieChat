@@ -3,13 +3,14 @@ package me.jameshunt.privatechat
 import android.util.Log
 import me.jameshunt.privatechat.PrivateChatApi.*
 import me.jameshunt.privatechat.crypto.AESCrypto
+import me.jameshunt.privatechat.crypto.toBase64String
+import me.jameshunt.privatechat.crypto.toHashedIdentity
 import me.jameshunt.privatechat.crypto.toPublicKey
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.http.*
 import java.security.PublicKey
-import java.util.*
 
 
 class PrivateChatService(private val api: PrivateChatApi, private val authManager: AuthManager) {
@@ -17,39 +18,39 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
     suspend fun getNewMessages(): List<Unit> {
         val message = createIdentity().message
         Log.d("createIdentityMessage", message)
-        val userPublicKey = getUserPublicKey(authManager.getIdentity().hashedIdentity)
-        Log.d("user public key", userPublicKey.encoded.toHashedIdentity())
+        val userPublicKey = getUserPublicKey(authManager.getIdentity().toHashedIdentity())
+        Log.d("user public key", userPublicKey.toHashedIdentity())
         return emptyList()
     }
 
     suspend fun scanQR(scannedHashedIdentity: String): ResponseMessage {
-        val qr = QR(scannedHashedIdentity = scannedHashedIdentity)
         return api.scanQR(
             headers = standardHeaders(),
-            qr = qr
+            qr = QR(scannedHashedIdentity = scannedHashedIdentity)
         )
     }
 
-    suspend fun sendFile(otherUserPublicKey: PublicKey, image: ByteArray): ResponseMessage {
+    suspend fun sendFile(otherUserHashedId: String, image: ByteArray): ResponseMessage {
+        val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), otherUserHashedId).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
         val encryptedImage = AESCrypto.encrypt(image, userToUserCredentials.sharedSecret, userToUserCredentials.iv)
         val contentType = "application/octet-stream".toMediaTypeOrNull()
         val body: RequestBody = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size)
 
+        val userToUserHeaders = mapOf("userUserIv" to userToUserCredentials.iv.toBase64String())
         return api.sendFile(
-            headers = standardHeaders(),
+            headers = standardHeaders(userToUserHeaders),
             encryptedFile = body
         )
     }
 
     private suspend fun createIdentity(): ResponseMessage {
-        val encoder = Base64.getEncoder()
         val userToServerCredentials = authManager.userToServerAuth(serverPublicKey = getServerPublicKey())
 
         return api.createIdentity(
             CreateIdentity(
-                publicKey = encoder.encodeToString(authManager.getIdentity().publicKey.encoded),
-                iv = encoder.encodeToString(userToServerCredentials.iv.iv),
+                publicKey = authManager.getIdentity().public.toBase64String(),
+                iv = userToServerCredentials.iv.toBase64String(),
                 encryptedToken = userToServerCredentials.encryptedToken
             )
         )
@@ -65,14 +66,14 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
     }
 
     private suspend fun standardHeaders(vararg additionalHeaders: Map<String, String>): Map<String, String> {
-        val standard = mapOf("HashedIdentity" to authManager.getIdentity().hashedIdentity) + userToServerHeaders()
+        val standard = mapOf("HashedIdentity" to authManager.getIdentity().toHashedIdentity()) + userToServerHeaders()
         return additionalHeaders.fold(standard) { acc, next -> acc + next }
     }
 
     private suspend fun userToServerHeaders(): Map<String, String> {
         val userToServerCredentials = authManager.userToServerAuth(getServerPublicKey())
         return mapOf(
-            "userServerIv" to Base64.getEncoder().encodeToString(userToServerCredentials.iv.iv),
+            "userServerIv" to userToServerCredentials.iv.toBase64String(),
             "userServerEncryptedToken" to userToServerCredentials.encryptedToken
         )
     }

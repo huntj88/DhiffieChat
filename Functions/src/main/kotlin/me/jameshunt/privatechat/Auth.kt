@@ -3,10 +3,7 @@ package me.jameshunt.privatechat
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.dynamodbv2.document.PrimaryKey
 import com.fasterxml.jackson.module.kotlin.readValue
-import me.jameshunt.privatechat.crypto.AESCrypto
-import me.jameshunt.privatechat.crypto.DHCrypto
-import me.jameshunt.privatechat.crypto.toPrivateKey
-import me.jameshunt.privatechat.crypto.toPublicKey
+import me.jameshunt.privatechat.crypto.*
 import java.security.GeneralSecurityException
 import java.security.KeyPair
 import java.security.MessageDigest
@@ -27,10 +24,7 @@ private data class Token(
 
 data class Identity(val publicKey: PublicKey) {
     val hashedIdentity: String
-        get() = MessageDigest
-            .getInstance("SHA-256")
-            .digest(publicKey.encoded)
-            .let { Base64.getEncoder().encodeToString(it) }
+        get() = publicKey.toHashedIdentity()
 }
 
 fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedToken: String): Boolean {
@@ -80,14 +74,10 @@ fun getServerKeyPair(): KeyPair {
 }
 
 fun saveServerKeyPair(keyPair: KeyPair) {
-    val encoder = Base64.getEncoder()
-    val privateKey = encoder.encodeToString(keyPair.private.encoded)
-    val publicKey = encoder.encodeToString(keyPair.public.encoded)
-
     val expiresAt = Instant.now().plus(2, ChronoUnit.HOURS)
 
-    setConfigProperty("PrivateKey", privateKey, expiresAt)
-    setConfigProperty("PublicKey", publicKey, expiresAt)
+    setConfigProperty(name = "PrivateKey", value = keyPair.private.toBase64String(), expiresAt = expiresAt)
+    setConfigProperty(name = "PublicKey", value = keyPair.public.toBase64String(), expiresAt = expiresAt)
 }
 
 private fun getConfigProperty(name: String, checkExpiration: Boolean): String? {

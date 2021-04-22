@@ -4,6 +4,7 @@ import com.squareup.moshi.Moshi
 import me.jameshunt.privatechat.crypto.AESCrypto
 import me.jameshunt.privatechat.crypto.DHCrypto
 import java.nio.charset.StandardCharsets
+import java.security.KeyPair
 import java.security.PublicKey
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -42,7 +43,7 @@ class AuthManager(
     // TODO: caching, return null after expiration
     fun userToServerAuth(serverPublicKey: PublicKey): AuthCredentials {
         val sharedSecretKey = DHCrypto.agreeSecretKey(
-            prkSelf = identityManager.getIdentity().privateKey,
+            prkSelf = identityManager.getIdentity().private,
             pbkPeer = serverPublicKey
         )
         val iv = AESCrypto.generateIv()
@@ -50,7 +51,7 @@ class AuthManager(
         val encryptedToken = AESCrypto.encrypt(input = token.toSerialized(), sharedSecretKey, iv)
 
         return AuthCredentials(
-            hashedIdentity = identityManager.getIdentity().hashedIdentity,
+            hashedIdentity = identityManager.getIdentity().toHashedIdentity(),
             iv = iv,
             encryptedToken = encryptedToken.toString(StandardCharsets.UTF_8),
             sharedSecret = sharedSecretKey
@@ -59,18 +60,18 @@ class AuthManager(
 
     fun userToUserMessage(serverPublicKey: PublicKey): MessageCredentials {
         val sharedSecretKey = DHCrypto.agreeSecretKey(
-            prkSelf = identityManager.getIdentity().privateKey,
+            prkSelf = identityManager.getIdentity().private,
             pbkPeer = serverPublicKey
         )
 
         return MessageCredentials(
-            hashedIdentity = identityManager.getIdentity().hashedIdentity,
+            hashedIdentity = identityManager.getIdentity().toHashedIdentity(),
             iv = AESCrypto.generateIv(),
             sharedSecret = sharedSecretKey
         )
     }
 
-    fun getIdentity(): Identity {
+    fun getIdentity(): KeyPair {
         return identityManager.getIdentity()
     }
 }

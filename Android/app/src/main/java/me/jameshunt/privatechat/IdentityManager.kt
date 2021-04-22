@@ -2,22 +2,17 @@ package me.jameshunt.privatechat
 
 import android.content.SharedPreferences
 import android.util.Log
-import me.jameshunt.privatechat.crypto.DHCrypto
-import me.jameshunt.privatechat.crypto.toPrivateKey
-import me.jameshunt.privatechat.crypto.toPublicKey
-import java.security.MessageDigest
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.util.*
+import me.jameshunt.privatechat.crypto.*
+import java.security.KeyPair
 
 class IdentityManager(private val getSharedPreferences: () -> SharedPreferences) {
-    private var cached: Identity? = null
+    private var cached: KeyPair? = null
 
-    fun getIdentity(): Identity = synchronized(this) {
+    fun getIdentity(): KeyPair = synchronized(this) {
         get() ?: new().also { save(it) }
     }
 
-    private fun get(): Identity? {
+    private fun get(): KeyPair? {
         cached?.let { return it }
 
         val sharedPreferences = getSharedPreferences()
@@ -26,41 +21,20 @@ class IdentityManager(private val getSharedPreferences: () -> SharedPreferences)
 
         Log.d("public base64", publicBase64)
         Log.d("private base64", privateBase64)
-        return Identity(
-            privateKey = privateBase64.toPrivateKey(),
-            publicKey = publicBase64.toPublicKey()
-        ).also { cached = it }
+        return KeyPair(publicBase64.toPublicKey(), privateBase64.toPrivateKey())
+            .also { cached = it }
     }
 
-    private fun new(): Identity = DHCrypto.genDHKeyPair().let {
-        Identity(
-            privateKey = it.private,
-            publicKey = it.public
-        )
-    }
+    private fun new(): KeyPair = DHCrypto.genDHKeyPair()
 
-    private fun save(identity: Identity) {
-        cached = identity
-        val encoder = Base64.getEncoder()
-        val privateKey = encoder.encodeToString(identity.privateKey.encoded)
-        val publicKey = encoder.encodeToString(identity.publicKey.encoded)
+    private fun save(keyPair: KeyPair) {
+        cached = keyPair
 
         getSharedPreferences().edit()
-            .putString("private", privateKey)
-            .putString("public", publicKey)
+            .putString("private", keyPair.private.toBase64String())
+            .putString("public", keyPair.public.toBase64String())
             .apply()
     }
 }
 
-data class Identity(
-    val privateKey: PrivateKey,
-    val publicKey: PublicKey
-) {
-    val hashedIdentity: String
-        get() = publicKey.encoded.toHashedIdentity()
-}
-
-fun ByteArray.toHashedIdentity(): String = MessageDigest
-    .getInstance("SHA-256")
-    .digest(this)
-    .let { Base64.getEncoder().encodeToString(it) }
+fun KeyPair.toHashedIdentity(): String = public.toHashedIdentity()

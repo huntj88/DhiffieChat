@@ -15,9 +15,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import me.jameshunt.privatechat.crypto.DHCrypto
+import me.jameshunt.privatechat.crypto.toHashedIdentity
 import net.glxn.qrgen.android.MatrixToImageWriter
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
+import java.security.KeyPair
 
 class MainActivity : AppCompatActivity() {
 
@@ -51,12 +53,12 @@ class MainActivity : AppCompatActivity() {
                 .toByteArray()
         }
 
-        val randomTestPublicKey = DHCrypto.genDHKeyPair().public
-        DI.privateChatService.sendFile(randomTestPublicKey, bytes)
+        val randomHashedIdentity = DHCrypto.genDHKeyPair().public.toHashedIdentity()
+        DI.privateChatService.sendFile(randomHashedIdentity, bytes)
     }
 
-    fun barcodeBlah(identity: Identity) {
-        val result = QRCodeWriter().encode(identity.hashedIdentity, BarcodeFormat.QR_CODE, 400, 400)
+    fun barcodeBlah(keyPair: KeyPair) {
+        val result = QRCodeWriter().encode(keyPair.toHashedIdentity(), BarcodeFormat.QR_CODE, 400, 400)
         val image = MatrixToImageWriter.toBitmap(result).let { InputImage.fromBitmap(it, 0) }
 
         val options = BarcodeScannerOptions.Builder()
@@ -66,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         val client = BarcodeScanning.getClient(options)
 
         client.process(image).addOnSuccessListener {
-            Log.d("before qr", identity.hashedIdentity)
+            Log.d("before qr", keyPair.toHashedIdentity())
             Log.d("QR SCAN", it.first().rawValue ?: "no raw value")
         }
     }

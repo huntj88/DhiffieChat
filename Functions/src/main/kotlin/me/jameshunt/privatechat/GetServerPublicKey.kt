@@ -2,7 +2,7 @@ package me.jameshunt.privatechat
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import java.util.*
+import me.jameshunt.privatechat.crypto.toBase64String
 
 data class GatewayResponse(
     val isBase64Encoded: Boolean = false,
@@ -13,9 +13,7 @@ data class GatewayResponse(
 
 class GetServerPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(data: Map<String, Any?>, context: Context): GatewayResponse {
-        val serverPublic = Base64.getEncoder().encodeToString(getServerKeyPair().public.encoded)
-        return GatewayResponse(
-            body = Singletons.objectMapper.writeValueAsString(mapOf("publicKey" to serverPublic))
-        )
+        val body = mapOf("publicKey" to getServerKeyPair().public.toBase64String())
+        return GatewayResponse(body = Singletons.objectMapper.writeValueAsString(body))
     }
 }

@@ -3,6 +3,7 @@ package me.jameshunt.privatechat
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.fasterxml.jackson.annotation.JsonAlias
+import me.jameshunt.privatechat.crypto.toBase64String
 import java.util.*
 
 class GetUserPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse> {
@@ -12,7 +13,7 @@ class GetUserPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse> {
             context = context,
             handle = { _, queryParams, _ ->
                 val userPublicKey = getUserPublicKey(queryParams.hashedIdentity)
-                mapOf("publicKey" to Base64.getEncoder().encodeToString(userPublicKey.encoded))
+                mapOf("publicKey" to userPublicKey.toBase64String())
             }
         )
     }

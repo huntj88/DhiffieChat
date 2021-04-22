@@ -3,6 +3,7 @@ package me.jameshunt.privatechat
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.jameshunt.privatechat.crypto.toHashedIdentity
 import me.jameshunt.privatechat.crypto.toIv
 import me.jameshunt.privatechat.crypto.toPublicKey
 
@@ -20,9 +21,8 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 throw Unauthorized()
             }
 
-            val hashedIdentity = Identity(body.publicKey.toPublicKey()).hashedIdentity
             val user = mapOf(
-                "HashedIdentity" to hashedIdentity,
+                "HashedIdentity" to body.publicKey.toPublicKey().toHashedIdentity(),
                 "PublicKey" to body.publicKey
             )
             Singletons.dynamoDB.getTable("User").putItem(Item.fromMap(user))
