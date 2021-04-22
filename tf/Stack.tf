@@ -158,7 +158,7 @@ resource "aws_lambda_function" "create_identity" {
   role = aws_iam_role.function_role.arn
   runtime = "java8"
   timeout = 30
-  memory_size = 256
+  memory_size = 512
 }
 
 resource "aws_lambda_function" "get_server_public_key" {
@@ -170,7 +170,7 @@ resource "aws_lambda_function" "get_server_public_key" {
   role = aws_iam_role.function_role.arn
   runtime = "java8"
   timeout = 30
-  memory_size = 256
+  memory_size = 512
 }
 
 resource "aws_lambda_function" "get_user_public_key" {
@@ -182,7 +182,7 @@ resource "aws_lambda_function" "get_user_public_key" {
   role = aws_iam_role.function_role.arn
   runtime = "java8"
   timeout = 30
-  memory_size = 256
+  memory_size = 512
 }
 
 resource "aws_lambda_function" "scan_qr" {
@@ -194,7 +194,19 @@ resource "aws_lambda_function" "scan_qr" {
   role = aws_iam_role.function_role.arn
   runtime = "java8"
   timeout = 30
-  memory_size = 256
+  memory_size = 512
+}
+
+resource "aws_lambda_function" "send_file" {
+  description = "Send File"
+  function_name = "send_file"
+  filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
+  handler = "me.jameshunt.privatechat.SendFile::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 512
 }
 
 resource "aws_api_gateway_rest_api" "chat_gateway" {
@@ -294,11 +306,36 @@ resource "aws_api_gateway_integration" "scan_qr_integration" {
   uri                     = aws_lambda_function.scan_qr.invoke_arn
 }
 
+resource "aws_api_gateway_resource" "send_file_resource" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  parent_id   = aws_api_gateway_rest_api.chat_gateway.root_resource_id
+  path_part   = "SendFile"
+}
+
+resource "aws_api_gateway_method" "send_file_method" {
+  rest_api_id   = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id   = aws_api_gateway_resource.send_file_resource.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "send_file_integration" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id = aws_api_gateway_method.send_file_method.resource_id
+  http_method = aws_api_gateway_method.send_file_method.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  content_handling        = "CONVERT_TO_BINARY"
+  uri                     = aws_lambda_function.send_file.invoke_arn
+}
+
 resource "aws_api_gateway_deployment" "chat_deployment" {
   depends_on = [
     aws_api_gateway_integration.get_server_public_key_integration,
     aws_api_gateway_integration.create_identity_integration,
-    aws_api_gateway_integration.scan_qr_integration
+    aws_api_gateway_integration.scan_qr_integration,
+    aws_api_gateway_integration.send_file_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -342,6 +379,17 @@ resource "aws_lambda_permission" "scan_qr_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.scan_qr.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "send_file_gw_permission" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.send_file.function_name
   principal     = "apigateway.amazonaws.com"
 
   # The "/*/*" portion grants access from any method on any resource

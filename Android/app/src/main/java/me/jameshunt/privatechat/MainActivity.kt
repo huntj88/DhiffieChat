@@ -14,8 +14,6 @@ import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.jameshunt.privatechat.crypto.DHCrypto
-import me.jameshunt.privatechat.crypto.toHashedIdentity
 import net.glxn.qrgen.android.MatrixToImageWriter
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
@@ -30,8 +28,8 @@ class MainActivity : AppCompatActivity() {
         lifecycle.coroutineScope.launch {
             try {
                 DI.privateChatService.getNewMessages()
+                sendImage()
                 DI.privateChatService.scanQR("aM1bPmKaaSQiOYlC3z16uWNFIoiLlVHKfPTpafnPqF0=")
-//                sendImage()
             } catch (e: HttpException) {
                 e.printStackTrace()
             }
@@ -53,8 +51,8 @@ class MainActivity : AppCompatActivity() {
                 .toByteArray()
         }
 
-        val randomHashedIdentity = DHCrypto.genDHKeyPair().public.toHashedIdentity()
-        DI.privateChatService.sendFile(randomHashedIdentity, bytes)
+        val sendToSelfHashedIdentity = "d7CUCMPj0cynTB4D/o7gjNd6LZ1seQ3OTs5gDSu/RGo="
+        DI.privateChatService.sendFile(sendToSelfHashedIdentity, bytes)
     }
 
     fun barcodeBlah(keyPair: KeyPair) {
