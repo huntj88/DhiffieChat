@@ -52,7 +52,7 @@ object DI {
         .build()
 
     private val api: PrivateChatApi = retrofit.create(PrivateChatApi::class.java)
-    private val identityManager = IdentityManager { LifeCycleAwareComponents.sharedPreferences }
+    val identityManager = IdentityManager { LifeCycleAwareComponents.sharedPreferences }
     private val authManager = AuthManager(identityManager, moshi)
 
     val privateChatService = PrivateChatService(api, authManager)

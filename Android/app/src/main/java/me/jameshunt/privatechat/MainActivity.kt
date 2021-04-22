@@ -3,33 +3,42 @@ package me.jameshunt.privatechat
 //import androidx.activity.compose.setContent
 import android.os.Bundle
 import android.util.Log
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.coroutineScope
-import com.google.mlkit.vision.barcode.Barcode
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions
-import com.google.mlkit.vision.barcode.BarcodeScanning
-import com.google.mlkit.vision.common.InputImage
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.glxn.qrgen.android.MatrixToImageWriter
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
-import java.security.KeyPair
 
 class MainActivity : AppCompatActivity() {
+
+    private val qrScanner = QRScanner()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DI.setLifecycleComponents(this)
+        setContentView(R.layout.activity_main)
+
+        val hashedIdentity = DI.identityManager.getIdentity().toHashedIdentity()
+        val result = QRCodeWriter().encode(hashedIdentity, BarcodeFormat.QR_CODE, 400, 400)
+        findViewById<ImageView>(R.id.myQr).setImageBitmap(MatrixToImageWriter.toBitmap(result))
 
         lifecycle.coroutineScope.launch {
             try {
                 DI.privateChatService.getNewMessages()
-                sendImage()
-                DI.privateChatService.scanQR("aM1bPmKaaSQiOYlC3z16uWNFIoiLlVHKfPTpafnPqF0=")
+
+                while (true) {
+                    Log.d("scanned", "loop")
+                    val scannedIdentity = qrScanner.getHashedIdentity(this@MainActivity)
+                    DI.privateChatService.scanQR(scannedIdentity)
+                    delay(1000)
+                }
             } catch (e: HttpException) {
                 e.printStackTrace()
             }
@@ -38,12 +47,10 @@ class MainActivity : AppCompatActivity() {
 //        setContent {
 //            MainUI(identity = identityManager.getIdentity().hashedIdentity)
 //        }
-
-//        barcodeBlah(identityManager.getIdentity())
     }
 
     suspend fun sendImage() {
-        val result = QRCodeWriter().encode("james is cool", BarcodeFormat.QR_CODE, 400, 400)
+        val result = QRCodeWriter().encode("james", BarcodeFormat.QR_CODE, 50, 50)
 
         val bytes = withContext(Dispatchers.Default) {
             ByteArrayOutputStream()
@@ -53,21 +60,5 @@ class MainActivity : AppCompatActivity() {
 
         val sendToSelfHashedIdentity = "d7CUCMPj0cynTB4D/o7gjNd6LZ1seQ3OTs5gDSu/RGo="
         DI.privateChatService.sendFile(sendToSelfHashedIdentity, bytes)
-    }
-
-    fun barcodeBlah(keyPair: KeyPair) {
-        val result = QRCodeWriter().encode(keyPair.toHashedIdentity(), BarcodeFormat.QR_CODE, 400, 400)
-        val image = MatrixToImageWriter.toBitmap(result).let { InputImage.fromBitmap(it, 0) }
-
-        val options = BarcodeScannerOptions.Builder()
-            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-            .build()
-
-        val client = BarcodeScanning.getClient(options)
-
-        client.process(image).addOnSuccessListener {
-            Log.d("before qr", keyPair.toHashedIdentity())
-            Log.d("QR SCAN", it.first().rawValue ?: "no raw value")
-        }
     }
 }
