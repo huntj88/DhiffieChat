@@ -25,6 +25,7 @@ class QRScanner {
     suspend fun getHashedIdentity(mainActivity: MainActivity): String {
         cameraExecutor = Executors.newSingleThreadExecutor()
         lastCheck = Instant.now()
+        Log.d("scanned", "last check set at top")
 
         return suspendCoroutine { continuation ->
             getHashedIdentity(mainActivity) {
@@ -68,27 +69,28 @@ class QRScanner {
         val analyzer = object : ImageAnalysis.Analyzer {
             @SuppressLint("UnsafeExperimentalUsageError")
             override fun analyze(image: ImageProxy) {
+                val shouldSkipCheck = lastCheck > Instant.now().minus(2, ChronoUnit.SECONDS)
+                Log.d("scanned", "should skip check: $shouldSkipCheck")
+
                 val mediaImage = image.image
-                val canCheckAgain = lastCheck > Instant.now().minus(2, ChronoUnit.SECONDS)
-                if (!canCheckAgain || mediaImage == null) {
+                if (shouldSkipCheck || mediaImage == null) {
                     image.close()
                     return
                 }
 
-                Log.d("scanned", DateTimeFormatter.ISO_INSTANT.format(lastCheck))
                 lastCheck = Instant.now()
+                Log.d("scanned", "checking qr code at: ${DateTimeFormatter.ISO_INSTANT.format(lastCheck)}")
 
                 client
                     .process(InputImage.fromMediaImage(mediaImage, image.imageInfo.rotationDegrees))
                     .addOnSuccessListener { barcodes ->
                         barcodes.firstOrNull()?.rawValue?.let { hashedIdentity ->
-                            Log.d("scanned", hashedIdentity)
+                            Log.d("scanned", "result: $hashedIdentity")
                             onResult(hashedIdentity)
                             cameraExecutor.shutdown()
                             cameraProviderFuture.cancel(true)
                         }
                     }
-                    .addOnFailureListener { it.printStackTrace() }
                     .addOnCompleteListener { image.close() }
             }
         }
