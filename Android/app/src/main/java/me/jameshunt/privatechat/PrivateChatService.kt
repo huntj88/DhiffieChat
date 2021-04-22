@@ -33,14 +33,14 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
     suspend fun sendFile(otherUserHashedId: String, image: ByteArray): ResponseMessage {
         val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), otherUserHashedId).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
+
         val encryptedImage = AESCrypto.encrypt(image, userToUserCredentials.sharedSecret, userToUserCredentials.iv)
         val contentType = "application/octet-stream".toMediaTypeOrNull()
-        val body: RequestBody = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size)
 
-        val userToUserHeaders = mapOf("userUserIv" to userToUserCredentials.iv.toBase64String())
         return api.sendFile(
-            headers = standardHeaders(userToUserHeaders),
-            encryptedFile = body
+            headers = standardHeaders(),
+            encryptedFile = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size),
+            iv = userToUserCredentials.iv.toBase64String()
         )
     }
 
@@ -116,5 +116,9 @@ interface PrivateChatApi {
     suspend fun scanQR(@HeaderMap headers: Map<String, String>, @Body qr: QR): ResponseMessage
 
     @POST("SendFile")
-    suspend fun sendFile(@HeaderMap headers: Map<String, String>, @Body encryptedFile: RequestBody): ResponseMessage
+    suspend fun sendFile(
+        @HeaderMap headers: Map<String, String>,
+        @Body encryptedFile: RequestBody,
+        @Query("userUserIv") iv: String
+    ): ResponseMessage
 }

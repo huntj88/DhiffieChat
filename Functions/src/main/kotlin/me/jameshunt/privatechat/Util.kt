@@ -4,6 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.privatechat.crypto.toIv
+import java.util.*
 
 inline fun <reified Body, reified Params, Out> awsTransform(
     request: Map<String, Any?>,
@@ -15,15 +16,21 @@ inline fun <reified Body, reified Params, Out> awsTransform(
     val body: Body = try {
         getBody(request)
     } catch (e: JsonProcessingException) {
-        e.printStackTrace()
-        return GatewayResponse(body = "bad request", statusCode = 400)
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: Body", statusCode = 400)
+    } catch (e: Exception) {
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: Body", statusCode = 400)
     }
 
     val queryParams: Params = try {
         getQueryParams(request)
     } catch (e: JsonProcessingException) {
-        e.printStackTrace()
-        return GatewayResponse(body = "bad request", statusCode = 400)
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: query params", statusCode = 400)
+    } catch (e: Exception) {
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: query params", statusCode = 400)
     }
 
     return try {
@@ -54,15 +61,21 @@ inline fun <reified Body, reified Params, Out> awsTransformAuthed(
     val body: Body = try {
         getBody(request)
     } catch (e: JsonProcessingException) {
-        e.printStackTrace()
-        return GatewayResponse(body = "bad request", statusCode = 400)
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: Body", statusCode = 400)
+    } catch (e: Exception) {
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: Body", statusCode = 400)
     }
 
     val queryParams: Params = try {
         getQueryParams(request)
     } catch (e: JsonProcessingException) {
-        e.printStackTrace()
-        return GatewayResponse(body = "bad request", statusCode = 400)
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: query params", statusCode = 400)
+    } catch (e: Exception) {
+        context.logger.log(e.stackTraceToString())
+        return GatewayResponse(body = "bad request: query params", statusCode = 400)
     }
 
     return try {
@@ -82,9 +95,10 @@ inline fun <reified Body, reified Params, Out> awsTransformAuthed(
 }
 
 inline fun <reified Body> getBody(request: Map<String, Any?>): Body {
-    return when (Body::class == Unit::class) {
-        false -> Singletons.objectMapper.readValue(request["body"]!!.toString())
-        true -> Unit as Body
+    return when {
+        Body::class == Unit::class -> Unit as Body
+        Body::class == ByteArray::class -> Base64.getDecoder().decode(request["body"]!!.toString()) as Body
+        else -> Singletons.objectMapper.readValue(request["body"]!!.toString())
     }
 }
 
