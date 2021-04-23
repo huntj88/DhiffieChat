@@ -1,17 +1,17 @@
 package me.jameshunt.privatechat
 
 //import androidx.activity.compose.setContent
+import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Log
+import android.provider.MediaStore
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.coroutineScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.glxn.qrgen.android.MatrixToImageWriter
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
@@ -30,18 +30,19 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageView>(R.id.myQr).setImageBitmap(MatrixToImageWriter.toBitmap(result))
 
         lifecycle.coroutineScope.launch {
+            delay(1000)
             try {
                 DI.privateChatService.getNewMessages()
-
-                while (true) {
-                    Log.d("scanned", "loop")
-                    val scannedIdentity = qrScanner.getHashedIdentity(this@MainActivity)
-                    DI.privateChatService.scanQR(scannedIdentity)
-                    delay(1000)
-                }
+//                while (true) {
+//                    Log.d("scanned", "loop")
+//                    val scannedIdentity = qrScanner.getHashedIdentity(this@MainActivity)
+//                    DI.privateChatService.scanQR(scannedIdentity)
+//                    delay(1000)
+//                }
             } catch (e: HttpException) {
                 e.printStackTrace()
             }
+            dispatchTakePictureIntent()
         }
 
 //        setContent {
@@ -49,16 +50,36 @@ class MainActivity : AppCompatActivity() {
 //        }
     }
 
-    suspend fun sendImage() {
-        val result = QRCodeWriter().encode("james", BarcodeFormat.QR_CODE, 50, 50)
-
-        val bytes = withContext(Dispatchers.Default) {
-            ByteArrayOutputStream()
-                .apply { MatrixToImageWriter.writeToStream(result, "jpg", this) }
-                .toByteArray()
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when (requestCode == requestImageCapture && resultCode == RESULT_OK) {
+            true -> {
+                val imageBitmap = data!!.extras!!.get("data") as Bitmap
+                sendImage(DI.identityManager.getIdentity().toHashedIdentity(), imageBitmap)
+            }
+            false -> super.onActivityResult(requestCode, resultCode, data)
         }
-
-        val sendToSelfHashedIdentity = "d7CUCMPj0cynTB4D/o7gjNd6LZ1seQ3OTs5gDSu/RGo="
-        DI.privateChatService.sendFile(sendToSelfHashedIdentity, bytes)
     }
+
+    private fun sendImage(recipientHashedIdentity: String, image: Bitmap) {
+        lifecycle.coroutineScope.launch {
+            try {
+                val stream = ByteArrayOutputStream()
+                image.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                val byteArray = stream.toByteArray()
+                image.recycle()
+
+                DI.privateChatService.sendFile(recipientHashedIdentity, byteArray)
+            } catch (e: HttpException) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private val requestImageCapture = 13423
+
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        startActivityForResult(takePictureIntent, requestImageCapture)
+    }
+
 }

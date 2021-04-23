@@ -30,8 +30,8 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         )
     }
 
-    suspend fun sendFile(otherUserHashedId: String, image: ByteArray): ResponseMessage {
-        val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), otherUserHashedId).publicKey.toPublicKey()
+    suspend fun sendFile(recipientHashedIdentity: String, image: ByteArray): ResponseMessage {
+        val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), recipientHashedIdentity).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
         val encryptedImage = AESCrypto.encrypt(image, userToUserCredentials.sharedSecret, userToUserCredentials.iv)
@@ -40,6 +40,7 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         return api.sendFile(
             headers = standardHeaders(),
             encryptedFile = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size),
+            recipientHashedIdentity = recipientHashedIdentity,
             iv = userToUserCredentials.iv.toBase64String()
         )
     }
@@ -77,14 +78,6 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
             "userServerEncryptedToken" to userToServerCredentials.encryptedToken
         )
     }
-
-//    private suspend fun userToUserHeaders(): Map<String, String> {
-//        val userToServerCredentials = authManager.userToServerAuth(getServerPublicKey())
-//        return mapOf(
-//            "userUserIv" to Base64.getEncoder().encodeToString(userToServerCredentials.iv.iv),
-//            "userUserEncryptedToken" to userToServerCredentials.encryptedToken
-//        )
-//    }
 }
 
 interface PrivateChatApi {
@@ -119,6 +112,7 @@ interface PrivateChatApi {
     suspend fun sendFile(
         @HeaderMap headers: Map<String, String>,
         @Body encryptedFile: RequestBody,
+        @Query("HashedIdentity") recipientHashedIdentity: String,
         @Query("userUserIv") iv: String
     ): ResponseMessage
 }
