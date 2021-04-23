@@ -6,10 +6,8 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.s3.model.ObjectMetadata
 import com.fasterxml.jackson.annotation.JsonAlias
 import java.io.ByteArrayInputStream
-import java.security.MessageDigest
 import java.time.Instant
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
@@ -49,20 +47,3 @@ data class UserUserQueryParams(
     @JsonAlias("UserUserIv", "userUserIv")
     val userUserIv: String
 )
-
-fun ByteArray.toS3Key(): String = MessageDigest
-    .getInstance("SHA-256")
-    .digest(this)
-    .let { Base64.getEncoder().encodeToString(it) }
-    .replace("/", "_") // don't make folders
-
-fun chatId(user1HashedIdentity: String, user2HashedIdentity: String): String =
-    listOf(user1HashedIdentity, user2HashedIdentity)
-        .sorted()
-        .joinToString("")
-        .let { sortedConcatIdentity ->
-            MessageDigest
-                .getInstance("SHA-256")
-                .digest(sortedConcatIdentity.toByteArray())
-        }
-        .let { Base64.getEncoder().encodeToString(it) }

@@ -68,7 +68,9 @@ class MainActivity : AppCompatActivity() {
                 val byteArray = stream.toByteArray()
                 image.recycle()
 
-                DI.privateChatService.sendFile(recipientHashedIdentity, byteArray)
+                val download = DI.privateChatService.sendFile(recipientHashedIdentity, byteArray)
+                findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
+
             } catch (e: HttpException) {
                 e.printStackTrace()
             }

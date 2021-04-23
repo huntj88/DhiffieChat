@@ -1,14 +1,14 @@
 package me.jameshunt.privatechat
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import me.jameshunt.privatechat.PrivateChatApi.*
-import me.jameshunt.privatechat.crypto.AESCrypto
-import me.jameshunt.privatechat.crypto.toBase64String
-import me.jameshunt.privatechat.crypto.toHashedIdentity
-import me.jameshunt.privatechat.crypto.toPublicKey
+import me.jameshunt.privatechat.crypto.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody
 import retrofit2.http.*
 import java.security.PublicKey
 
@@ -30,7 +30,7 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         )
     }
 
-    suspend fun sendFile(recipientHashedIdentity: String, image: ByteArray): ResponseMessage {
+    suspend fun sendFile(recipientHashedIdentity: String, image: ByteArray): Bitmap {
         val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), recipientHashedIdentity).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
@@ -42,7 +42,14 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
             encryptedFile = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size),
             recipientHashedIdentity = recipientHashedIdentity,
             iv = userToUserCredentials.iv.toBase64String()
-        )
+        ).let {
+            // todo: remove, just testing, but it works!
+            val encryptedBody = api.getFile(standardHeaders(), "n+v3wzgL2Ta3S4OnPwdnE6JHYvIwp6mP7zfGm+K2Hc4=").bytes()
+            val file = AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, "MXcZ1uxfkXUy+Hu0UuA/Mg==".toIv())
+            val bmp = BitmapFactory.decodeByteArray(file, 0, file.size)
+            Log.d("file", "bmp width: ${bmp.width}, height: ${bmp.height}")
+            bmp
+        }
     }
 
     private suspend fun createIdentity(): ResponseMessage {
@@ -115,4 +122,10 @@ interface PrivateChatApi {
         @Query("HashedIdentity") recipientHashedIdentity: String,
         @Query("userUserIv") iv: String
     ): ResponseMessage
+
+    @GET("GetFile")
+    suspend fun getFile(
+        @HeaderMap headers: Map<String, String>,
+        @Query("FileKey") fileKey: String
+    ): ResponseBody
 }

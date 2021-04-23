@@ -4,7 +4,15 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.privatechat.crypto.toIv
+import java.security.MessageDigest
 import java.util.*
+
+data class GatewayResponse(
+    val isBase64Encoded: Boolean = false,
+    val statusCode: Int = 200,
+    val headers: Map<String, String> = emptyMap(),
+    val body: String
+)
 
 inline fun <reified Body, reified Params, Out> awsTransform(
     request: Map<String, Any?>,
@@ -131,3 +139,20 @@ fun validateAndGetIdentity(request: Map<String, Any?>): Identity {
 }
 
 class Unauthorized : Exception()
+
+fun ByteArray.toS3Key(): String = MessageDigest
+    .getInstance("SHA-256")
+    .digest(this)
+    .let { Base64.getEncoder().encodeToString(it) }
+    .replace("/", "_") // don't make folders
+
+fun chatId(user1HashedIdentity: String, user2HashedIdentity: String): String =
+    listOf(user1HashedIdentity, user2HashedIdentity)
+        .sorted()
+        .joinToString("")
+        .let { sortedConcatIdentity ->
+            MessageDigest
+                .getInstance("SHA-256")
+                .digest(sortedConcatIdentity.toByteArray())
+        }
+        .let { Base64.getEncoder().encodeToString(it) }
