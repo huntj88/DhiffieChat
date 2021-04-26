@@ -11,6 +11,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import retrofit2.http.*
 import java.security.PublicKey
+import javax.crypto.spec.IvParameterSpec
 
 
 class PrivateChatService(private val api: PrivateChatApi, private val authManager: AuthManager) {
@@ -30,9 +31,9 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         )
     }
 
-    suspend fun sendFile(recipientHashedIdentity: String, image: ByteArray): Bitmap {
-        val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), recipientHashedIdentity).publicKey.toPublicKey()
-        val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
+    suspend fun sendFile(recipientHashedIdentity: String, image: ByteArray): ResponseMessage {
+        val recipientPublicKey = api.getUserPublicKey(standardHeaders(), recipientHashedIdentity).publicKey.toPublicKey()
+        val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
 
         val encryptedImage = AESCrypto.encrypt(image, userToUserCredentials.sharedSecret, userToUserCredentials.iv)
         val contentType = "application/octet-stream".toMediaTypeOrNull()
@@ -42,14 +43,16 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
             encryptedFile = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size),
             recipientHashedIdentity = recipientHashedIdentity,
             iv = userToUserCredentials.iv.toBase64String()
-        ).let {
-            // todo: remove, just testing, but it works!
-            val encryptedBody = api.getFile(standardHeaders(), "n+v3wzgL2Ta3S4OnPwdnE6JHYvIwp6mP7zfGm+K2Hc4=").bytes()
-            val file = AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, "MXcZ1uxfkXUy+Hu0UuA/Mg==".toIv())
-            val bmp = BitmapFactory.decodeByteArray(file, 0, file.size)
-            Log.d("file", "bmp width: ${bmp.width}, height: ${bmp.height}")
-            bmp
-        }
+        )
+    }
+
+    suspend fun getFile(senderHashedId: String, fileKey: String, userUserIv: IvParameterSpec): Bitmap {
+        val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), senderHashedId).publicKey.toPublicKey()
+        val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
+
+        val encryptedBody = api.getFile(standardHeaders(), fileKey).bytes()
+        val file = AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, userUserIv)
+        return BitmapFactory.decodeByteArray(file, 0, file.size)
     }
 
     private suspend fun createIdentity(): ResponseMessage {

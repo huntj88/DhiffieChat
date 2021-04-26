@@ -12,6 +12,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import me.jameshunt.privatechat.crypto.toIv
 import net.glxn.qrgen.android.MatrixToImageWriter
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
@@ -64,11 +65,17 @@ class MainActivity : AppCompatActivity() {
         lifecycle.coroutineScope.launch {
             try {
                 val stream = ByteArrayOutputStream()
-                image.compress(Bitmap.CompressFormat.PNG, 100, stream)
+                image.compress(Bitmap.CompressFormat.JPEG, 100, stream)
                 val byteArray = stream.toByteArray()
                 image.recycle()
 
-                val download = DI.privateChatService.sendFile(recipientHashedIdentity, byteArray)
+                DI.privateChatService.sendFile(recipientHashedIdentity, byteArray)
+
+                val download = DI.privateChatService.getFile(
+                    senderHashedId = recipientHashedIdentity,
+                    fileKey = "vMUUTg9md3ZJI9ybiReSUVMabShQeQ4nb96+Dj6FV8A=",
+                    userUserIv = "VhqI09teTpAdHlTyt0PquA==".toIv()
+                )
                 findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
 
             } catch (e: HttpException) {
