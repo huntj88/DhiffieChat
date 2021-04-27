@@ -22,19 +22,19 @@ class QRScanner {
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var lastCheck: Instant
 
-    suspend fun getHashedIdentity(mainActivity: MainActivity): String {
+    suspend fun getUserId(mainActivity: MainActivity): String {
         cameraExecutor = Executors.newSingleThreadExecutor()
         lastCheck = Instant.now()
         Log.d("scanned", "last check set at top")
 
         return suspendCoroutine { continuation ->
-            getHashedIdentity(mainActivity) {
+            getUserId(mainActivity) {
                 continuation.resumeWith(Result.success(it))
             }
         }
     }
 
-    private fun getHashedIdentity(mainActivity: MainActivity, onResult: (String) -> Unit) {
+    private fun getUserId(mainActivity: MainActivity, onResult: (String) -> Unit) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(mainActivity)
 
         cameraProviderFuture.addListener({
@@ -84,9 +84,9 @@ class QRScanner {
                 client
                     .process(InputImage.fromMediaImage(mediaImage, image.imageInfo.rotationDegrees))
                     .addOnSuccessListener { barcodes ->
-                        barcodes.firstOrNull()?.rawValue?.let { hashedIdentity ->
-                            Log.d("scanned", "result: $hashedIdentity")
-                            onResult(hashedIdentity)
+                        barcodes.firstOrNull()?.rawValue?.let { userId ->
+                            Log.d("scanned", "result: $userId")
+                            onResult(userId)
                             cameraExecutor.shutdown()
                             cameraProviderFuture.cancel(true)
                         }

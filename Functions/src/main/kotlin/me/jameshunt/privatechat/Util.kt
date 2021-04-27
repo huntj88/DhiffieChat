@@ -129,12 +129,12 @@ inline fun <reified Params> getQueryParams(request: Map<String, Any?>, logger: L
 
 fun validateAndGetIdentity(request: Map<String, Any?>): Identity {
     val headers = request["headers"]!!.let { it as Map<String, String> }
-    val hashedIdentity = headers["hashedidentity"]!!
+    val userId = headers["userid"]!!
     val userServerIv = headers["userserveriv"]!!.toIv()
     val userServerEncryptedToken = headers["userserverencryptedtoken"]!!
 
     return validateAndGetIdentity(
-        hashedIdentity = hashedIdentity,
+        userId = userId,
         iv = userServerIv,
         encryptedToken = userServerEncryptedToken
     )
@@ -148,8 +148,8 @@ fun ByteArray.toS3Key(): String = MessageDigest
     .let { Base64.getEncoder().encodeToString(it) }
     .replace("/", "_") // don't make folders
 
-fun chatId(user1HashedIdentity: String, user2HashedIdentity: String): String =
-    listOf(user1HashedIdentity, user2HashedIdentity)
+fun chatId(firstUserId: String, secondUserId: String): String =
+    listOf(firstUserId, secondUserId)
         .sorted()
         .joinToString("")
         .let { sortedConcatIdentity ->

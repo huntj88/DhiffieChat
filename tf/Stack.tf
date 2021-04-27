@@ -27,10 +27,10 @@ resource "aws_dynamodb_table" "user-dynamodb-table" {
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
-  hash_key       = "HashedIdentity"
+  hash_key       = "userId"
 
   attribute {
-    name = "HashedIdentity"
+    name = "userId"
     type = "S"
   }
 }
@@ -40,10 +40,10 @@ resource "aws_dynamodb_table" "config-dynamodb-table" {
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
-  hash_key       = "Name"
+  hash_key       = "name"
 
   attribute {
-    name = "Name"
+    name = "name"
     type = "S"
   }
 }
@@ -53,16 +53,16 @@ resource "aws_dynamodb_table" "chat-dynamodb-table" {
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
-  hash_key       = "ChatId"
-  range_key       = "MessageCreatedAt"
+  hash_key       = "chatId"
+  range_key       = "messageCreatedAt"
 
   attribute {
-    name = "ChatId"
+    name = "chatId"
     type = "S"
   }
 
   attribute {
-    name = "MessageCreatedAt"
+    name = "messageCreatedAt"
     type = "S"
   }
 }

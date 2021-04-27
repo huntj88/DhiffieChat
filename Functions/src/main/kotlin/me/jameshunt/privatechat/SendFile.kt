@@ -27,12 +27,12 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 
             val message = Item.fromMap(
                 mapOf(
-                    "ChatId" to chatId(identity.hashedIdentity, params.hashedIdentity),
-                    "MessageCreatedAt" to DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
-                    "From" to identity.hashedIdentity,
-                    "To" to params.hashedIdentity,
-                    "FileKey" to key,
-                    "Iv" to params.userUserIv,
+                    "chatId" to chatId(identity.userId, params.userId),
+                    "messageCreatedAt" to DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+                    "from" to identity.userId,
+                    "to" to params.userId,
+                    "fileKey" to key,
+                    "iv" to params.userUserIv,
                 )
             )
 
@@ -42,8 +42,6 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 }
 
 data class UserUserQueryParams(
-    @JsonAlias("HashedIdentity", "hashedIdentity")
-    val hashedIdentity: String,
-    @JsonAlias("UserUserIv", "userUserIv")
+    val userId: String,
     val userUserIv: String
 )

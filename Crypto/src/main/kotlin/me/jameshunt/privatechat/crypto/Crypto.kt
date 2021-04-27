@@ -94,7 +94,7 @@ fun IvParameterSpec.toBase64String(): String = Base64.getEncoder().encodeToStrin
 fun PublicKey.toBase64String(): String = Base64.getEncoder().encodeToString(encoded)
 fun PrivateKey.toBase64String(): String = Base64.getEncoder().encodeToString(encoded)
 
-fun PublicKey.toHashedIdentity(): String = MessageDigest
+fun PublicKey.toUserId(): String = MessageDigest
     .getInstance("SHA-256")
     .digest(this.encoded)
     .let { Base64.getEncoder().encodeToString(it) }

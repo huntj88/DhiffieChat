@@ -37,4 +37,4 @@ class IdentityManager(private val getSharedPreferences: () -> SharedPreferences)
     }
 }
 
-fun KeyPair.toHashedIdentity(): String = public.toHashedIdentity()
+fun KeyPair.toUserId(): String = public.toUserId()

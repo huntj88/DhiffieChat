@@ -21,7 +21,7 @@ class AuthManager(
     )
 
     data class AuthCredentials(
-        val hashedIdentity: String,
+        val userId: String,
         val iv: IvParameterSpec,
         val encryptedToken: String,
         @Transient
@@ -29,7 +29,7 @@ class AuthManager(
     )
 
     data class MessageCredentials(
-        val hashedIdentity: String,
+        val userId: String,
         val iv: IvParameterSpec,
         @Transient
         val sharedSecret: SecretKey
@@ -51,7 +51,7 @@ class AuthManager(
         val encryptedToken = AESCrypto.encrypt(input = token.toSerialized(), sharedSecretKey, iv)
 
         return AuthCredentials(
-            hashedIdentity = identityManager.getIdentity().toHashedIdentity(),
+            userId = identityManager.getIdentity().toUserId(),
             iv = iv,
             encryptedToken = encryptedToken.toString(StandardCharsets.UTF_8),
             sharedSecret = sharedSecretKey
@@ -65,7 +65,7 @@ class AuthManager(
         )
 
         return MessageCredentials(
-            hashedIdentity = identityManager.getIdentity().toHashedIdentity(),
+            userId = identityManager.getIdentity().toUserId(),
             iv = AESCrypto.generateIv(),
             sharedSecret = sharedSecretKey
         )

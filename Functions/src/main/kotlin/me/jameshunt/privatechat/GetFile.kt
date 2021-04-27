@@ -35,6 +35,5 @@ class GetFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 }
 
 data class GetFileQueryParams(
-    @JsonAlias("FileKey", "fileKey")
     val fileKey: String
 )

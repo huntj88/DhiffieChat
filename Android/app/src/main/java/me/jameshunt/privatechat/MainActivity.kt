@@ -26,8 +26,8 @@ class MainActivity : AppCompatActivity() {
         DI.setLifecycleComponents(this)
         setContentView(R.layout.activity_main)
 
-        val hashedIdentity = DI.identityManager.getIdentity().toHashedIdentity()
-        val result = QRCodeWriter().encode(hashedIdentity, BarcodeFormat.QR_CODE, 400, 400)
+        val userId = DI.identityManager.getIdentity().toUserId()
+        val result = QRCodeWriter().encode(userId, BarcodeFormat.QR_CODE, 400, 400)
         findViewById<ImageView>(R.id.myQr).setImageBitmap(MatrixToImageWriter.toBitmap(result))
 
         lifecycle.coroutineScope.launch {
@@ -36,8 +36,8 @@ class MainActivity : AppCompatActivity() {
                 DI.privateChatService.getNewMessages()
 //                while (true) {
 //                    Log.d("scanned", "loop")
-//                    val scannedIdentity = qrScanner.getHashedIdentity(this@MainActivity)
-//                    DI.privateChatService.scanQR(scannedIdentity)
+//                    val scannedUserId = qrScanner.getUserId(this@MainActivity)
+//                    DI.privateChatService.scanQR(scannedUserId)
 //                    delay(1000)
 //                }
             } catch (e: HttpException) {
@@ -55,13 +55,13 @@ class MainActivity : AppCompatActivity() {
         when (requestCode == requestImageCapture && resultCode == RESULT_OK) {
             true -> {
                 val imageBitmap = data!!.extras!!.get("data") as Bitmap
-                sendImage(DI.identityManager.getIdentity().toHashedIdentity(), imageBitmap)
+                sendImage(DI.identityManager.getIdentity().toUserId(), imageBitmap)
             }
             false -> super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
-    private fun sendImage(recipientHashedIdentity: String, image: Bitmap) {
+    private fun sendImage(recipientUserId: String, image: Bitmap) {
         lifecycle.coroutineScope.launch {
             try {
                 val stream = ByteArrayOutputStream()
@@ -69,10 +69,10 @@ class MainActivity : AppCompatActivity() {
                 val byteArray = stream.toByteArray()
                 image.recycle()
 
-                DI.privateChatService.sendFile(recipientHashedIdentity, byteArray)
+                DI.privateChatService.sendFile(recipientUserId, byteArray)
 
                 val download = DI.privateChatService.getFile(
-                    senderHashedId = recipientHashedIdentity,
+                    senderUserId = recipientUserId,
                     fileKey = "vMUUTg9md3ZJI9ybiReSUVMabShQeQ4nb96+Dj6FV8A=",
                     userUserIv = "VhqI09teTpAdHlTyt0PquA==".toIv()
                 )

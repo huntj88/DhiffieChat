@@ -6,12 +6,10 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.privatechat.crypto.*
 import java.security.GeneralSecurityException
 import java.security.KeyPair
-import java.security.MessageDigest
 import java.security.PublicKey
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.*
 import javax.crypto.spec.IvParameterSpec
 
 private data class Token(
@@ -23,8 +21,8 @@ private data class Token(
 }
 
 data class Identity(val publicKey: PublicKey) {
-    val hashedIdentity: String
-        get() = publicKey.toHashedIdentity()
+    val userId: String
+        get() = publicKey.toUserId()
 }
 
 fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedToken: String): Boolean {
@@ -40,34 +38,34 @@ fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedT
     return token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
 }
 
-fun validateAndGetIdentity(hashedIdentity: String, iv: IvParameterSpec, encryptedToken: String): Identity {
-    val publicKey = getUserPublicKey(hashedIdentity)
+fun validateAndGetIdentity(userId: String, iv: IvParameterSpec, encryptedToken: String): Identity {
+    val publicKey = getUserPublicKey(userId)
     return when (doesUserHavePrivateKey(publicKey, iv, encryptedToken)) {
         true -> Identity(publicKey = publicKey)
         false -> throw Unauthorized()
     }
 }
 
-fun getUserPublicKey(hashedIdentity: String): PublicKey {
+fun getUserPublicKey(userId: String): PublicKey {
     return Singletons.dynamoDB
         .getTable("User")
-        .getItem(PrimaryKey("HashedIdentity", hashedIdentity))
+        .getItem(PrimaryKey("userId", userId))
         .asMap()
-        .let { it["PublicKey"] as String }
+        .let { it["publicKey"] as String }
         .toPublicKey()
 }
 
-fun getClientPublicKey(hashedIdentity: String): PublicKey {
+fun getClientPublicKey(userId: String): PublicKey {
     return Singletons.dynamoDB.getTable("User")
-        .getItem(PrimaryKey("HashedIdentity", hashedIdentity))
-        .asMap()["PublicKey"]
+        .getItem(PrimaryKey("userId", userId))
+        .asMap()["publicKey"]
         .let { it as String }
         .toPublicKey()
 }
 
 fun getServerKeyPair(): KeyPair {
-    val existingPrivate = getConfigProperty("PrivateKey", checkExpiration = true)?.toPrivateKey()
-    val existingPublic = getConfigProperty("PublicKey", checkExpiration = true)?.toPublicKey()
+    val existingPrivate = getConfigProperty("privateKey", checkExpiration = true)?.toPrivateKey()
+    val existingPublic = getConfigProperty("publicKey", checkExpiration = true)?.toPublicKey()
 
     return existingPrivate?.let { KeyPair(existingPublic!!, it) }
         ?: DHCrypto.genDHKeyPair().also { saveServerKeyPair(it) }
@@ -76,19 +74,19 @@ fun getServerKeyPair(): KeyPair {
 fun saveServerKeyPair(keyPair: KeyPair) {
     val expiresAt = Instant.now().plus(2, ChronoUnit.HOURS)
 
-    setConfigProperty(name = "PrivateKey", value = keyPair.private.toBase64String(), expiresAt = expiresAt)
-    setConfigProperty(name = "PublicKey", value = keyPair.public.toBase64String(), expiresAt = expiresAt)
+    setConfigProperty(name = "privateKey", value = keyPair.private.toBase64String(), expiresAt = expiresAt)
+    setConfigProperty(name = "publicKey", value = keyPair.public.toBase64String(), expiresAt = expiresAt)
 }
 
 private fun getConfigProperty(name: String, checkExpiration: Boolean): String? {
     return Singletons.dynamoDB
         .getTable("Config")
-        .getItem(PrimaryKey("Name", name))
+        .getItem(PrimaryKey("name", name))
         ?.asMap()
         ?.let { item ->
-            val expiresAt = (item["ExpiresAt"] as? String)?.let { Instant.parse(it) }
+            val expiresAt = (item["expiresAt"] as? String)?.let { Instant.parse(it) }
             when (!checkExpiration || expiresAt == null || expiresAt > Instant.now()) {
-                true -> item["Value"] as String
+                true -> item["value"] as String
                 false -> null
             }
         }
@@ -100,9 +98,9 @@ private fun setConfigProperty(name: String, value: String, expiresAt: Instant?) 
         .putItem(
             Item.fromMap(
                 mapOf(
-                    "Name" to name,
-                    "Value" to value,
-                    "ExpiresAt" to DateTimeFormatter.ISO_INSTANT.format(expiresAt)
+                    "name" to name,
+                    "value" to value,
+                    "expiresAt" to DateTimeFormatter.ISO_INSTANT.format(expiresAt)
                 )
             )
         )
