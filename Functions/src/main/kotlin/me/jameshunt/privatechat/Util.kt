@@ -1,6 +1,7 @@
 package me.jameshunt.privatechat
 
 import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.privatechat.crypto.toIv
@@ -22,25 +23,11 @@ inline fun <reified Body, reified Params, Out> awsTransform(
     // TODO: truncate large non human readable bodies when logging
     context.logger.log(Singletons.objectMapper.writeValueAsBytes(request))
 
-    val body: Body = try {
-        getBody(request)
-    } catch (e: JsonProcessingException) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: Body", statusCode = 400)
-    } catch (e: Exception) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: Body", statusCode = 400)
-    }
+    val bodyResult = getBody<Body>(request, context.logger)
+    val body = bodyResult.right() ?: return bodyResult.left()
 
-    val queryParams: Params = try {
-        getQueryParams(request)
-    } catch (e: JsonProcessingException) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: query params", statusCode = 400)
-    } catch (e: Exception) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: query params", statusCode = 400)
-    }
+    val queryParamsResult = getQueryParams<Params>(request, context.logger)
+    val queryParams = queryParamsResult.right() ?: return queryParamsResult.left()
 
     return try {
         val out = Singletons.objectMapper.writeValueAsString(
@@ -68,25 +55,11 @@ inline fun <reified Body, reified Params, Out> awsTransformAuthed(
 
     val identity = validateAndGetIdentity(request)
 
-    val body: Body = try {
-        getBody(request)
-    } catch (e: JsonProcessingException) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: Body", statusCode = 400)
-    } catch (e: Exception) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: Body", statusCode = 400)
-    }
+    val bodyResult = getBody<Body>(request, context.logger)
+    val body = bodyResult.right() ?: return bodyResult.left()
 
-    val queryParams: Params = try {
-        getQueryParams(request)
-    } catch (e: JsonProcessingException) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: query params", statusCode = 400)
-    } catch (e: Exception) {
-        context.logger.log(e.stackTraceToString())
-        return GatewayResponse(body = "bad request: query params", statusCode = 400)
-    }
+    val queryParamsResult = getQueryParams<Params>(request, context.logger)
+    val queryParams = queryParamsResult.right() ?: return queryParamsResult.left()
 
     return try {
         val out = Singletons.objectMapper.writeValueAsString(
@@ -104,24 +77,53 @@ inline fun <reified Body, reified Params, Out> awsTransformAuthed(
     }
 }
 
-inline fun <reified Body> getBody(request: Map<String, Any?>): Body {
-    return when {
-        Body::class == Unit::class -> Unit as Body
-        Body::class == ByteArray::class -> Base64.getDecoder().decode(request["body"]!!.toString()) as Body
-        else -> Singletons.objectMapper.readValue(request["body"]!!.toString())
+sealed class Either<out A, out B> {
+    class Left<A>(val value: A) : Either<A, Nothing>()
+    class Right<B>(val value: B) : Either<Nothing, B>() // success
+
+    fun right(): B? = when (this) {
+        is Left -> null
+        is Right -> this.value
+    }
+
+    fun left(): A = when (this) {
+        is Left -> this.value
+        is Right -> null ?: throw IllegalAccessError("Successful result is ready to be used")
     }
 }
 
-inline fun <reified Params> getQueryParams(request: Map<String, Any?>): Params {
-    return when (Params::class == Unit::class) {
-        false -> {
-            val map = request["queryStringParameters"]!! as Map<String, String>
-            println("queryParam map: $map")
-            val paramJson = Singletons.objectMapper.writeValueAsString(map)
-            println("queryParam json: $paramJson")
-            Singletons.objectMapper.readValue(paramJson)
-        }
-        true -> Unit as Params
+
+inline fun <reified Body> getBody(request: Map<String, Any?>, logger: LambdaLogger): Either<GatewayResponse, Body> {
+    return try {
+        when {
+            Body::class == Unit::class -> Unit as Body
+            Body::class == ByteArray::class -> Base64.getDecoder().decode(request["body"]!!.toString()) as Body
+            else -> Singletons.objectMapper.readValue(request["body"]!!.toString())
+        }.let { Either.Right(it) }
+    } catch (e: JsonProcessingException) {
+        logger.log(e.stackTraceToString())
+        return Either.Left(GatewayResponse(body = "bad request: Json Body", statusCode = 400))
+    } catch (e: Exception) {
+        logger.log(e.stackTraceToString())
+        return Either.Left(GatewayResponse(body = "bad request: Body", statusCode = 400))
+    }
+}
+
+inline fun <reified Params> getQueryParams(request: Map<String, Any?>, logger: LambdaLogger): Either<GatewayResponse, Params> {
+    return try {
+        when (Params::class == Unit::class) {
+            false -> {
+                val map = request["queryStringParameters"]!! as Map<String, String>
+                println("queryParam map: $map")
+                val paramJson = Singletons.objectMapper.writeValueAsString(map)
+                println("queryParam json: $paramJson")
+                Singletons.objectMapper.readValue(paramJson)
+            }
+            true -> Unit as Params
+        }.let { Either.Right(it) }
+    } catch (e: Exception) {
+        logger.log(e.stackTraceToString())
+        return Either.Left(GatewayResponse(body = "bad request: query params", statusCode = 400))
     }
 }
 
