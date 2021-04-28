@@ -47,7 +47,7 @@ object DI {
 
     private val retrofit = Retrofit.Builder()
         .client(okhttp)
-        .baseUrl("https://uifqvolofe.execute-api.us-east-1.amazonaws.com/stage/")
+        .baseUrl("https://tm7ga7s3od.execute-api.us-east-1.amazonaws.com/stage/")
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 

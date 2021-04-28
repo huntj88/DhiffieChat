@@ -35,19 +35,6 @@ resource "aws_dynamodb_table" "user-dynamodb-table" {
   }
 }
 
-resource "aws_dynamodb_table" "config-dynamodb-table" {
-  name           = "Config"
-  billing_mode   = "PAY_PER_REQUEST"
-  read_capacity  = 1
-  write_capacity = 1
-  hash_key       = "name"
-
-  attribute {
-    name = "name"
-    type = "S"
-  }
-}
-
 resource "aws_dynamodb_table" "chat-dynamodb-table" {
   name           = "Chat"
   billing_mode   = "PAY_PER_REQUEST"
@@ -157,7 +144,6 @@ resource "aws_iam_policy" "function_policy" {
         Effect   = "Allow"
         Resource = [
           aws_dynamodb_table.user-dynamodb-table.arn,
-          aws_dynamodb_table.config-dynamodb-table.arn,
           aws_dynamodb_table.chat-dynamodb-table.arn
         ]
       }
@@ -182,16 +168,6 @@ module "create_identity" {
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
   gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
   http_method = "POST"
-  role = aws_iam_role.function_role.arn
-}
-
-module "get_server_public_key" {
-  source = "../tfmodules/provisioned-lambda"
-  function_name = "GetServerPublicKey"
-  gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
-  gateway_id = aws_api_gateway_rest_api.chat_gateway.id
-  gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
-  http_method = "GET"
   role = aws_iam_role.function_role.arn
 }
 
@@ -264,7 +240,6 @@ resource "aws_api_gateway_deployment" "chat_deployment" {
   triggers = {
     redeployment = sha1(jsonencode([
       module.create_identity.redeploy_hash,
-      module.get_server_public_key.redeploy_hash,
       module.get_user_public_key.redeploy_hash,
       module.scan_qr.redeploy_hash,
       module.send_file.redeploy_hash,

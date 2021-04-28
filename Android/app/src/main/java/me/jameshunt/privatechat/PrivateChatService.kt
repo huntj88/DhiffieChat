@@ -4,10 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import me.jameshunt.privatechat.PrivateChatApi.*
-import me.jameshunt.privatechat.crypto.AESCrypto
-import me.jameshunt.privatechat.crypto.toBase64String
-import me.jameshunt.privatechat.crypto.toPublicKey
-import me.jameshunt.privatechat.crypto.toUserId
+import me.jameshunt.privatechat.crypto.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -80,9 +77,8 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         )
     }
 
-    // TODO: caching
-    private suspend fun getServerPublicKey(): PublicKey {
-        return api.getServerPublicKey().publicKey.toPublicKey()
+    private fun getServerPublicKey(): PublicKey {
+        return serverPublic.toPublicKey()
     }
 
     private suspend fun getUserPublicKey(userId: String): PublicKey {
@@ -105,9 +101,6 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
 
 interface PrivateChatApi {
     data class PublicKeyResponse(val publicKey: String)
-
-    @GET("GetServerPublicKey")
-    suspend fun getServerPublicKey(): PublicKeyResponse
 
     @GET("GetUserPublicKey")
     suspend fun getUserPublicKey(
