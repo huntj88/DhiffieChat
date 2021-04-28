@@ -176,7 +176,7 @@ resource "aws_api_gateway_rest_api" "chat_gateway" {
 }
 
 module "create_identity" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "CreateIdentity"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -186,7 +186,7 @@ module "create_identity" {
 }
 
 module "get_server_public_key" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "GetServerPublicKey"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -196,7 +196,7 @@ module "get_server_public_key" {
 }
 
 module "get_user_public_key" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "GetUserPublicKey"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -207,7 +207,7 @@ module "get_user_public_key" {
 
 
 module "scan_qr" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "ScanQR"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -217,7 +217,7 @@ module "scan_qr" {
 }
 
 module "send_file" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "SendFile"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -228,7 +228,7 @@ module "send_file" {
 }
 
 module "get_file" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "GetFile"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -239,7 +239,7 @@ module "get_file" {
 }
 
 module "get_messages" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "GetMessages"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
@@ -249,7 +249,7 @@ module "get_messages" {
 }
 
 module "get_user_relationships" {
-  source = "../tfmodules/lambdapermission"
+  source = "../tfmodules/provisioned-lambda"
   function_name = "GetUserRelationships"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
