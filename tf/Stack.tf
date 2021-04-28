@@ -54,7 +54,7 @@ resource "aws_dynamodb_table" "chat-dynamodb-table" {
   read_capacity  = 1
   write_capacity = 1
   hash_key       = "chatId"
-  range_key       = "messageCreatedAt"
+  range_key      = "messageCreatedAt"
 
   attribute {
     name = "chatId"
@@ -151,7 +151,8 @@ resource "aws_iam_policy" "function_policy" {
           "dynamodb:GetItem",
           "dynamodb:UpdateItem",
           "dynamodb:PutItem",
-          "dynamodb:DeleteItem"
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
         ]
         Effect   = "Allow"
         Resource = [
@@ -235,6 +236,18 @@ resource "aws_lambda_function" "get_file" {
   filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
   source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
   handler = "me.jameshunt.privatechat.GetFile::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 512
+}
+
+resource "aws_lambda_function" "get_messages" {
+  description = "Get Messages"
+  function_name = "get_messages"
+  filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
+  handler = "me.jameshunt.privatechat.GetMessages::handleRequest"
   role = aws_iam_role.function_role.arn
   runtime = "java8"
   timeout = 30
@@ -386,6 +399,29 @@ resource "aws_api_gateway_integration" "get_file_integration" {
   uri                     = aws_lambda_function.get_file.invoke_arn
 }
 
+resource "aws_api_gateway_resource" "get_messages_resource" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  parent_id   = aws_api_gateway_rest_api.chat_gateway.root_resource_id
+  path_part   = "GetMessages"
+}
+
+resource "aws_api_gateway_method" "get_messages_method" {
+  rest_api_id   = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id   = aws_api_gateway_resource.get_messages_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_messages_integration" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id = aws_api_gateway_method.get_messages_method.resource_id
+  http_method = aws_api_gateway_method.get_messages_method.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_messages.invoke_arn
+}
+
 resource "aws_lambda_permission" "get_server_public_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
@@ -452,13 +488,25 @@ resource "aws_lambda_permission" "get_file_gw_permission" {
   source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
 }
 
+resource "aws_lambda_permission" "get_messages_gw_permission" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_messages.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
+}
+
 resource "aws_api_gateway_deployment" "chat_deployment" {
   depends_on = [
     aws_api_gateway_integration.get_server_public_key_integration,
     aws_api_gateway_integration.create_identity_integration,
     aws_api_gateway_integration.scan_qr_integration,
     aws_api_gateway_integration.send_file_integration,
-    aws_api_gateway_integration.get_file_integration
+    aws_api_gateway_integration.get_file_integration,
+    aws_api_gateway_integration.get_messages_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.chat_gateway.id

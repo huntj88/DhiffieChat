@@ -2,7 +2,6 @@ package me.jameshunt.privatechat
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import com.fasterxml.jackson.annotation.JsonAlias
 import me.jameshunt.privatechat.crypto.toBase64String
 
 class GetUserPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse> {

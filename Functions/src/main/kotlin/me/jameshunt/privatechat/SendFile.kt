@@ -4,7 +4,6 @@ import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.s3.model.ObjectMetadata
-import com.fasterxml.jackson.annotation.JsonAlias
 import java.io.ByteArrayInputStream
 import java.time.Instant
 import java.time.format.DateTimeFormatter

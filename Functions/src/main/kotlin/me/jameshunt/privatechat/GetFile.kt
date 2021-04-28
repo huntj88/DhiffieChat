@@ -3,14 +3,13 @@ package me.jameshunt.privatechat
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.s3.model.S3ObjectInputStream
-import com.fasterxml.jackson.annotation.JsonAlias
 import java.io.ByteArrayOutputStream
 import java.util.*
 
 
 class GetFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<Unit, GetFileQueryParams, String>(request, context) { body, params, identity ->
+        return awsTransformAuthed<Unit, GetFileQueryParams, String>(request, context) { _, params, identity ->
             // TODO: check if has access to file
             context.logger.log("params: $params")
 

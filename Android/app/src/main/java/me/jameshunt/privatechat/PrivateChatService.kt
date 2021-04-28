@@ -19,7 +19,7 @@ import javax.crypto.spec.IvParameterSpec
 
 class PrivateChatService(private val api: PrivateChatApi, private val authManager: AuthManager) {
 
-    suspend fun getNewMessages(): List<Unit> {
+    suspend fun testStuff(): List<Unit> {
         val message = createIdentity().message
         Log.d("createIdentityMessage", message)
         val userPublicKey = getUserPublicKey(authManager.getIdentity().toUserId())
@@ -57,6 +57,11 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         val encryptedBody = api.getFile(standardHeaders(), fileKey).bytes()
         val file = AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, userUserIv)
         return BitmapFactory.decodeByteArray(file, 0, file.size)
+    }
+
+    suspend fun getMessages(): List<Message> {
+        val testUserId = authManager.getIdentity().toUserId()
+        return api.getMessages(standardHeaders(), testUserId)
     }
 
     private suspend fun createIdentity(): ResponseMessage {
@@ -135,4 +140,19 @@ interface PrivateChatApi {
         @HeaderMap headers: Map<String, String>,
         @Query("fileKey") fileKey: String
     ): ResponseBody
+
+    data class Message(
+        val messageCreatedAt: String,
+        val from: String,
+        val to: String,
+        val text: String?,
+        val fileKey: String?,
+        val iv: String
+    )
+
+    @GET("GetMessages")
+    suspend fun getMessages(
+        @HeaderMap headers: Map<String, String>,
+        @Query("userId") userId: String
+    ): List<Message>
 }

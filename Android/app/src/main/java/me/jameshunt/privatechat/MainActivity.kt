@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.coroutineScope
@@ -33,7 +34,7 @@ class MainActivity : AppCompatActivity() {
         lifecycle.coroutineScope.launch {
             delay(1000)
             try {
-                DI.privateChatService.getNewMessages()
+                DI.privateChatService.testStuff()
 //                while (true) {
 //                    Log.d("scanned", "loop")
 //                    val scannedUserId = qrScanner.getUserId(this@MainActivity)
@@ -71,13 +72,19 @@ class MainActivity : AppCompatActivity() {
 
                 DI.privateChatService.sendFile(recipientUserId, byteArray)
 
-                val download = DI.privateChatService.getFile(
-                    senderUserId = recipientUserId,
-                    fileKey = "vMUUTg9md3ZJI9ybiReSUVMabShQeQ4nb96+Dj6FV8A=",
-                    userUserIv = "VhqI09teTpAdHlTyt0PquA==".toIv()
-                )
-                findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
+                val messages = DI.privateChatService.getMessages()
 
+                messages.forEach { Log.d("Message", it.toString()) }
+
+                messages.lastOrNull { it.fileKey != null }?.let {
+                    val download = DI.privateChatService.getFile(
+                        senderUserId = it.from,
+                        fileKey = it.fileKey!!,
+                        userUserIv = it.iv.toIv()
+                    )
+
+                    findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
+                }
             } catch (e: HttpException) {
                 e.printStackTrace()
             }
