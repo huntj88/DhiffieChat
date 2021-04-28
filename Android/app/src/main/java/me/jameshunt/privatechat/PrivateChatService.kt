@@ -106,10 +106,10 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
 interface PrivateChatApi {
     data class PublicKeyResponse(val publicKey: String)
 
-    @GET("ServerPublicKey")
+    @GET("GetServerPublicKey")
     suspend fun getServerPublicKey(): PublicKeyResponse
 
-    @GET("UserPublicKey")
+    @GET("GetUserPublicKey")
     suspend fun getUserPublicKey(
         @HeaderMap headers: Map<String, String>,
         @Query("userId") userId: String

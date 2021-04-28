@@ -114,7 +114,6 @@ inline fun <reified Params> getQueryParams(request: Map<String, Any?>, logger: L
         when (Params::class == Unit::class) {
             false -> {
                 val map = request["queryStringParameters"]!! as Map<String, String>
-                println("queryParam map: $map")
                 val paramJson = Singletons.objectMapper.writeValueAsString(map)
                 println("queryParam json: $paramJson")
                 Singletons.objectMapper.readValue(paramJson)
