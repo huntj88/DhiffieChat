@@ -3,11 +3,15 @@ package me.jameshunt.privatechat
 //import androidx.activity.compose.setContent
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.lifecycle.coroutineScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
@@ -17,6 +21,8 @@ import me.jameshunt.privatechat.crypto.toIv
 import net.glxn.qrgen.android.MatrixToImageWriter
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
+import java.io.File
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -55,8 +61,11 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when (requestCode == requestImageCapture && resultCode == RESULT_OK) {
             true -> {
-                val imageBitmap = data!!.extras!!.get("data") as Bitmap
-                sendImage(DI.identityManager.getIdentity().toUserId(), imageBitmap)
+                val takenImage = BitmapFactory.decodeFile(photoFile!!.absolutePath)
+
+                // thumbnail
+                // val imageBitmap = data!!.extras!!.get("data") as Bitmap
+                sendImage(DI.identityManager.getIdentity().toUserId(), takenImage)
             }
             false -> super.onActivityResult(requestCode, resultCode, data)
         }
@@ -93,10 +102,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val requestImageCapture = 13423
-
+    private var photoFile: File? = null
     private fun dispatchTakePictureIntent() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        photoFile = getPhotoFileUri()
+
+        val fileProvider: Uri = FileProvider.getUriForFile(this, "me.jameshunt.privatechat.fileprovider", photoFile!!)
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider)
         startActivityForResult(takePictureIntent, requestImageCapture)
+    }
+
+    private fun getPhotoFileUri(): File {
+        val mediaStorageDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "PrivateChat")
+
+        // Create the storage directory if it does not exist
+        if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()) {
+            Log.d("PrivateChat", "failed to create directory")
+        }
+
+        // Return the file target for the photo based on filename
+        return File(mediaStorageDir.path + File.separator.toString() + "temp.jpg")
     }
 
 }
