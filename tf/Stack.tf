@@ -254,6 +254,18 @@ resource "aws_lambda_function" "get_messages" {
   memory_size = 512
 }
 
+resource "aws_lambda_function" "get_user_relationships" {
+  description = "Get User Relationships"
+  function_name = "get_user_relationships"
+  filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
+  handler = "me.jameshunt.privatechat.GetUserRelationships::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 512
+}
+
 resource "aws_api_gateway_rest_api" "chat_gateway" {
   name        = "chat_gateway"
   description = "Chat Gateway"
@@ -422,6 +434,29 @@ resource "aws_api_gateway_integration" "get_messages_integration" {
   uri                     = aws_lambda_function.get_messages.invoke_arn
 }
 
+resource "aws_api_gateway_resource" "get_user_relationships_resource" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  parent_id   = aws_api_gateway_rest_api.chat_gateway.root_resource_id
+  path_part   = "GetUserRelationships"
+}
+
+resource "aws_api_gateway_method" "get_user_relationships_method" {
+  rest_api_id   = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id   = aws_api_gateway_resource.get_user_relationships_resource.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_user_relationships_integration" {
+  rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+  resource_id = aws_api_gateway_method.get_user_relationships_method.resource_id
+  http_method = aws_api_gateway_method.get_user_relationships_method.http_method
+
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.get_user_relationships.invoke_arn
+}
+
 resource "aws_lambda_permission" "get_server_public_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
@@ -499,6 +534,18 @@ resource "aws_lambda_permission" "get_messages_gw_permission" {
   source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
 }
 
+resource "aws_lambda_permission" "get_user_relationships_gw_permission" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.get_user_relationships.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # The "/*/*" portion grants access from any method on any resource
+  # within the API Gateway REST API.
+  source_arn = "${aws_api_gateway_rest_api.chat_gateway.execution_arn}/*/*"
+}
+
+
 resource "aws_api_gateway_deployment" "chat_deployment" {
   depends_on = [
     aws_api_gateway_integration.get_server_public_key_integration,
@@ -506,7 +553,8 @@ resource "aws_api_gateway_deployment" "chat_deployment" {
     aws_api_gateway_integration.scan_qr_integration,
     aws_api_gateway_integration.send_file_integration,
     aws_api_gateway_integration.get_file_integration,
-    aws_api_gateway_integration.get_messages_integration
+    aws_api_gateway_integration.get_messages_integration,
+    aws_api_gateway_integration.get_user_relationships_integration
   ]
 
   rest_api_id = aws_api_gateway_rest_api.chat_gateway.id

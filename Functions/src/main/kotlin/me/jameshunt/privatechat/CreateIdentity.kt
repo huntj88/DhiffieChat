@@ -3,9 +3,9 @@ package me.jameshunt.privatechat
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import me.jameshunt.privatechat.crypto.toUserId
 import me.jameshunt.privatechat.crypto.toIv
 import me.jameshunt.privatechat.crypto.toPublicKey
+import me.jameshunt.privatechat.crypto.toUserId
 
 
 data class RequestData(
@@ -20,12 +20,16 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
             if (!doesUserHavePrivateKey(body.publicKey.toPublicKey(), body.iv.toIv(), body.encryptedToken)) {
                 throw Unauthorized()
             }
+            val userTable = Singletons.dynamoDB.getTable("User")
+            val userId = body.publicKey.toPublicKey().toUserId()
 
-            val user = mapOf(
-                "userId" to body.publicKey.toPublicKey().toUserId(),
-                "publicKey" to body.publicKey
-            )
-            Singletons.dynamoDB.getTable("User").putItem(Item.fromMap(user))
+            if (userTable.getItem("userId", userId) == null) {
+                val user = mapOf(
+                    "userId" to userId,
+                    "publicKey" to body.publicKey
+                )
+                userTable.putItem(Item.fromMap(user))
+            }
         }
     }
 }

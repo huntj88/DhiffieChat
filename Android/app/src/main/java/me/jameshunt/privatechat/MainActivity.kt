@@ -72,8 +72,9 @@ class MainActivity : AppCompatActivity() {
 
                 DI.privateChatService.sendFile(recipientUserId, byteArray)
 
-                val messages = DI.privateChatService.getMessages()
+                Log.d("Relationship", DI.privateChatService.getUserRelationships().toString())
 
+                val messages = DI.privateChatService.getMessages()
                 messages.forEach { Log.d("Message", it.toString()) }
 
                 messages.lastOrNull { it.fileKey != null }?.let {

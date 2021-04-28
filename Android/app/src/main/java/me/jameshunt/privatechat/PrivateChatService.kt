@@ -64,6 +64,10 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         return api.getMessages(standardHeaders(), testUserId)
     }
 
+    suspend fun getUserRelationships(): Relationships {
+        return api.getUserRelationships(standardHeaders())
+    }
+
     private suspend fun createIdentity(): ResponseMessage {
         val userToServerCredentials = authManager.userToServerAuth(serverPublicKey = getServerPublicKey())
 
@@ -155,4 +159,13 @@ interface PrivateChatApi {
         @HeaderMap headers: Map<String, String>,
         @Query("userId") userId: String
     ): List<Message>
+
+    data class Relationships(
+        val sentRequests: List<String>,
+        val receivedRequests: List<String>,
+        val friends: List<String>,
+    )
+
+    @GET("GetUserRelationships")
+    suspend fun getUserRelationships(@HeaderMap headers: Map<String, String>): Relationships
 }
