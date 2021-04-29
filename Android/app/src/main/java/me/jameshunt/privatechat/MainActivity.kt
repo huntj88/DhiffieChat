@@ -1,6 +1,5 @@
 package me.jameshunt.privatechat
 
-import androidx.activity.compose.setContent
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -10,15 +9,13 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import android.widget.ImageView
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.coroutineScope
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import me.jameshunt.privatechat.compose.MainUI
 import me.jameshunt.privatechat.crypto.toIv
-import net.glxn.qrgen.android.MatrixToImageWriter
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
 import java.io.File
