@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @Composable
-fun QRScanner() {
+fun QRScanner(onScanned: (userId: String) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -36,10 +36,7 @@ fun QRScanner() {
     lateinit var cameraExecutor: ExecutorService
     lateinit var lastCheck: Instant
 
-    fun qrAnalyzer(
-        cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
-        onResult: (String) -> Unit
-    ): ImageAnalysis {
+    fun qrAnalyzer(cameraProviderFuture: ListenableFuture<ProcessCameraProvider>): ImageAnalysis {
         val options = BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build()
         val client = BarcodeScanning.getClient(options)
 
@@ -63,10 +60,9 @@ fun QRScanner() {
                     .addOnSuccessListener { barcodes ->
                         barcodes.firstOrNull()?.rawValue?.let { userId ->
                             Log.d("scanned", "result: $userId")
-                            onResult(userId)
                             cameraExecutor.shutdown()
                             cameraProviderFuture.cancel(true)
-
+                            onScanned(userId)
                         }
                     }
                     .addOnCompleteListener { image.close() }
@@ -91,9 +87,7 @@ fun QRScanner() {
                     setSurfaceProvider(previewView.surfaceProvider)
                 }
 
-                val qrAnalyzer = qrAnalyzer(cameraProviderFuture) {
-                    Log.d("scanner", "it")
-                }
+                val qrAnalyzer = qrAnalyzer(cameraProviderFuture)
 
                 try {
                     // Unbind use cases before rebinding

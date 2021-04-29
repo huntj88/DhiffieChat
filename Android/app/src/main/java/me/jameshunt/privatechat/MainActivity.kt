@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.compose.MainUI
 import me.jameshunt.privatechat.crypto.toIv
@@ -32,24 +33,21 @@ class MainActivity : AppCompatActivity() {
 //        val result = QRCodeWriter().encode(userId, BarcodeFormat.QR_CODE, 400, 400)
 //        findViewById<ImageView>(R.id.myQr).setImageBitmap(MatrixToImageWriter.toBitmap(result))
 
-//        lifecycle.coroutineScope.launch {
-//            delay(1000)
-//            try {
-//                DI.privateChatService.testStuff()
-////                while (true) {
-////                    Log.d("scanned", "loop")
-////                    val scannedUserId = qrScanner.getUserId(this@MainActivity)
-////                    DI.privateChatService.scanQR(scannedUserId)
-////                    delay(1000)
-////                }
-//            } catch (e: HttpException) {
-//                e.printStackTrace()
-//            }
-//            dispatchTakePictureIntent()
-//        }
+        lifecycle.coroutineScope.launch {
+            try {
+                DI.privateChatService.testStuff()
+                val relationships = DI.privateChatService.getUserRelationships()
 
-        setContent {
-            MainUI(userId = DI.identityManager.getIdentity().toUserId())
+                setContent {
+                    MainUI(
+                        userId = DI.identityManager.getIdentity().toUserId(),
+                        relationships = relationships
+                    )
+                }
+            } catch (e: HttpException) {
+                e.printStackTrace()
+            }
+//            dispatchTakePictureIntent()
         }
     }
 
@@ -88,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                         userUserIv = it.iv.toIv()
                     )
 
-                    findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
+//                    findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
                 }
             } catch (e: HttpException) {
                 e.printStackTrace()

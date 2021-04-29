@@ -11,10 +11,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import me.jameshunt.privatechat.PrivateChatApi
 import net.glxn.qrgen.android.MatrixToImageWriter
 
 @Composable
-fun MainUI(userId: String) {
+fun MainUI(userId: String, relationships: PrivateChatApi.Relationships) {
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
 
@@ -32,6 +33,26 @@ fun MainUI(userId: String) {
             isScanOpen = true
             Log.d("clicked", "click")
         }
+
+        relationships.friends.forEach {
+            Spacer(modifier = Modifier.height(8.dp))
+            CallToActionQR(text = it) {
+                Log.d("clicked", "click")
+            }
+        }
+        relationships.receivedRequests.forEach {
+            Spacer(modifier = Modifier.height(8.dp))
+            CallToActionQR(text = it) {
+                Log.d("clicked", "click")
+            }
+        }
+        relationships.sentRequests.forEach {
+            Spacer(modifier = Modifier.height(8.dp))
+            CallToActionQR(text = it) {
+                Log.d("clicked", "click")
+            }
+        }
+
     }
 
 
@@ -47,7 +68,9 @@ fun MainUI(userId: String) {
     if (isScanOpen) {
         Dialog(onDismissRequest = { isScanOpen = false }) {
             Card {
-                QRScanner()
+                QRScanner {
+                    isScanOpen = false
+                }
             }
         }
     }
