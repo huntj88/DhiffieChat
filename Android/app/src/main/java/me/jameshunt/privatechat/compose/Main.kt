@@ -4,13 +4,18 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import me.jameshunt.privatechat.DI
 import me.jameshunt.privatechat.PrivateChatApi
 import net.glxn.qrgen.android.MatrixToImageWriter
 
@@ -68,11 +73,40 @@ fun MainUI(userId: String, relationships: PrivateChatApi.Relationships) {
     if (isScanOpen) {
         Dialog(onDismissRequest = { isScanOpen = false }) {
             Card {
-                QRScanner {
+                QRScannerWithJob {
                     isScanOpen = false
                 }
             }
         }
+    }
+}
+
+@Composable
+fun QRScannerWithJob(onDone: () -> Unit) {
+    val coroutineScope = rememberCoroutineScope()
+    var scanned by remember { mutableStateOf<String?>(null) }
+
+    val getUserIdOnScan: (String) -> Unit = { userId ->
+        coroutineScope.launch {
+            delay(2000)
+            DI.privateChatService.scanQR(userId)
+            onDone()
+        }
+    }
+
+    if (scanned == null) {
+        QRScanner {
+            scanned = it
+        }
+    }
+
+    if (scanned != null) {
+        getUserIdOnScan(scanned!!)
+        CircularProgressIndicator(
+            modifier = Modifier.size(90.dp, 90.dp).padding(16.dp),
+            color = Color.Green,
+            strokeWidth = 8.dp
+        )
     }
 }
 
