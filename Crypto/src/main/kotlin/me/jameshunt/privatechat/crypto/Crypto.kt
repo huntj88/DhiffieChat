@@ -27,8 +27,8 @@ object DHCrypto {
 
     @Throws(Exception::class)
     fun agreeSecretKey(
-        prkSelf: PrivateKey?,
-        pbkPeer: PublicKey?
+        prkSelf: PrivateKey,
+        pbkPeer: PublicKey
     ): SecretKey {
         // instantiates and inits a KeyAgreement
         val ka: KeyAgreement = KeyAgreement.getInstance("DH")

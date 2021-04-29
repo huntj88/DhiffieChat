@@ -46,10 +46,7 @@ fun MainUI(userId: String, relationships: PrivateChatApi.Relationships) {
             }
         }
         relationships.receivedRequests.forEach {
-            Spacer(modifier = Modifier.height(8.dp))
-            CallToActionQR(text = it) {
-                Log.d("clicked", "click")
-            }
+            FriendRequest(it)
         }
         relationships.sentRequests.forEach {
             Spacer(modifier = Modifier.height(8.dp))
@@ -59,7 +56,6 @@ fun MainUI(userId: String, relationships: PrivateChatApi.Relationships) {
         }
 
     }
-
 
 
     if (isShareOpen) {
@@ -82,13 +78,29 @@ fun MainUI(userId: String, relationships: PrivateChatApi.Relationships) {
 }
 
 @Composable
+fun FriendRequest(userId: String) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val scan: () -> Unit = {
+        coroutineScope.launch {
+            DI.privateChatService.scanQR(userId)
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+    CallToActionQR(text = userId) {
+        scan()
+        Log.d("clicked", "click")
+    }
+}
+
+@Composable
 fun QRScannerWithJob(onDone: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     var scanned by remember { mutableStateOf<String?>(null) }
 
     val getUserIdOnScan: (String) -> Unit = { userId ->
         coroutineScope.launch {
-            delay(2000)
             DI.privateChatService.scanQR(userId)
             onDone()
         }

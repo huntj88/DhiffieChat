@@ -85,12 +85,12 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
         return api.getUserPublicKey(headers = standardHeaders(), userId = userId).publicKey.toPublicKey()
     }
 
-    private suspend fun standardHeaders(vararg additionalHeaders: Map<String, String>): Map<String, String> {
+    private fun standardHeaders(vararg additionalHeaders: Map<String, String>): Map<String, String> {
         val standard = mapOf("userId" to authManager.getIdentity().toUserId()) + userToServerHeaders()
         return additionalHeaders.fold(standard) { acc, next -> acc + next }
     }
 
-    private suspend fun userToServerHeaders(): Map<String, String> {
+    private fun userToServerHeaders(): Map<String, String> {
         val userToServerCredentials = authManager.userToServerAuth(getServerPublicKey())
         return mapOf(
             "userServerIv" to userToServerCredentials.iv.toBase64String(),
