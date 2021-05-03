@@ -2,19 +2,25 @@ package me.jameshunt.privatechat.compose
 
 import LoadingIndicator
 import android.util.Log
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.DI
+import me.jameshunt.privatechat.PrivateChatApi
 import me.jameshunt.privatechat.R
 import me.jameshunt.privatechat.toUserId
 import net.glxn.qrgen.android.MatrixToImageWriter
@@ -34,12 +40,13 @@ import net.glxn.qrgen.android.MatrixToImageWriter
 //}
 
 
-
 @Composable
-fun FriendRequestScreen() {
+fun ManageFriendsScreen() {
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
-    var isPendingRequestsLoading by remember { mutableStateOf(true) }
+    var relationships by remember { mutableStateOf<PrivateChatApi.Relationships?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    val service = DI.privateChatService
 
     Column(
         Modifier
@@ -56,7 +63,11 @@ fun FriendRequestScreen() {
             Log.d("clicked", "click")
         }
 
-        if (isPendingRequestsLoading) {
+        relationships?.let {
+            RequestList("Received Requests", it.receivedRequests)
+            RequestList("Sent Requests", it.sentRequests)
+            RequestList("Friends", it.friends)
+        } ?: run {
             Spacer(modifier = Modifier.height(8.dp))
             Box(Modifier.align(Alignment.CenterHorizontally)) {
                 LoadingIndicator()
@@ -81,6 +92,40 @@ fun FriendRequestScreen() {
                     isScanOpen = false
                 }
             }
+        }
+    }
+
+    // TODO, jank way to get around lint warnings, there is definitely a better way
+    fun load() {
+        coroutineScope.launch {
+            relationships = service.getUserRelationships()
+        }
+    }
+    load()
+}
+
+@Composable
+fun RequestList(title: String, requestList: List<String>) {
+    Spacer(modifier = Modifier.height(24.dp))
+    Text(text = title, fontSize = 30.sp)
+    requestList.forEach {
+        CallToAction(text = it, drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
+
+        }
+    }
+
+    if (requestList.isEmpty()) {
+        Card(
+            elevation = 2.dp,
+            modifier = Modifier.fillMaxWidth(),
+            border = BorderStroke(width = 1.5.dp, Color.LightGray)
+        ) {
+            Text(
+                text = "No Results",
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

@@ -22,9 +22,9 @@ fun HomeScreen(navController: NavController) {
     ) {
 
         Spacer(modifier = Modifier.height(8.dp))
-        CallToAction(text = "Friend Requests", drawableId = R.drawable.ic_baseline_person_add_24) {
+        CallToAction(text = "Manage Friends", drawableId = R.drawable.ic_baseline_person_add_24) {
             Log.d("clicked", "click")
-            navController.navigate("friendRequests")
+            navController.navigate("manageFriends")
         }
 
         if (isMessagesLoading) {

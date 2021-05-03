@@ -17,7 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.compose.HomeScreen
-import me.jameshunt.privatechat.compose.FriendRequestScreen
+import me.jameshunt.privatechat.compose.ManageFriendsScreen
 import me.jameshunt.privatechat.crypto.toIv
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
             val navController = rememberNavController()
             NavHost(navController, startDestination = "home") {
                 composable("home") { HomeScreen(navController) }
-                composable("friendRequests") { FriendRequestScreen() }
+                composable("manageFriends") { ManageFriendsScreen() }
             }
         }
 //        setContentView(R.layout.activity_main)
