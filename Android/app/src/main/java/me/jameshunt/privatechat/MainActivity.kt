@@ -13,9 +13,13 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.coroutineScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.compose.MainUI
+import me.jameshunt.privatechat.compose.SecondScreen
 import me.jameshunt.privatechat.crypto.toIv
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
@@ -27,28 +31,38 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         DI.setLifecycleComponents(this)
+        setContent {
+            val navController = rememberNavController()
+            NavHost(navController, startDestination = "home") {
+                composable("home") {
+                    val userId = DI.identityManager.getIdentity().toUserId()
+                    MainUI(userId, navController)
+                }
+                composable("friendRequests") { SecondScreen() }
+            }
+        }
 //        setContentView(R.layout.activity_main)
 //
 //        val userId = DI.identityManager.getIdentity().toUserId()
 //        val result = QRCodeWriter().encode(userId, BarcodeFormat.QR_CODE, 400, 400)
 //        findViewById<ImageView>(R.id.myQr).setImageBitmap(MatrixToImageWriter.toBitmap(result))
 
-        lifecycle.coroutineScope.launch {
-            try {
-                DI.privateChatService.testStuff()
-                val relationships = DI.privateChatService.getUserRelationships()
-
-                setContent {
-                    MainUI(
-                        userId = DI.identityManager.getIdentity().toUserId(),
-                        relationships = relationships
-                    )
-                }
-            } catch (e: HttpException) {
-                e.printStackTrace()
-            }
-//            dispatchTakePictureIntent()
-        }
+//        lifecycle.coroutineScope.launch {
+//            try {
+//                DI.privateChatService.testStuff()
+//                val relationships = DI.privateChatService.getUserRelationships()
+//
+//                setContent {
+//                    MainUI(
+//                        userId = DI.identityManager.getIdentity().toUserId(),
+//                        relationships = relationships
+//                    )
+//                }
+//            } catch (e: HttpException) {
+//                e.printStackTrace()
+//            }
+////            dispatchTakePictureIntent()
+//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -100,13 +114,15 @@ class MainActivity : AppCompatActivity() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         photoFile = getPhotoFileUri()
 
-        val fileProvider: Uri = FileProvider.getUriForFile(this, "me.jameshunt.privatechat.fileprovider", photoFile!!)
+        val fileProvider: Uri =
+            FileProvider.getUriForFile(this, "me.jameshunt.privatechat.fileprovider", photoFile!!)
         takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider)
         startActivityForResult(takePictureIntent, requestImageCapture)
     }
 
     private fun getPhotoFileUri(): File {
-        val mediaStorageDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "PrivateChat")
+        val mediaStorageDir =
+            File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "PrivateChat")
 
         // Create the storage directory if it does not exist
         if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()) {

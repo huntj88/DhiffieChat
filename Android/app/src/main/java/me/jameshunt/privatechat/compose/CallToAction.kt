@@ -1,5 +1,6 @@
 package me.jameshunt.privatechat.compose
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -15,10 +16,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import me.jameshunt.privatechat.R
 
 @Composable
-fun CallToActionQR(text: String, onClick: () -> Unit) {
+fun CallToAction(text: String, @DrawableRes drawableId: Int, onClick: () -> Unit) {
     Card(
         elevation = 2.dp,
         modifier = Modifier
@@ -28,8 +28,8 @@ fun CallToActionQR(text: String, onClick: () -> Unit) {
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)) {
             Image(
-                painter = painterResource(R.drawable.ic_baseline_qr_code_scanner_24),
-                contentDescription = "QR Scanner",
+                painter = painterResource(id = drawableId),
+                contentDescription = text,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.requiredSize(50.dp),
                 colorFilter = ColorFilter.tint(Color.Black)
