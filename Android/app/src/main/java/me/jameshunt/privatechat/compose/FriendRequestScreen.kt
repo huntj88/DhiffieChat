@@ -1,32 +1,45 @@
 package me.jameshunt.privatechat.compose
 
+import LoadingIndicator
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.navigation.NavController
-import androidx.navigation.compose.navigate
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.DI
 import me.jameshunt.privatechat.R
+import me.jameshunt.privatechat.toUserId
 import net.glxn.qrgen.android.MatrixToImageWriter
 
+
+//@Composable
+//fun FriendRequest(userId: String) {
+//    val coroutineScope = rememberCoroutineScope()
+//
+//    Spacer(modifier = Modifier.height(8.dp))
+//    CallToAction(text = userId) {
+//        coroutineScope.launch {
+//            DI.privateChatService.scanQR(userId)
+//        }
+//        Log.d("clicked", "click")
+//    }
+//}
+
+
+
 @Composable
-fun MainUI(userId: String, navController: NavController) {
+fun FriendRequestScreen() {
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
-    var isMessagesLoading by remember { mutableStateOf(true) }
+    var isPendingRequestsLoading by remember { mutableStateOf(true) }
 
     Column(
         Modifier
@@ -43,13 +56,8 @@ fun MainUI(userId: String, navController: NavController) {
             Log.d("clicked", "click")
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        CallToAction(text = "Friend Requests", drawableId = R.drawable.ic_baseline_person_add_24) {
-            Log.d("clicked", "click")
-            navController.navigate("friendRequests")
-        }
-
-        if (isMessagesLoading) {
+        if (isPendingRequestsLoading) {
+            Spacer(modifier = Modifier.height(8.dp))
             Box(Modifier.align(Alignment.CenterHorizontally)) {
                 LoadingIndicator()
             }
@@ -59,6 +67,8 @@ fun MainUI(userId: String, navController: NavController) {
     if (isShareOpen) {
         Dialog(onDismissRequest = { isShareOpen = false }) {
             Card {
+                // TODO: VIEWMODEL
+                val userId = DI.identityManager.getIdentity().toUserId()
                 QRCodeImage(userId)
             }
         }
@@ -74,19 +84,6 @@ fun MainUI(userId: String, navController: NavController) {
         }
     }
 }
-
-//@Composable
-//fun FriendRequest(userId: String) {
-//    val coroutineScope = rememberCoroutineScope()
-//
-//    Spacer(modifier = Modifier.height(8.dp))
-//    CallToAction(text = userId) {
-//        coroutineScope.launch {
-//            DI.privateChatService.scanQR(userId)
-//        }
-//        Log.d("clicked", "click")
-//    }
-//}
 
 @Composable
 fun QRScannerWithJob(onDone: () -> Unit) {
@@ -119,21 +116,5 @@ fun QRCodeImage(data: String) {
         bitmap = MatrixToImageWriter.toBitmap(result1).asImageBitmap(),
         contentDescription = null,
         modifier = Modifier.requiredSize(350.dp)
-    )
-}
-
-@Composable
-fun SecondScreen() {
-    Text(text = "Second screen!")
-}
-
-@Composable
-fun LoadingIndicator() {
-    CircularProgressIndicator(
-        modifier = Modifier
-            .size(90.dp, 90.dp)
-            .padding(16.dp),
-        color = Color.Green,
-        strokeWidth = 8.dp
     )
 }

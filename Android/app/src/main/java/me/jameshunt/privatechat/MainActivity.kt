@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
-import android.widget.ImageView
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -16,10 +15,9 @@ import androidx.lifecycle.coroutineScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import me.jameshunt.privatechat.compose.MainUI
-import me.jameshunt.privatechat.compose.SecondScreen
+import me.jameshunt.privatechat.compose.HomeScreen
+import me.jameshunt.privatechat.compose.FriendRequestScreen
 import me.jameshunt.privatechat.crypto.toIv
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
@@ -34,11 +32,8 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val navController = rememberNavController()
             NavHost(navController, startDestination = "home") {
-                composable("home") {
-                    val userId = DI.identityManager.getIdentity().toUserId()
-                    MainUI(userId, navController)
-                }
-                composable("friendRequests") { SecondScreen() }
+                composable("home") { HomeScreen(navController) }
+                composable("friendRequests") { FriendRequestScreen() }
             }
         }
 //        setContentView(R.layout.activity_main)
