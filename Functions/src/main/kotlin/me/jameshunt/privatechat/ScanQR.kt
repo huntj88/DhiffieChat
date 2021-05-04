@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.document.AttributeUpdate
 import com.amazonaws.services.dynamodbv2.document.PrimaryKey
 import com.amazonaws.services.dynamodbv2.document.Table
 import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.amazonaws.services.lambda.runtime.RequestHandler
 
 data class QR(val scannedUserId: String)
@@ -14,21 +15,26 @@ class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
             val table = Singletons.dynamoDB.getTable("User")
             val item = table.getItem("userId", identity.userId)
 
-            // check if already friends
-            item?.getStringSet("friends")?.contains(body.scannedUserId) ?: return@awsTransformAuthed
+            context.logger.log("checking if already friends")
+            val friends = item?.getStringSet("friends") ?: emptySet()
+            if (friends.contains(body.scannedUserId)) {
+                return@awsTransformAuthed
+            }
 
             val existingRequestFromScanned = item
                 .getStringSet("receivedRequests")
                 ?.contains(body.scannedUserId) ?: false
 
+            context.logger.log("existingRequestFromScanned: $existingRequestFromScanned")
             when (existingRequestFromScanned) {
-                true -> upgradeToFriend(table, identity.userId, body.scannedUserId)
-                false -> sendFriendRequest(table, identity.userId, body.scannedUserId)
+                true -> upgradeToFriend(table, identity.userId, body.scannedUserId, context.logger)
+                false -> sendFriendRequest(table, identity.userId, body.scannedUserId, context.logger)
             }
         }
     }
 
-    private fun upgradeToFriend(table: Table, userId: String, scannedUserId: String) {
+    private fun upgradeToFriend(table: Table, userId: String, scannedUserId: String, logger: LambdaLogger) {
+        logger.log("upgrading to friend")
         table.updateItem(
             PrimaryKey("userId", userId),
             AttributeUpdate("receivedRequests").removeElements(scannedUserId),
@@ -42,7 +48,8 @@ class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
         )
     }
 
-    private fun sendFriendRequest(table: Table, userId: String, scannedUserId: String) {
+    private fun sendFriendRequest(table: Table, userId: String, scannedUserId: String, logger: LambdaLogger) {
+        logger.log("sending friend request")
         table.updateItem(
             PrimaryKey("userId", userId),
             AttributeUpdate("sentRequests").addElements(scannedUserId)
