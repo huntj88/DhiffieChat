@@ -32,7 +32,6 @@ class HomeViewModel(private val apiService: PrivateChatService) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            DI.privateChatService.testStuff()
             refresh()
         }
     }

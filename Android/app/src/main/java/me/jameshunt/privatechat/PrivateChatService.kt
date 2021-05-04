@@ -20,12 +20,13 @@ class PrivateChatService(
     private val identityManager: IdentityManager
 ) {
 
-    suspend fun testStuff(): List<Unit> {
+    suspend fun initialize() {
         val message = createIdentity().message
         Log.d("createIdentityMessage", message)
+
+        // TODO: remove
         val userPublicKey = getUserPublicKey(identityManager.getIdentity().toUserId())
         Log.d("user public key", userPublicKey.toUserId())
-        return emptyList()
     }
 
     suspend fun scanQR(scannedUserId: String): ResponseMessage {

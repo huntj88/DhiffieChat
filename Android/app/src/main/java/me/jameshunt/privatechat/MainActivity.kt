@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.compose.HomeScreen
+import me.jameshunt.privatechat.compose.LauncherScreen
 import me.jameshunt.privatechat.compose.ManageFriendsScreen
 import me.jameshunt.privatechat.crypto.toIv
 import retrofit2.HttpException
@@ -31,7 +32,8 @@ class MainActivity : AppCompatActivity() {
         DI.setLifecycleComponents(this)
         setContent {
             val navController = rememberNavController()
-            NavHost(navController, startDestination = "home") {
+            NavHost(navController, startDestination = "launcher") {
+                composable("launcher") { LauncherScreen(navController) }
                 composable("home") { HomeScreen(navController) }
                 composable("manageFriends") { ManageFriendsScreen() }
             }
