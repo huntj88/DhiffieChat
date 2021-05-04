@@ -12,6 +12,9 @@ import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.navigate
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.DI
 import me.jameshunt.privatechat.PrivateChatApi.*
@@ -56,14 +59,21 @@ class HomeViewModel(private val apiService: PrivateChatService) : ViewModel() {
     }
 
     private suspend fun refresh() {
-        _relationships.value = apiService.getUserRelationships()
-        _messageSummaries.value = apiService.getMessageSummaries()
+        coroutineScope {
+            listOf(
+                async { _messageSummaries.value = apiService.getMessageSummaries() },
+                async { _relationships.value = apiService.getUserRelationships() }
+            ).awaitAll()
+        }
     }
 
 }
 
 @Composable
-fun HomeScreen(navController: NavController, onSendMessage: (recipientUserId: String, gotCameraResult: () -> Unit) -> Unit) {
+fun HomeScreen(
+    navController: NavController,
+    onSendMessage: (recipientUserId: String, gotCameraResult: () -> Unit) -> Unit
+) {
     val viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
 
     Column(

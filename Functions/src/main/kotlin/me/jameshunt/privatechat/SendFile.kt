@@ -34,7 +34,7 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 authedUrl = null
             )
 
-            Singletons.dynamoDB.getTable("Chat").putItem(message.toItem())
+            Singletons.dynamoDB.getTable("Message").putItem(message.toItem())
         }
     }
 }
