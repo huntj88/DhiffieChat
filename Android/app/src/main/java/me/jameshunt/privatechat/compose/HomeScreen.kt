@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
+import androidx.navigation.*
 import androidx.navigation.compose.navigate
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -34,7 +34,7 @@ class HomeViewModel(private val apiService: PrivateChatService) : ViewModel() {
         MutableLiveData(null)
 
     data class FriendMessageData(
-        val from: String,
+        val friendUserId: String,
         val count: Int
     )
 
@@ -48,7 +48,7 @@ class HomeViewModel(private val apiService: PrivateChatService) : ViewModel() {
             messageSummaries
                 .firstOrNull { friendUserId == it.from }
                 ?.let { FriendMessageData(it.from, it.count) }
-                ?: FriendMessageData(from = friendUserId, count = 0)
+                ?: FriendMessageData(friendUserId = friendUserId, count = 0)
         }
     }
 
@@ -72,7 +72,7 @@ class HomeViewModel(private val apiService: PrivateChatService) : ViewModel() {
 @Composable
 fun HomeScreen(
     navController: NavController,
-    onSendMessage: (recipientUserId: String, gotCameraResult: () -> Unit) -> Unit
+    onSendMessage: (gotCameraResult: () -> Unit) -> Unit
 ) {
     val viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
 
@@ -93,10 +93,14 @@ fun HomeScreen(
 
         messageSummaries?.let { summaries ->
             Spacer(modifier = Modifier.height(8.dp))
-            summaries.forEach {
-                CallToAction(it.from, R.drawable.ic_baseline_qr_code_scanner_24) {
-                    onSendMessage(it.from) {
-                        navController.navigate("sendMessage")
+            summaries.forEach { data ->
+                CallToAction(data.friendUserId, R.drawable.ic_baseline_qr_code_scanner_24) {
+                    when (data.count == 0) {
+                        true -> onSendMessage {
+                            val route = "sendMessage/${data.friendUserId}"
+                            navController.navigate(route)
+                        }
+                        false -> navController.navigate("showNextMessage/${data.friendUserId}")
                     }
                 }
             }
