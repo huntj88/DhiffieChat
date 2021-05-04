@@ -1,7 +1,6 @@
 package me.jameshunt.privatechat
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
@@ -10,22 +9,26 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.FileProvider
-import androidx.lifecycle.coroutineScope
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navArgument
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.launch
 import me.jameshunt.privatechat.compose.HomeScreen
 import me.jameshunt.privatechat.compose.LauncherScreen
 import me.jameshunt.privatechat.compose.ManageFriendsScreen
-import me.jameshunt.privatechat.crypto.toIv
-import retrofit2.HttpException
-import java.io.ByteArrayOutputStream
 import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
+
+    private val requestImageCapture = 13423
+    private var photoFile: File? = null
+    private var recipientUserId: String? = null
+    private var gotImageCallback: (() -> Unit)? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,79 +37,65 @@ class MainActivity : AppCompatActivity() {
             val navController = rememberNavController()
             NavHost(navController, startDestination = "launcher") {
                 composable("launcher") { LauncherScreen(navController) }
-                composable("home") { HomeScreen(navController) }
+                composable("home") {
+                    HomeScreen(navController) { selectedUserId: String, function: () -> Unit ->
+                        gotImageCallback = function
+                        recipientUserId = selectedUserId
+                        dispatchTakePictureIntent()
+                    }
+                }
                 composable("manageFriends") { ManageFriendsScreen() }
+                composable(
+                    route = "sendMessage",
+                    arguments = listOf(navArgument("imageFile") { type = NavType.StringType }),
+                    content = {
+                        // todo: use recipientUserId too
+                        val takenImage = BitmapFactory.decodeFile(photoFile!!.absolutePath)
+                        Image(bitmap = takenImage.asImageBitmap(), "")
+                    }
+                )
             }
         }
-//        setContentView(R.layout.activity_main)
-//
-//        val userId = DI.identityManager.getIdentity().toUserId()
-//        val result = QRCodeWriter().encode(userId, BarcodeFormat.QR_CODE, 400, 400)
-//        findViewById<ImageView>(R.id.myQr).setImageBitmap(MatrixToImageWriter.toBitmap(result))
-
-//        lifecycle.coroutineScope.launch {
-//            try {
-//                DI.privateChatService.testStuff()
-//                val relationships = DI.privateChatService.getUserRelationships()
-//
-//                setContent {
-//                    MainUI(
-//                        userId = DI.identityManager.getIdentity().toUserId(),
-//                        relationships = relationships
-//                    )
-//                }
-//            } catch (e: HttpException) {
-//                e.printStackTrace()
-//            }
-////            dispatchTakePictureIntent()
-//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         when (requestCode == requestImageCapture && resultCode == RESULT_OK) {
-            true -> {
-                val takenImage = BitmapFactory.decodeFile(photoFile!!.absolutePath)
-
-                // thumbnail
-                // val imageBitmap = data!!.extras!!.get("data") as Bitmap
-                sendImage(DI.identityManager.getIdentity().toUserId(), takenImage)
-            }
+            true -> gotImageCallback?.let { it() }
             false -> super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
-    private fun sendImage(recipientUserId: String, image: Bitmap) {
-        lifecycle.coroutineScope.launch {
-            try {
-                val stream = ByteArrayOutputStream()
-                image.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                val byteArray = stream.toByteArray()
-                image.recycle()
+//    private fun sendImage(recipientUserId: String, image: Bitmap) {
+//        lifecycle.coroutineScope.launch {
+//            try {
+//                val stream = ByteArrayOutputStream()
+//                image.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+//                val byteArray = stream.toByteArray()
+//                image.recycle()
+//
+//                DI.privateChatService.sendFile(recipientUserId, byteArray)
+//
+//                Log.d("Relationship", DI.privateChatService.getUserRelationships().toString())
+//
+//                val messages = DI.privateChatService.getMessageSummaries()
+//                messages.forEach { Log.d("Message", it.toString()) }
+//
+//                messages.lastOrNull { it.next.fileKey != null }?.let {
+//                    val download = DI.privateChatService.getFile(
+//                        senderUserId = it.from,
+//                        fileKey = it.next.fileKey!!,
+//                        userUserIv = it.next.iv.toIv()
+//                    )
+//
+////                    findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
+//                }
+//            } catch (e: HttpException) {
+//                e.printStackTrace()
+//            }
+//        }
+//    }
 
-                DI.privateChatService.sendFile(recipientUserId, byteArray)
 
-                Log.d("Relationship", DI.privateChatService.getUserRelationships().toString())
-
-                val messages = DI.privateChatService.getMessageSummaries()
-                messages.forEach { Log.d("Message", it.toString()) }
-
-                messages.lastOrNull { it.next.fileKey != null }?.let {
-                    val download = DI.privateChatService.getFile(
-                        senderUserId = it.from,
-                        fileKey = it.next.fileKey!!,
-                        userUserIv = it.next.iv.toIv()
-                    )
-
-//                    findViewById<ImageView>(R.id.myQr).setImageBitmap(download)
-                }
-            } catch (e: HttpException) {
-                e.printStackTrace()
-            }
-        }
-    }
-
-    private val requestImageCapture = 13423
-    private var photoFile: File? = null
     private fun dispatchTakePictureIntent() {
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         photoFile = getPhotoFileUri()

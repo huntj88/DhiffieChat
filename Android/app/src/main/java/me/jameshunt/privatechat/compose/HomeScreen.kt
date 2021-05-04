@@ -63,7 +63,7 @@ class HomeViewModel(private val apiService: PrivateChatService) : ViewModel() {
 }
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, onSendMessage: (recipientUserId: String, gotCameraResult: () -> Unit) -> Unit) {
     val viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
 
     Column(
@@ -85,7 +85,9 @@ fun HomeScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(8.dp))
             summaries.forEach {
                 CallToAction(it.from, R.drawable.ic_baseline_qr_code_scanner_24) {
-                    
+                    onSendMessage(it.from) {
+                        navController.navigate("sendMessage")
+                    }
                 }
             }
 
