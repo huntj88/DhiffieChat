@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.os.Parcelable
 import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.compose.setContent
@@ -12,11 +13,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.content.FileProvider
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.navArgument
 import androidx.navigation.compose.rememberNavController
+import kotlinx.android.parcel.Parcelize
 import me.jameshunt.privatechat.compose.HomeScreen
 import me.jameshunt.privatechat.compose.LauncherScreen
 import me.jameshunt.privatechat.compose.ManageFriendsScreen
@@ -30,8 +30,21 @@ class MainActivity : AppCompatActivity() {
     private var recipientUserId: String? = null
     private var gotImageCallback: (() -> Unit)? = null
 
+    @Parcelize
+    data class State(
+        val photoPath: String?,
+        val recipientUserId: String?
+    ): Parcelable {
+        fun fileFromPathState(): File? = photoPath?.let { File(it) }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        savedInstanceState?.getParcelable<State>("state")?.let {
+            photoFile = it.fileFromPathState()
+            recipientUserId = it.recipientUserId
+        }
+
         DI.setLifecycleComponents(this)
         setContent {
             val navController = rememberNavController()
@@ -45,17 +58,18 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
                 composable("manageFriends") { ManageFriendsScreen() }
-                composable(
-                    route = "sendMessage",
-                    arguments = listOf(navArgument("imageFile") { type = NavType.StringType }),
-                    content = {
-                        // todo: use recipientUserId too
-                        val takenImage = BitmapFactory.decodeFile(photoFile!!.absolutePath)
-                        Image(bitmap = takenImage.asImageBitmap(), "")
-                    }
-                )
+                composable("sendMessage") {
+                    // todo: use recipientUserId too
+                    val takenImage = BitmapFactory.decodeFile(photoFile!!.absolutePath)
+                    Image(bitmap = takenImage.asImageBitmap(), "")
+                }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable("state", State(photoFile?.absolutePath, recipientUserId))
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
