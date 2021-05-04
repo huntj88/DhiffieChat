@@ -65,7 +65,7 @@ class ManageFriendsViewModel(
 
 @Composable
 fun ManageFriendsScreen() {
-    val viewModel: ManageFriendsViewModel = viewModel("", ManageFriendsViewModelFactory())
+    val viewModel: ManageFriendsViewModel = viewModel(factory = ManageFriendsViewModelFactory())
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
 
