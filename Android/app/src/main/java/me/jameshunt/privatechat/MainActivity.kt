@@ -9,11 +9,9 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
+import androidx.navigation.NavController
 import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.navArgument
-import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.*
 import me.jameshunt.privatechat.compose.HomeScreen
 import me.jameshunt.privatechat.compose.LauncherScreen
 import me.jameshunt.privatechat.compose.ManageFriendsScreen
@@ -45,7 +43,7 @@ class MainActivity : AppCompatActivity() {
                     arguments = listOf(navArgument("toUserId") { type = NavType.StringType }),
                     content = {
                         SendMessage(
-                            photoPath = getPhotoFileUri().absolutePath,
+                            photoPath = getPhotoFile().absolutePath,
                             recipientUserId = it.arguments!!.getString("toUserId")!!
                         )
                     })
@@ -70,14 +68,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun dispatchTakePictureIntent() {
         val fpPackage = "me.jameshunt.privatechat.fileprovider"
-        val fileProvider: Uri = FileProvider.getUriForFile(this, fpPackage, getPhotoFileUri())
+        val fileProvider: Uri = FileProvider.getUriForFile(this, fpPackage, getPhotoFile())
         val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider)
 
         startActivityForResult(takePictureIntent, requestImageCapture)
     }
 
-    private fun getPhotoFileUri(): File {
+    private fun getPhotoFile(): File {
         val imageDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "PrivateChat")
 
         // Create the storage directory if it does not exist
@@ -86,7 +84,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Return the file target for the photo based on filename
-        return File(imageDir.path + File.separator.toString() + "temp.jpg")
+        return File("${imageDir.path}${File.separator}temp.jpg")
     }
 
+}
+
+fun NavController.navigateToSendMessage(friendUserId: String) {
+    this.navigate("sendMessage/$friendUserId")
+}
+
+fun NavController.navigateToShowNextMessage(friendUserId: String) {
+    this.navigate("showNextMessage/$friendUserId")
 }

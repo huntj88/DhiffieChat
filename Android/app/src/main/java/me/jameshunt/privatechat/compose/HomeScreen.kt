@@ -16,9 +16,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import me.jameshunt.privatechat.DI
+import me.jameshunt.privatechat.*
 import me.jameshunt.privatechat.PrivateChatApi.*
-import me.jameshunt.privatechat.PrivateChatService
 import me.jameshunt.privatechat.R
 
 class HomeViewModelFactory : ViewModelProvider.Factory {
@@ -97,10 +96,9 @@ fun HomeScreen(
                 CallToAction(data.friendUserId, R.drawable.ic_baseline_qr_code_scanner_24) {
                     when (data.count == 0) {
                         true -> onSendMessage {
-                            val route = "sendMessage/${data.friendUserId}"
-                            navController.navigate(route)
+                            navController.navigateToSendMessage(data.friendUserId)
                         }
-                        false -> navController.navigate("showNextMessage/${data.friendUserId}")
+                        false -> navController.navigateToShowNextMessage(data.friendUserId)
                     }
                 }
             }
