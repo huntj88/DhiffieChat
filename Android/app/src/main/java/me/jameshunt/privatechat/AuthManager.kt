@@ -70,8 +70,4 @@ class AuthManager(
             sharedSecret = sharedSecretKey
         )
     }
-
-    fun getIdentity(): KeyPair {
-        return identityManager.getIdentity()
-    }
 }

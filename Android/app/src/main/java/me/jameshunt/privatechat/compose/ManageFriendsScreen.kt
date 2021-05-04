@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,37 +17,57 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
-import me.jameshunt.privatechat.DI
-import me.jameshunt.privatechat.PrivateChatApi
+import me.jameshunt.privatechat.*
+import me.jameshunt.privatechat.PrivateChatApi.*
 import me.jameshunt.privatechat.R
-import me.jameshunt.privatechat.toUserId
 import net.glxn.qrgen.android.MatrixToImageWriter
 
 
-//@Composable
-//fun FriendRequest(userId: String) {
-//    val coroutineScope = rememberCoroutineScope()
-//
-//    Spacer(modifier = Modifier.height(8.dp))
-//    CallToAction(text = userId) {
-//        coroutineScope.launch {
-//            DI.privateChatService.scanQR(userId)
-//        }
-//        Log.d("clicked", "click")
-//    }
-//}
+class ManageFriendsViewModelFactory : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return ManageFriendsViewModel(DI.privateChatService, DI.identityManager) as T
+    }
+}
 
+class ManageFriendsViewModel(
+    private val apiService: PrivateChatService,
+    identityManager: IdentityManager
+) : ViewModel() {
+
+    private val _relationships: MutableLiveData<Relationships?> = MutableLiveData(null)
+    val relationships: LiveData<Relationships?> = _relationships
+    val userId = identityManager.getIdentity().toUserId()
+
+    init {
+        viewModelScope.launch {
+            refresh()
+        }
+    }
+
+    fun acceptFriendRequest(otherUserId: String) {
+        viewModelScope.launch {
+            _relationships.value = null
+            apiService.scanQR(otherUserId)
+            refresh()
+        }
+    }
+
+    private suspend fun refresh() {
+        _relationships.value = apiService.getUserRelationships()
+    }
+
+}
 
 @Composable
 fun ManageFriendsScreen() {
+    val viewModel: ManageFriendsViewModel = viewModel("", ManageFriendsViewModelFactory())
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
-    var relationships by remember { mutableStateOf<PrivateChatApi.Relationships?>(null) }
-    val coroutineScope = rememberCoroutineScope()
-    val service = DI.privateChatService
 
     Column(
         Modifier
@@ -63,10 +84,13 @@ fun ManageFriendsScreen() {
             Log.d("clicked", "click")
         }
 
+        val relationships = viewModel.relationships.observeAsState().value
+
         relationships?.let {
-            RequestList("Received Requests", it.receivedRequests)
-            RequestList("Sent Requests", it.sentRequests)
-            RequestList("Friends", it.friends)
+            RequestList("Received Requests", it.receivedRequests) { userId ->
+                viewModel.acceptFriendRequest(userId)
+            }
+            RequestList("Sent Requests", it.sentRequests) {}
         } ?: run {
             Spacer(modifier = Modifier.height(8.dp))
             Box(Modifier.align(Alignment.CenterHorizontally)) {
@@ -78,9 +102,7 @@ fun ManageFriendsScreen() {
     if (isShareOpen) {
         Dialog(onDismissRequest = { isShareOpen = false }) {
             Card {
-                // TODO: VIEWMODEL
-                val userId = DI.identityManager.getIdentity().toUserId()
-                QRCodeImage(userId)
+                QRCodeImage(viewModel.userId)
             }
         }
     }
@@ -94,23 +116,15 @@ fun ManageFriendsScreen() {
             }
         }
     }
-
-    // TODO, jank way to get around lint warnings, there is definitely a better way
-    fun load() {
-        coroutineScope.launch {
-            relationships = service.getUserRelationships()
-        }
-    }
-    load()
 }
 
 @Composable
-fun RequestList(title: String, requestList: List<String>) {
+fun RequestList(title: String, requestList: List<String>, ifItemClicked: (userId: String) -> Unit) {
     Spacer(modifier = Modifier.height(24.dp))
     Text(text = title, fontSize = 30.sp)
-    requestList.forEach {
-        CallToAction(text = it, drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
-
+    requestList.forEach { userId ->
+        CallToAction(text = userId, drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
+            ifItemClicked(userId)
         }
     }
 
@@ -122,7 +136,9 @@ fun RequestList(title: String, requestList: List<String>) {
         ) {
             Text(
                 text = "No Results",
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center
             )

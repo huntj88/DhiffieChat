@@ -55,5 +55,5 @@ object DI {
     val identityManager = IdentityManager { LifeCycleAwareComponents.sharedPreferences }
     private val authManager = AuthManager(identityManager, moshi)
 
-    val privateChatService = PrivateChatService(api, authManager)
+    val privateChatService = PrivateChatService(api, authManager, identityManager)
 }

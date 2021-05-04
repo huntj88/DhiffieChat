@@ -14,12 +14,16 @@ import java.security.PublicKey
 import javax.crypto.spec.IvParameterSpec
 
 
-class PrivateChatService(private val api: PrivateChatApi, private val authManager: AuthManager) {
+class PrivateChatService(
+    private val api: PrivateChatApi,
+    private val authManager: AuthManager,
+    private val identityManager: IdentityManager
+) {
 
     suspend fun testStuff(): List<Unit> {
         val message = createIdentity().message
         Log.d("createIdentityMessage", message)
-        val userPublicKey = getUserPublicKey(authManager.getIdentity().toUserId())
+        val userPublicKey = getUserPublicKey(identityManager.getIdentity().toUserId())
         Log.d("user public key", userPublicKey.toUserId())
         return emptyList()
     }
@@ -57,7 +61,7 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
     }
 
     suspend fun getMessages(): List<Message> {
-        val testUserId = authManager.getIdentity().toUserId()
+        val testUserId = identityManager.getIdentity().toUserId()
         return api.getMessages(standardHeaders(), testUserId)
     }
 
@@ -70,7 +74,7 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
 
         return api.createIdentity(
             CreateIdentity(
-                publicKey = authManager.getIdentity().public.toBase64String(),
+                publicKey = identityManager.getIdentity().public.toBase64String(),
                 iv = userToServerCredentials.iv.toBase64String(),
                 encryptedToken = userToServerCredentials.encryptedToken
             )
@@ -86,7 +90,7 @@ class PrivateChatService(private val api: PrivateChatApi, private val authManage
     }
 
     private fun standardHeaders(vararg additionalHeaders: Map<String, String>): Map<String, String> {
-        val standard = mapOf("userId" to authManager.getIdentity().toUserId()) + userToServerHeaders()
+        val standard = mapOf("userId" to identityManager.getIdentity().toUserId()) + userToServerHeaders()
         return additionalHeaders.fold(standard) { acc, next -> acc + next }
     }
 
