@@ -34,15 +34,13 @@ class MainActivity : AppCompatActivity() {
     data class State(
         val photoPath: String?,
         val recipientUserId: String?
-    ): Parcelable {
-        fun fileFromPathState(): File? = photoPath?.let { File(it) }
-    }
+    ) : Parcelable
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        savedInstanceState?.getParcelable<State>("state")?.let {
-            photoFile = it.fileFromPathState()
-            recipientUserId = it.recipientUserId
+        savedInstanceState?.getParcelable<State>("state")?.let { state ->
+            photoFile = state.photoPath?.let { File(it) }
+            recipientUserId = state.recipientUserId
         }
 
         DI.setLifecycleComponents(this)
@@ -111,26 +109,26 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun dispatchTakePictureIntent() {
-        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         photoFile = getPhotoFileUri()
 
-        val fileProvider: Uri =
-            FileProvider.getUriForFile(this, "me.jameshunt.privatechat.fileprovider", photoFile!!)
+        val fpPackage = "me.jameshunt.privatechat.fileprovider"
+        val fileProvider: Uri = FileProvider.getUriForFile(this, fpPackage, photoFile!!)
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
         takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileProvider)
+
         startActivityForResult(takePictureIntent, requestImageCapture)
     }
 
     private fun getPhotoFileUri(): File {
-        val mediaStorageDir =
-            File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "PrivateChat")
+        val imageDir = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "PrivateChat")
 
         // Create the storage directory if it does not exist
-        if (!mediaStorageDir.exists() && !mediaStorageDir.mkdirs()) {
+        if (!imageDir.exists() && !imageDir.mkdirs()) {
             Log.d("PrivateChat", "failed to create directory")
         }
 
         // Return the file target for the photo based on filename
-        return File(mediaStorageDir.path + File.separator.toString() + "temp.jpg")
+        return File(imageDir.path + File.separator.toString() + "temp.jpg")
     }
 
 }
