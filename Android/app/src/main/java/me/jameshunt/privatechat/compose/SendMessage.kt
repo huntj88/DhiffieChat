@@ -19,7 +19,7 @@ import java.io.ByteArrayOutputStream
 
 @Composable
 fun SendMessage(photoPath: String, recipientUserId: String) {
-    val coroutineScopeQ = rememberCoroutineScope()
+    val coroutineScope = rememberCoroutineScope()
     val takenImage = BitmapFactory.decodeFile(photoPath)
     var text: String by remember { mutableStateOf("") }
 
@@ -36,7 +36,7 @@ fun SendMessage(photoPath: String, recipientUserId: String) {
                 .fillMaxWidth()
                 .requiredHeight(100.dp)
                 .padding(16.dp),
-            onClick = { coroutineScopeQ.sendImage(recipientUserId, takenImage) },
+            onClick = { coroutineScope.sendImage(recipientUserId, takenImage) },
             content = { Text(text = "Confirm") }
         )
     }

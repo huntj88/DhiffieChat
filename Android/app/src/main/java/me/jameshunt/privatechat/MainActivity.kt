@@ -47,8 +47,8 @@ class MainActivity : AppCompatActivity() {
             NavHost(navController, startDestination = "launcher") {
                 composable("launcher") { LauncherScreen(navController) }
                 composable("home") {
-                    HomeScreen(navController) { selectedUserId: String, function: () -> Unit ->
-                        gotImageCallback = function
+                    HomeScreen(navController) { selectedUserId: String, gotImage: () -> Unit ->
+                        gotImageCallback = gotImage
                         recipientUserId = selectedUserId
                         dispatchTakePictureIntent()
                     }
