@@ -35,16 +35,16 @@ resource "aws_dynamodb_table" "user-dynamodb-table" {
   }
 }
 
-resource "aws_dynamodb_table" "chat-dynamodb-table" {
-  name           = "Chat"
+resource "aws_dynamodb_table" "message-dynamodb-table" {
+  name           = "Message"
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
-  hash_key       = "chatId"
+  hash_key       = "to"
   range_key      = "messageCreatedAt"
 
   attribute {
-    name = "chatId"
+    name = "to"
     type = "S"
   }
 
@@ -144,7 +144,7 @@ resource "aws_iam_policy" "function_policy" {
         Effect   = "Allow"
         Resource = [
           aws_dynamodb_table.user-dynamodb-table.arn,
-          aws_dynamodb_table.chat-dynamodb-table.arn
+          aws_dynamodb_table.message-dynamodb-table.arn
         ]
       }
     ]
@@ -214,9 +214,9 @@ module "get_file" {
   content_handling = "CONVERT_TO_BINARY"
 }
 
-module "get_messages" {
+module "get_message_summaries" {
   source = "../tfmodules/provisioned-lambda"
-  function_name = "GetMessages"
+  function_name = "GetMessageSummaries"
   gateway_execution_arn = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id = aws_api_gateway_rest_api.chat_gateway.id
   gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
@@ -244,7 +244,7 @@ resource "aws_api_gateway_deployment" "chat_deployment" {
       module.scan_qr.redeploy_hash,
       module.send_file.redeploy_hash,
       module.get_file.redeploy_hash,
-      module.get_messages.redeploy_hash,
+      module.get_message_summaries.redeploy_hash,
       module.get_user_relationships.redeploy_hash,
     ]))
   }

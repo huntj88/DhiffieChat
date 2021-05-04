@@ -24,18 +24,17 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 ObjectMetadata()
             )
 
-            val message = Item.fromMap(
-                mapOf(
-                    "chatId" to chatId(identity.userId, params.userId),
-                    "messageCreatedAt" to DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
-                    "from" to identity.userId,
-                    "to" to params.userId,
-                    "fileKey" to key,
-                    "iv" to params.userUserIv,
-                )
+            val message = Message(
+                to = params.userId,
+                from = identity.userId,
+                messageCreatedAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+                text = null, // TODO
+                fileKey = key,
+                iv = params.userUserIv,
+                authedUrl = null
             )
 
-            Singletons.dynamoDB.getTable("Chat").putItem(message)
+            Singletons.dynamoDB.getTable("Chat").putItem(message.toItem())
         }
     }
 }

@@ -85,14 +85,14 @@ class MainActivity : AppCompatActivity() {
 
                 Log.d("Relationship", DI.privateChatService.getUserRelationships().toString())
 
-                val messages = DI.privateChatService.getMessages()
+                val messages = DI.privateChatService.getMessageSummaries()
                 messages.forEach { Log.d("Message", it.toString()) }
 
-                messages.lastOrNull { it.fileKey != null }?.let {
+                messages.lastOrNull { it.next.fileKey != null }?.let {
                     val download = DI.privateChatService.getFile(
                         senderUserId = it.from,
-                        fileKey = it.fileKey!!,
-                        userUserIv = it.iv.toIv()
+                        fileKey = it.next.fileKey!!,
+                        userUserIv = it.next.iv.toIv()
                     )
 
 //                    findViewById<ImageView>(R.id.myQr).setImageBitmap(download)

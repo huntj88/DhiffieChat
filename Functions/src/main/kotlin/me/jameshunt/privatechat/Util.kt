@@ -146,14 +146,3 @@ fun ByteArray.toS3Key(): String = MessageDigest
     .digest(this)
     .let { Base64.getEncoder().encodeToString(it) }
     .replace("/", "_") // don't make folders
-
-fun chatId(firstUserId: String, secondUserId: String): String =
-    listOf(firstUserId, secondUserId)
-        .sorted()
-        .joinToString("")
-        .let { sortedConcatIdentity ->
-            MessageDigest
-                .getInstance("SHA-256")
-                .digest(sortedConcatIdentity.toByteArray())
-        }
-        .let { Base64.getEncoder().encodeToString(it) }

@@ -60,9 +60,8 @@ class PrivateChatService(
         return BitmapFactory.decodeByteArray(file, 0, file.size)
     }
 
-    suspend fun getMessages(): List<Message> {
-        val testUserId = identityManager.getIdentity().toUserId()
-        return api.getMessages(standardHeaders(), testUserId)
+    suspend fun getMessageSummaries(): List<MessageFromUserSummary> {
+        return api.getMessageSummaries(standardHeaders())
     }
 
     suspend fun getUserRelationships(): Relationships {
@@ -142,20 +141,24 @@ interface PrivateChatApi {
         @Query("fileKey") fileKey: String
     ): ResponseBody
 
-    data class Message(
-        val messageCreatedAt: String,
+    data class MessageFromUserSummary(
         val from: String,
-        val to: String,
-        val text: String?,
-        val fileKey: String?,
-        val iv: String
+        val count: Int,
+        val next: Message
     )
 
-    @GET("GetMessages")
-    suspend fun getMessages(
-        @HeaderMap headers: Map<String, String>,
-        @Query("userId") userId: String
-    ): List<Message>
+    data class Message(
+        val to: String,
+        val from: String,
+        val messageCreatedAt: String,
+        val text: String?,
+        val fileKey: String?,
+        val iv: String,
+        val authedUrl: String?
+    )
+
+    @GET("GetMessageSummaries")
+    suspend fun getMessageSummaries(@HeaderMap headers: Map<String, String>): List<MessageFromUserSummary>
 
     data class Relationships(
         val sentRequests: List<String>,
