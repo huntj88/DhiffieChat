@@ -4,14 +4,10 @@ import com.amazonaws.HttpMethod
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
-import com.amazonaws.services.s3.model.ObjectMetadata
-import me.jameshunt.dhiffiechat.crypto.toS3Key
-import java.io.ByteArrayInputStream
 import java.net.URL
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 import java.util.*
 
 
@@ -20,11 +16,11 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
         return awsTransformAuthed<Unit, UserUserQueryParams, SendFileResponse>(request, context) { _, params, identity ->
             // TODO: check if friends
 
-            val generatePreSignedUrlRequest = GeneratePresignedUrlRequest("encrypted-file-bucket-z00001", params.s3Key)
+            val signedUrlRequest = GeneratePresignedUrlRequest("encrypted-file-bucket-z00001", params.s3Key)
                 .withMethod(HttpMethod.PUT)
-                .withExpiration(Date.from(Instant.now().plus(4, ChronoUnit.MINUTES)))
+                .withExpiration(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
 
-            val url: URL = Singletons.s3.generatePresignedUrl(generatePreSignedUrlRequest)
+            val signedUrl: URL = Singletons.s3.generatePresignedUrl(signedUrlRequest)
 
             val message = Message(
                 to = params.userId,
@@ -38,7 +34,7 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 
             Singletons.dynamoDB.getTable("Message").putItem(message.toItem())
 
-            SendFileResponse(url.toString())
+            SendFileResponse(signedUrl.toString())
         }
     }
 }

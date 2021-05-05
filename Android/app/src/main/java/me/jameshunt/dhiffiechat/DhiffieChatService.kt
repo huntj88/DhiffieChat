@@ -5,10 +5,6 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import me.jameshunt.dhiffiechat.DhiffieChatApi.*
 import me.jameshunt.dhiffiechat.crypto.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.ResponseBody
 import retrofit2.http.*
 import java.net.URL
 import java.security.PublicKey
@@ -54,14 +50,17 @@ class DhiffieChatService(
         )
 
         @Suppress("BlockingMethodInNonBlockingContext")
-        s3Service.uploadToS3(encryptedImage, URL(response.uploadUrl))
+        s3Service.upload(encryptedImage, URL(response.uploadUrl))
     }
 
     suspend fun getDecryptedFile(senderUserId: String, fileKey: String, userUserIv: IvParameterSpec): ByteArray {
         val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), senderUserId).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
-        val encryptedBody = api.getFile(standardHeaders(), fileKey).bytes()
+        val s3Url = api.getFile(standardHeaders(), fileKey).s3Url
+        @Suppress("BlockingMethodInNonBlockingContext")
+        val encryptedBody = s3Service.download(URL(s3Url))
+
         return AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, userUserIv)
     }
 
@@ -143,12 +142,14 @@ interface DhiffieChatApi {
         @Query("userId") recipientUserId: String,
         @Query("userUserIv") iv: String
     ): SendFileResponse
+    
+    data class GetFileResponse(val s3Url: String)
 
     @GET("GetFile")
     suspend fun getFile(
         @HeaderMap headers: Map<String, String>,
         @Query("fileKey") fileKey: String
-    ): ResponseBody
+    ): GetFileResponse
 
     data class MessageFromUserSummary(
         val from: String,

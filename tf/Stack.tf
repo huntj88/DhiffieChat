@@ -200,7 +200,6 @@ module "send_file" {
   gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
   http_method              = "POST"
   role                     = aws_iam_role.function_role.arn
-  content_handling         = "CONVERT_TO_BINARY"
 }
 
 module "get_file" {
@@ -211,7 +210,6 @@ module "get_file" {
   gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
   http_method              = "GET"
   role                     = aws_iam_role.function_role.arn
-  content_handling         = "CONVERT_TO_BINARY"
 }
 
 module "get_message_summaries" {
