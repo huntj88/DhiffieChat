@@ -36,7 +36,7 @@ data class Message(
     val from: String,
     val messageCreatedAt: String,
     val text: String?,
-    val fileKey: String?,
+    val fileKey: String,
     val iv: String,
     val authedUrl: String?
 )

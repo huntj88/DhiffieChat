@@ -1,19 +1,28 @@
 package me.jameshunt.dhiffiechat
 
 import android.content.SharedPreferences
+import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
 import okhttp3.logging.HttpLoggingInterceptor
+import okio.BufferedSink
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.lang.ref.WeakReference
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import kotlin.math.sin
 
 
 object DI {
@@ -55,9 +64,9 @@ object DI {
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
-    private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
     val identityManager = IdentityManager { LifeCycleAwareComponents.sharedPreferences.get()!! }
     private val authManager = AuthManager(identityManager, moshi)
-
-    val dhiffieChatService = DhiffieChatService(api, authManager, identityManager)
+    private val s3Service = S3Service(okhttp)
+    private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
+    val dhiffieChatService = DhiffieChatService(api, authManager, identityManager, s3Service)
 }

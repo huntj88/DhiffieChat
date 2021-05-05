@@ -40,7 +40,7 @@ class ShowNextMessageViewModel(
 
             _imageByteArray.value = apiService.getDecryptedFile(
                 senderUserId = message.from,
-                fileKey = message.fileKey!!,
+                fileKey = message.fileKey,
                 userUserIv = message.iv.toIv()
             )
         }

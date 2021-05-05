@@ -7,7 +7,7 @@ resource "aws_lambda_function" "lambda_func" {
   role = var.role
   runtime = "java8"
   timeout = 30
-  memory_size = 512
+  memory_size = 1024
 }
 
 resource "aws_api_gateway_resource" "gateway_resource" {

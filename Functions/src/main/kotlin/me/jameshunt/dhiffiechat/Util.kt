@@ -141,8 +141,3 @@ fun validateAndGetIdentity(request: Map<String, Any?>): Identity {
 
 class Unauthorized : Exception()
 
-fun ByteArray.toS3Key(): String = MessageDigest
-    .getInstance("SHA-256")
-    .digest(this)
-    .let { Base64.getEncoder().encodeToString(it) }
-    .replace("/", "_") // don't make folders

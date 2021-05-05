@@ -10,6 +10,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import retrofit2.http.*
+import java.net.URL
 import java.security.PublicKey
 import javax.crypto.spec.IvParameterSpec
 
@@ -17,7 +18,8 @@ import javax.crypto.spec.IvParameterSpec
 class DhiffieChatService(
     private val api: DhiffieChatApi,
     private val authManager: AuthManager,
-    private val identityManager: IdentityManager
+    private val identityManager: IdentityManager,
+    private val s3Service: S3Service
 ) {
 
     suspend fun initialize() {
@@ -36,20 +38,23 @@ class DhiffieChatService(
         )
     }
 
-    suspend fun sendFile(recipientUserId: String, image: ByteArray): ResponseMessage {
+    suspend fun sendFile(recipientUserId: String, image: ByteArray) {
         val recipientPublicKey =
             api.getUserPublicKey(standardHeaders(), recipientUserId).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
 
         val encryptedImage = AESCrypto.encrypt(image, userToUserCredentials.sharedSecret, userToUserCredentials.iv)
-        val contentType = "application/octet-stream".toMediaTypeOrNull()
 
-        return api.sendFile(
+        val response = api.sendFile(
             headers = standardHeaders(),
-            encryptedFile = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size),
+//            encryptedFile = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size),
             recipientUserId = recipientUserId,
-            iv = userToUserCredentials.iv.toBase64String()
+            iv = userToUserCredentials.iv.toBase64String(),
+            s3Key = encryptedImage.toS3Key()
         )
+
+        @Suppress("BlockingMethodInNonBlockingContext")
+        s3Service.uploadToS3(encryptedImage, URL(response.uploadUrl))
     }
 
     suspend fun getDecryptedFile(senderUserId: String, fileKey: String, userUserIv: IvParameterSpec): ByteArray {
@@ -129,13 +134,15 @@ interface DhiffieChatApi {
     @POST("ScanQR")
     suspend fun scanQR(@HeaderMap headers: Map<String, String>, @Body qr: QR): ResponseMessage
 
+    data class SendFileResponse(val uploadUrl: String)
+
     @POST("SendFile")
     suspend fun sendFile(
         @HeaderMap headers: Map<String, String>,
-        @Body encryptedFile: RequestBody,
+        @Query("s3Key") s3Key: String,
         @Query("userId") recipientUserId: String,
         @Query("userUserIv") iv: String
-    ): ResponseMessage
+    ): SendFileResponse
 
     @GET("GetFile")
     suspend fun getFile(
@@ -154,7 +161,7 @@ interface DhiffieChatApi {
         val from: String,
         val messageCreatedAt: String,
         val text: String?,
-        val fileKey: String?,
+        val fileKey: String,
         val iv: String,
         val authedUrl: String?
     )
