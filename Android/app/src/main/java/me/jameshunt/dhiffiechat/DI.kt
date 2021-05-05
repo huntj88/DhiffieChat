@@ -19,6 +19,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.lang.ref.WeakReference
+import java.net.URL
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
@@ -46,6 +47,13 @@ object DI {
 
             @FromJson
             fun fromJson(string: String): Instant = Instant.parse(string)
+        })
+        .add(object {
+            @ToJson
+            fun toJson(url: URL): String = url.toString()
+
+            @FromJson
+            fun fromJson(string: String): URL = URL(string)
         })
         .addLast(KotlinJsonAdapterFactory())
         .build()

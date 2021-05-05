@@ -39,28 +39,34 @@ class DhiffieChatService(
             api.getUserPublicKey(standardHeaders(), recipientUserId).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
 
-        val encryptedImage = AESCrypto.encrypt(image, userToUserCredentials.sharedSecret, userToUserCredentials.iv)
+        val encryptedImage = AESCrypto.encrypt(
+            input = image,
+            key = userToUserCredentials.sharedSecret,
+            iv = userToUserCredentials.iv
+        )
 
         val response = api.sendFile(
             headers = standardHeaders(),
-//            encryptedFile = encryptedImage.toRequestBody(contentType, 0, encryptedImage.size),
             recipientUserId = recipientUserId,
             iv = userToUserCredentials.iv.toBase64String(),
             s3Key = encryptedImage.toS3Key()
         )
 
-        @Suppress("BlockingMethodInNonBlockingContext")
-        s3Service.upload(encryptedImage, URL(response.uploadUrl))
+        s3Service.upload(encryptedImage, response.uploadUrl)
     }
 
-    suspend fun getDecryptedFile(senderUserId: String, fileKey: String, userUserIv: IvParameterSpec): ByteArray {
-        val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), senderUserId).publicKey.toPublicKey()
+    suspend fun getDecryptedFile(
+        senderUserId: String,
+        fileKey: String,
+        userUserIv: IvParameterSpec
+    ): ByteArray {
+        val otherUserPublicKey =
+            api.getUserPublicKey(standardHeaders(), senderUserId).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
         val s3Url = api.getFile(standardHeaders(), fileKey).s3Url
-        @Suppress("BlockingMethodInNonBlockingContext")
-        val encryptedBody = s3Service.download(URL(s3Url))
 
+        val encryptedBody = s3Service.download(s3Url)
         return AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, userUserIv)
     }
 
@@ -73,7 +79,8 @@ class DhiffieChatService(
     }
 
     private suspend fun createIdentity(): ResponseMessage {
-        val userToServerCredentials = authManager.userToServerAuth(serverPublicKey = getServerPublicKey())
+        val userToServerCredentials =
+            authManager.userToServerAuth(serverPublicKey = getServerPublicKey())
 
         return api.createIdentity(
             CreateIdentity(
@@ -89,11 +96,15 @@ class DhiffieChatService(
     }
 
     private suspend fun getUserPublicKey(userId: String): PublicKey {
-        return api.getUserPublicKey(headers = standardHeaders(), userId = userId).publicKey.toPublicKey()
+        return api.getUserPublicKey(
+            headers = standardHeaders(),
+            userId = userId
+        ).publicKey.toPublicKey()
     }
 
     private fun standardHeaders(vararg additionalHeaders: Map<String, String>): Map<String, String> {
-        val standard = mapOf("userId" to identityManager.getIdentity().toUserId()) + userToServerHeaders()
+        val toUserId = identityManager.getIdentity().toUserId()
+        val standard = mapOf("userId" to toUserId) + userToServerHeaders()
         return additionalHeaders.fold(standard) { acc, next -> acc + next }
     }
 
@@ -133,7 +144,7 @@ interface DhiffieChatApi {
     @POST("ScanQR")
     suspend fun scanQR(@HeaderMap headers: Map<String, String>, @Body qr: QR): ResponseMessage
 
-    data class SendFileResponse(val uploadUrl: String)
+    data class SendFileResponse(val uploadUrl: URL)
 
     @POST("SendFile")
     suspend fun sendFile(
@@ -142,8 +153,8 @@ interface DhiffieChatApi {
         @Query("userId") recipientUserId: String,
         @Query("userUserIv") iv: String
     ): SendFileResponse
-    
-    data class GetFileResponse(val s3Url: String)
+
+    data class GetFileResponse(val s3Url: URL)
 
     @GET("GetFile")
     suspend fun getFile(
@@ -164,7 +175,7 @@ interface DhiffieChatApi {
         val text: String?,
         val fileKey: String,
         val iv: String,
-        val authedUrl: String?
+        val authedUrl: URL?
     )
 
     @GET("GetMessageSummaries")

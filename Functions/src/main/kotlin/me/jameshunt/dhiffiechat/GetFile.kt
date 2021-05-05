@@ -22,7 +22,7 @@ class GetFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 
             val signedUrl: URL = Singletons.s3.generatePresignedUrl(signedUrlRequest)
 
-            GetFileResponse(s3Url = signedUrl.toString())
+            GetFileResponse(s3Url = signedUrl)
         }
     }
 }
@@ -32,5 +32,5 @@ data class GetFileQueryParams(
 )
 
 data class GetFileResponse(
-    val s3Url: String
+    val s3Url: URL
 )

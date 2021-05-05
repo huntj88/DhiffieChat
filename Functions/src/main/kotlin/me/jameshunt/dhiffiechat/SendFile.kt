@@ -34,7 +34,7 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 
             Singletons.dynamoDB.getTable("Message").putItem(message.toItem())
 
-            SendFileResponse(signedUrl.toString())
+            SendFileResponse(signedUrl)
         }
     }
 }
@@ -45,4 +45,4 @@ data class UserUserQueryParams(
     val s3Key: String
 )
 
-data class SendFileResponse(val uploadUrl: String)
+data class SendFileResponse(val uploadUrl: URL)

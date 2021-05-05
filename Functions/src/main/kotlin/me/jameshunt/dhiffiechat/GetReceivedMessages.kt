@@ -3,6 +3,7 @@ package me.jameshunt.dhiffiechat
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import java.net.URL
 
 class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
@@ -38,7 +39,7 @@ data class Message(
     val text: String?,
     val fileKey: String,
     val iv: String,
-    val authedUrl: String?
+    val authedUrl: URL?
 )
 
 fun Item.toMessage(): Message {
@@ -49,7 +50,7 @@ fun Item.toMessage(): Message {
         text = this.getString("text"),
         fileKey = this.getString("fileKey"),
         iv = this.getString("iv"),
-        authedUrl = this.getString("authedUrl")
+        authedUrl = this.getString("authedUrl")?.let { URL(it) }
     )
 }
 
@@ -61,7 +62,7 @@ fun Message.toItem(): Item {
         "text" to text,
         "fileKey" to fileKey,
         "iv" to iv,
-        "authedUrl" to authedUrl
+        "authedUrl" to authedUrl?.toString()
     )
 
     return Item.fromMap(map)
