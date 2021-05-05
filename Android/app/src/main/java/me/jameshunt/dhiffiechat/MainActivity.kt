@@ -12,10 +12,7 @@ import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
-import me.jameshunt.dhiffiechat.compose.HomeScreen
-import me.jameshunt.dhiffiechat.compose.LauncherScreen
-import me.jameshunt.dhiffiechat.compose.ManageFriendsScreen
-import me.jameshunt.dhiffiechat.compose.SendMessage
+import me.jameshunt.dhiffiechat.compose.*
 import java.io.File
 
 
@@ -52,8 +49,7 @@ class MainActivity : AppCompatActivity() {
                     arguments = listOf(navArgument("fromUserId") { type = NavType.StringType }),
                     content = {
                         val userId = it.arguments!!.getString("fromUserId")!!
-                        Log.d("showNextMessage", userId)
-                        TODO()
+                        ShowNextMessageScreen(userId)
                     })
             }
         }

@@ -52,13 +52,12 @@ class DhiffieChatService(
         )
     }
 
-    suspend fun getFile(senderUserId: String, fileKey: String, userUserIv: IvParameterSpec): Bitmap {
+    suspend fun getDecryptedFile(senderUserId: String, fileKey: String, userUserIv: IvParameterSpec): ByteArray {
         val otherUserPublicKey = api.getUserPublicKey(standardHeaders(), senderUserId).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
         val encryptedBody = api.getFile(standardHeaders(), fileKey).bytes()
-        val file = AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, userUserIv)
-        return BitmapFactory.decodeByteArray(file, 0, file.size)
+        return AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, userUserIv)
     }
 
     suspend fun getMessageSummaries(): List<MessageFromUserSummary> {
@@ -102,6 +101,8 @@ class DhiffieChatService(
         )
     }
 }
+
+fun ByteArray.toBitmap(): Bitmap = BitmapFactory.decodeByteArray(this, 0, this.size)
 
 interface DhiffieChatApi {
     data class PublicKeyResponse(val publicKey: String)
