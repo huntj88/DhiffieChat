@@ -3,7 +3,7 @@ resource "aws_lambda_function" "lambda_func" {
   function_name = var.function_name
   filename = "../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
   source_code_hash = filebase64sha256("../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
-  handler = "me.jameshunt.privatechat.${var.function_name}::handleRequest"
+  handler = "me.jameshunt.dhiffiechat.${var.function_name}::handleRequest"
   role = var.role
   runtime = "java8"
   timeout = 30
