@@ -174,8 +174,7 @@ interface DhiffieChatApi {
         val text: String?,
         val fileKey: String,
         val iv: String,
-        val signedS3Url: URL?,
-        val signedS3UrlExpiration: Instant?
+        val signedS3Url: URL?
     )
 
     @GET("GetMessageSummaries")
