@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import java.net.URL
+import java.time.Instant
 
 class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
@@ -14,6 +15,8 @@ class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 .query("to", identity.userId)
                 .asIterable()
                 .map { it.toMessage() }
+                // filter by file upload finished, plan is to use s3 event trigger which
+                // kicks off lambda to set upload finished, and send notification
                 .groupBy { it.from }
                 .map { (from, messagesFromOneUser) ->
                     MessageFromUserSummary(
@@ -35,22 +38,24 @@ data class MessageFromUserSummary(
 data class Message(
     val to: String,
     val from: String,
-    val messageCreatedAt: String,
+    val messageCreatedAt: Instant,
     val text: String?,
     val fileKey: String,
     val iv: String,
-    val authedUrl: URL?
+    val signedS3Url: URL?,
+    val signedS3UrlExpiration: Instant?
 )
 
 fun Item.toMessage(): Message {
     return Message(
         to = this.getString("to"),
         from = this.getString("from"),
-        messageCreatedAt = this.getString("messageCreatedAt"),
+        messageCreatedAt = Instant.parse(this.getString("messageCreatedAt")),
         text = this.getString("text"),
         fileKey = this.getString("fileKey"),
         iv = this.getString("iv"),
-        authedUrl = this.getString("authedUrl")?.let { URL(it) }
+        signedS3Url = this.getString("signedS3Url")?.let { URL(it) },
+        signedS3UrlExpiration = this.getString("signedS3UrlExpiration")?.let { Instant.parse(it) },
     )
 }
 
@@ -58,11 +63,12 @@ fun Message.toItem(): Item {
     val map = mapOf(
         "to" to to,
         "from" to from,
-        "messageCreatedAt" to messageCreatedAt,
+        "messageCreatedAt" to messageCreatedAt.format(),
         "text" to text,
         "fileKey" to fileKey,
         "iv" to iv,
-        "authedUrl" to authedUrl?.toString()
+        "signedS3Url" to signedS3Url?.toString(),
+        "signedS3UrlExpiration" to signedS3UrlExpiration?.format()
     )
 
     return Item.fromMap(map)

@@ -6,7 +6,6 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
 import java.net.URL
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
 
@@ -25,11 +24,12 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
             val message = Message(
                 to = params.userId,
                 from = identity.userId,
-                messageCreatedAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+                messageCreatedAt = Instant.now(),
                 text = null, // TODO
                 fileKey = params.s3Key,
                 iv = params.userUserIv,
-                authedUrl = null
+                signedS3Url = null,
+                signedS3UrlExpiration = null
             )
 
             Singletons.dynamoDB.getTable("Message").putItem(message.toItem())

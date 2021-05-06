@@ -15,7 +15,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DI
 import me.jameshunt.dhiffiechat.DhiffieChatService
-import me.jameshunt.dhiffiechat.crypto.toIv
 import me.jameshunt.dhiffiechat.toBitmap
 
 class ShowNextMessageViewModelFactory : ViewModelProvider.Factory {
@@ -38,11 +37,7 @@ class ShowNextMessageViewModel(
                 .first { it.from == fromUserId }
                 .next
 
-            _imageByteArray.value = apiService.getDecryptedFile(
-                senderUserId = message.from,
-                fileKey = message.fileKey,
-                userUserIv = message.iv.toIv()
-            )
+            _imageByteArray.value = apiService.getDecryptedFile(message)
         }
     }
 }

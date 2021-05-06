@@ -6,6 +6,8 @@ import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.dhiffiechat.crypto.toIv
 import java.security.MessageDigest
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 data class GatewayResponse(
@@ -141,3 +143,6 @@ fun validateAndGetIdentity(request: Map<String, Any?>): Identity {
 
 class Unauthorized : Exception()
 
+fun Instant.format(): String {
+    return DateTimeFormatter.ISO_INSTANT.format(this)
+}

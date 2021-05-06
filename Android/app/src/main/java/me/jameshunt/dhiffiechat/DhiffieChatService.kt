@@ -8,7 +8,8 @@ import me.jameshunt.dhiffiechat.crypto.*
 import retrofit2.http.*
 import java.net.URL
 import java.security.PublicKey
-import javax.crypto.spec.IvParameterSpec
+import java.time.Instant
+import java.time.format.DateTimeFormatter
 
 
 class DhiffieChatService(
@@ -55,19 +56,16 @@ class DhiffieChatService(
         s3Service.upload(encryptedImage, response.uploadUrl)
     }
 
-    suspend fun getDecryptedFile(
-        senderUserId: String,
-        fileKey: String,
-        userUserIv: IvParameterSpec
-    ): ByteArray {
+    suspend fun getDecryptedFile(message: Message): ByteArray {
         val otherUserPublicKey =
-            api.getUserPublicKey(standardHeaders(), senderUserId).publicKey.toPublicKey()
+            api.getUserPublicKey(standardHeaders(), message.from).publicKey.toPublicKey()
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
-        val s3Url = api.getFile(standardHeaders(), fileKey).s3Url
+        val timeSent = DateTimeFormatter.ISO_INSTANT.format(message.messageCreatedAt)
+        val s3Url = api.getFile(standardHeaders(), message.fileKey, timeSent).s3Url
 
         val encryptedBody = s3Service.download(s3Url)
-        return AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, userUserIv)
+        return AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, message.iv.toIv())
     }
 
     suspend fun getMessageSummaries(): List<MessageFromUserSummary> {
@@ -159,7 +157,8 @@ interface DhiffieChatApi {
     @GET("GetFile")
     suspend fun getFile(
         @HeaderMap headers: Map<String, String>,
-        @Query("fileKey") fileKey: String
+        @Query("fileKey") fileKey: String,
+        @Query("timeSent") timeSent: String
     ): GetFileResponse
 
     data class MessageFromUserSummary(
@@ -171,11 +170,12 @@ interface DhiffieChatApi {
     data class Message(
         val to: String,
         val from: String,
-        val messageCreatedAt: String,
+        val messageCreatedAt: Instant,
         val text: String?,
         val fileKey: String,
         val iv: String,
-        val authedUrl: URL?
+        val signedS3Url: URL?,
+        val signedS3UrlExpiration: Instant?
     )
 
     @GET("GetMessageSummaries")
