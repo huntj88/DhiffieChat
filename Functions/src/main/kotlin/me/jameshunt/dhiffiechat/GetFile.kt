@@ -7,15 +7,12 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
 import java.net.URL
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
-
 
 class GetFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransformAuthed<Unit, GetFileQueryParams, GetFileResponse>(request, context) { _, params, identity ->
-            // TODO: check if has access to file
             context.logger.log("params: $params")
             val messageTable = Singletons.dynamoDB.getTable("Message")
 

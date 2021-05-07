@@ -36,8 +36,7 @@ class DhiffieChatService(
     }
 
     suspend fun sendFile(recipientUserId: String, image: ByteArray) {
-        val recipientPublicKey =
-            api.getUserPublicKey(standardHeaders(), recipientUserId).publicKey.toPublicKey()
+        val recipientPublicKey = getUserPublicKey(recipientUserId)
         val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
 
         val encryptedImage = AESCrypto.encrypt(
@@ -57,15 +56,18 @@ class DhiffieChatService(
     }
 
     suspend fun getDecryptedFile(message: Message): ByteArray {
-        val otherUserPublicKey =
-            api.getUserPublicKey(standardHeaders(), message.from).publicKey.toPublicKey()
+        val otherUserPublicKey = getUserPublicKey(message.from)
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
         val timeSent = DateTimeFormatter.ISO_INSTANT.format(message.messageCreatedAt)
         val s3Url = api.getFile(standardHeaders(), message.fileKey, timeSent).s3Url
 
         val encryptedBody = s3Service.download(s3Url)
-        return AESCrypto.decrypt(encryptedBody, userToUserCredentials.sharedSecret, message.iv.toIv())
+        return AESCrypto.decrypt(
+            cipherInput = encryptedBody,
+            key = userToUserCredentials.sharedSecret,
+            iv = message.iv.toIv()
+        )
     }
 
     suspend fun getMessageSummaries(): List<MessageFromUserSummary> {
@@ -94,10 +96,16 @@ class DhiffieChatService(
     }
 
     private suspend fun getUserPublicKey(userId: String): PublicKey {
-        return api.getUserPublicKey(
-            headers = standardHeaders(),
-            userId = userId
-        ).publicKey.toPublicKey()
+        return api.getUserPublicKey(headers = standardHeaders(), userId = userId)
+            .publicKey
+            .toPublicKey()
+            .also {
+                // TODO: maintain a list of your friends locally to validate against (MiTM), if not in list then abort.
+                // verify that public key given matches whats expected
+                if (it.toUserId() != userId) {
+                    throw IllegalStateException("Incorrect public key given for user: $userId")
+                }
+            }
     }
 
     private fun standardHeaders(vararg additionalHeaders: Map<String, String>): Map<String, String> {

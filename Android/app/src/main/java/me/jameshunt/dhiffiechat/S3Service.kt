@@ -10,6 +10,7 @@ import kotlin.coroutines.suspendCoroutine
 class S3Service(private val okHttpClient: OkHttpClient) {
 
     suspend fun upload(byteArray: ByteArray, url: URL) {
+        // TODO: probably not the right place for this? Remove metadata from files
         val request = Request.Builder()
             .url(url)
             .put(byteArray.toRequestBody("application/octet-stream".toMediaTypeOrNull()))

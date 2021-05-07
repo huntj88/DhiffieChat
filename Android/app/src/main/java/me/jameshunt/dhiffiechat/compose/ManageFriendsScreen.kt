@@ -49,14 +49,6 @@ class ManageFriendsViewModel(
         }
     }
 
-    fun acceptFriendRequest(otherUserId: String) {
-        viewModelScope.launch {
-            _relationships.value = null
-            apiService.scanQR(otherUserId)
-            refresh()
-        }
-    }
-
     private suspend fun refresh() {
         _relationships.value = apiService.getUserRelationships()
     }
@@ -88,7 +80,7 @@ fun ManageFriendsScreen() {
 
         relationships?.let {
             RequestList("Received Requests", it.receivedRequests) { userId ->
-                viewModel.acceptFriendRequest(userId)
+                isScanOpen = true
             }
             RequestList("Sent Requests", it.sentRequests) {}
         } ?: run {
