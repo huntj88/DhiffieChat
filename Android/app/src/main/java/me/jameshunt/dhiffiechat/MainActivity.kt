@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity() {
                     arguments = listOf(navArgument("toUserId") { type = NavType.StringType }),
                     content = {
                         SendMessage(
+                            navController = navController,
                             photoPath = getPhotoFile().absolutePath,
                             recipientUserId = it.arguments!!.getString("toUserId")!!
                         )

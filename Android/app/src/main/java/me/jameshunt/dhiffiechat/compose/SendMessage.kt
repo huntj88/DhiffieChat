@@ -1,5 +1,6 @@
 package me.jameshunt.dhiffiechat.compose
 
+import LoadingIndicator
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -13,6 +14,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.S3Service
@@ -27,7 +29,9 @@ class SendMessageViewModelFactory : ViewModelProvider.Factory {
 }
 
 class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
-    fun sendImage(recipientUserId: String, image: Bitmap) {
+    fun sendImage(recipientUserId: String, image: Bitmap, text: String, onFinish: () -> Unit) {
+        // TODO: use text
+
         viewModelScope.launch {
             try {
                 val stream = ByteArrayOutputStream()
@@ -36,6 +40,7 @@ class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
                 image.recycle()
 
                 s3Service.sendFile(recipientUserId, byteArray)
+                onFinish()
             } catch (e: HttpException) {
                 e.printStackTrace()
                 throw e
@@ -45,26 +50,44 @@ class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
 }
 
 @Composable
-fun SendMessage(photoPath: String, recipientUserId: String) {
+fun SendMessage(navController: NavController, photoPath: String, recipientUserId: String) {
     val viewModel: SendMessageViewModel = viewModel(factory = SendMessageViewModelFactory())
     val takenImage = BitmapFactory.decodeFile(photoPath)
     var text: String by remember { mutableStateOf("") }
+    var isUploading by remember { mutableStateOf(false) }
 
     Column {
         Image(
             bitmap = takenImage.asImageBitmap(),
-            contentDescription = ""
+            contentDescription = "",
         )
-        TextField(text, onValueChange = {
-            text = it
-        })
+        TextField(
+            value = text,
+            onValueChange = { text = it },
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            placeholder = {
+                Text(text = "Message")
+            }
+        )
         Button(
             modifier = Modifier
                 .fillMaxWidth()
                 .requiredHeight(100.dp)
                 .padding(16.dp),
-            onClick = { viewModel.sendImage(recipientUserId, takenImage) },
+            onClick = {
+                isUploading = true
+                viewModel.sendImage(
+                    recipientUserId = recipientUserId,
+                    image = takenImage,
+                    text = text,
+                    onFinish = { navController.popBackStack() }
+                )
+            },
             content = { Text(text = "Confirm") }
         )
+    }
+
+    if (isUploading) {
+        LoadingIndicator()
     }
 }
