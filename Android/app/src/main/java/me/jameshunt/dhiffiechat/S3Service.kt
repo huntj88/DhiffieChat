@@ -109,6 +109,7 @@ class S3Service(
                     if (response.isSuccessful) {
                         continuation.resumeWith(Result.success(response.body!!.bytes()))
                     } else {
+                        // will crash if file not finished uploading yet
                         TODO()
                     }
                 }
