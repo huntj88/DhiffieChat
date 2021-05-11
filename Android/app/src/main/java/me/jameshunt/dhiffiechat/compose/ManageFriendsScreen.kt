@@ -30,7 +30,8 @@ import net.glxn.qrgen.android.MatrixToImageWriter
 
 class ManageFriendsViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return ManageFriendsViewModel(DI.dhiffieChatService, DI.identityManager) as T
+        val di = DhiffieChatApp.di
+        return ManageFriendsViewModel(di.dhiffieChatService, di.identityManager) as T
     }
 }
 
@@ -145,7 +146,7 @@ fun QRScannerWithJob(onDone: () -> Unit) {
 
     val getUserIdOnScan: (String) -> Unit = { userId ->
         coroutineScope.launch {
-            DI.dhiffieChatService.scanQR(userId)
+            DhiffieChatApp.di.dhiffieChatService.scanQR(userId)
             onDone()
         }
     }

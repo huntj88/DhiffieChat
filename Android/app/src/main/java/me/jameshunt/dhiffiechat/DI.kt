@@ -1,32 +1,27 @@
 package me.jameshunt.dhiffiechat
 
+import android.content.Context
 import android.content.SharedPreferences
-import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import com.squareup.sqldelight.android.AndroidSqliteDriver
+import com.squareup.sqldelight.db.SqlDriver
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
 import okhttp3.logging.HttpLoggingInterceptor
-import okio.BufferedSink
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import java.io.ByteArrayOutputStream
-import java.io.OutputStream
 import java.lang.ref.WeakReference
 import java.net.URL
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import kotlin.math.sin
 
 
-object DI {
+class DI(application: DhiffieChatApp) {
+
     fun setLifecycleComponents(mainActivity: MainActivity) {
         LifeCycleAwareComponents.sharedPreferences = WeakReference(
             mainActivity.getSharedPreferences(
@@ -39,6 +34,8 @@ object DI {
     private object LifeCycleAwareComponents {
         lateinit var sharedPreferences: WeakReference<SharedPreferences>
     }
+
+    private val applicationContext: Context = application
 
     private val moshi: Moshi = Moshi.Builder()
         .add(object {
@@ -72,9 +69,25 @@ object DI {
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
+    private val driver: SqlDriver = AndroidSqliteDriver(
+        schema = Database.Schema,
+        context = applicationContext,
+        name = "dhiffiechat.db"
+    )
+    private val database = Database(driver)
+
     val identityManager = IdentityManager { LifeCycleAwareComponents.sharedPreferences.get()!! }
+
     private val authManager = AuthManager(identityManager, moshi)
     private val s3Service = S3Service(okhttp)
     private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
     val dhiffieChatService = DhiffieChatService(api, authManager, identityManager, s3Service)
+}
+
+
+private fun MainActivity.toSharedPrefs(): SharedPreferences {
+    return this.getSharedPreferences(
+        "prefs",
+        AppCompatActivity.MODE_PRIVATE
+    )
 }

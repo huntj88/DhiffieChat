@@ -22,7 +22,7 @@ import me.jameshunt.dhiffiechat.R
 
 class HomeViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return HomeViewModel(DI.dhiffieChatService) as T
+        return HomeViewModel(DhiffieChatApp.di.dhiffieChatService) as T
     }
 }
 

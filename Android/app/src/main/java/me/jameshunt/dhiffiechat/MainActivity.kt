@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DI.setLifecycleComponents(this)
+        DhiffieChatApp.di.setLifecycleComponents(this)
         setContent {
             val navController = rememberNavController()
             NavHost(navController, startDestination = "launcher") {

@@ -13,13 +13,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.DI
+import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.DhiffieChatService
 import me.jameshunt.dhiffiechat.toBitmap
 
 class ShowNextMessageViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return ShowNextMessageViewModel(DI.dhiffieChatService) as T
+        return ShowNextMessageViewModel(DhiffieChatApp.di.dhiffieChatService) as T
     }
 }
 

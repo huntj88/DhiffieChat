@@ -5,7 +5,7 @@ import androidx.compose.runtime.*
 import androidx.navigation.NavController
 import androidx.navigation.compose.navigate
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.DI
+import me.jameshunt.dhiffiechat.DhiffieChatApp
 
 @Composable
 fun LauncherScreen(navController: NavController) {
@@ -15,7 +15,7 @@ fun LauncherScreen(navController: NavController) {
 
     run {
         scope.launch {
-            DI.dhiffieChatService.initialize()
+            DhiffieChatApp.di.dhiffieChatService.initialize()
             navController.navigate("home")
         }
     }

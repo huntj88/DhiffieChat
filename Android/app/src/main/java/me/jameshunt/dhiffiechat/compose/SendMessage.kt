@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.DI
+import me.jameshunt.dhiffiechat.DhiffieChatApp
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
 
@@ -50,7 +50,7 @@ private fun CoroutineScope.sendImage(recipientUserId: String, image: Bitmap) {
             val byteArray = stream.toByteArray()
             image.recycle()
 
-            DI.dhiffieChatService.sendFile(recipientUserId, byteArray)
+            DhiffieChatApp.di.dhiffieChatService.sendFile(recipientUserId, byteArray)
         } catch (e: HttpException) {
             e.printStackTrace()
         }
