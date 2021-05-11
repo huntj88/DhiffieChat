@@ -1,6 +1,6 @@
 package me.jameshunt.dhiffiechat
 
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.firstOrNull
 import me.jameshunt.dhiffiechat.crypto.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -62,11 +62,8 @@ class S3Service(
                 val userIdFromPublic = publicKey.toUserId()
 
                 // maintain a list of your friends locally to validate against (MiTM), if not in list then abort.
-                val isLocalFriend = userService.getFriends()
-                    .toList()
-                    .flatten()
-                    .map { it.userId }
-                    .contains(userIdFromPublic)
+                val friends = userService.getFriends().firstOrNull()?.map { it.userId }
+                val isLocalFriend = friends?.contains(userIdFromPublic) ?: false
 
                 // verify that public key given matches whats expected
                 if (userIdFromPublic != userId && isLocalFriend) {

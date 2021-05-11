@@ -11,15 +11,42 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
+import me.jameshunt.dhiffiechat.S3Service
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
 
+class SendMessageViewModelFactory : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val di = DhiffieChatApp.di
+        return SendMessageViewModel(di.s3Service) as T
+    }
+}
+
+class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
+    fun sendImage(recipientUserId: String, image: Bitmap) {
+        viewModelScope.launch {
+            try {
+                val stream = ByteArrayOutputStream()
+                image.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+                val byteArray = stream.toByteArray()
+                image.recycle()
+
+                s3Service.sendFile(recipientUserId, byteArray)
+            } catch (e: HttpException) {
+                e.printStackTrace()
+                throw e
+            }
+        }
+    }
+}
+
 @Composable
 fun SendMessage(photoPath: String, recipientUserId: String) {
-    val coroutineScope = rememberCoroutineScope()
+    val viewModel: SendMessageViewModel = viewModel(factory = SendMessageViewModelFactory())
     val takenImage = BitmapFactory.decodeFile(photoPath)
     var text: String by remember { mutableStateOf("") }
 
@@ -36,23 +63,8 @@ fun SendMessage(photoPath: String, recipientUserId: String) {
                 .fillMaxWidth()
                 .requiredHeight(100.dp)
                 .padding(16.dp),
-            onClick = { coroutineScope.sendImage(recipientUserId, takenImage) },
+            onClick = { viewModel.sendImage(recipientUserId, takenImage) },
             content = { Text(text = "Confirm") }
         )
-    }
-}
-
-private fun CoroutineScope.sendImage(recipientUserId: String, image: Bitmap) {
-    launch {
-        try {
-            val stream = ByteArrayOutputStream()
-            image.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-            val byteArray = stream.toByteArray()
-            image.recycle()
-
-            DhiffieChatApp.di.s3Service.sendFile(recipientUserId, byteArray)
-        } catch (e: HttpException) {
-            e.printStackTrace()
-        }
     }
 }

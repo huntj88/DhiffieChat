@@ -82,11 +82,3 @@ class DI(application: DhiffieChatApp) {
     val s3Service = S3Service(okhttp, networkHelper, authManager, api, relationshipService)
     val userService = UserService(database.aliasQueries, networkHelper, api, authManager, identityManager)
 }
-
-
-private fun MainActivity.toSharedPrefs(): SharedPreferences {
-    return this.getSharedPreferences(
-        "prefs",
-        AppCompatActivity.MODE_PRIVATE
-    )
-}

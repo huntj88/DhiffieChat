@@ -28,22 +28,22 @@ class HomeViewModel(
 
     data class FriendMessageData(
         val friendUserId: String,
-        val count: Int,
-        val alias: String
+        val alias: String,
+        val count: Int
     )
 
-    val friendMessageData: LiveData<List<FriendMessageData>> = userService.getFriends().map { friends ->
-        val summaries = userService.getMessageSummaries().associateBy { it.from }
-        friends.map { friend ->
-            summaries[friend.userId]?.let {
+    val friendMessageData: LiveData<List<FriendMessageData>> = userService
+        .getFriends()
+        .map { friends ->
+            val summaries = userService.getMessageSummaries().associateBy { it.from }
+            friends.map { friend ->
                 FriendMessageData(
-                    friend.userId,
-                    it.count,
-                    friend.alias
+                    friendUserId = friend.userId,
+                    alias = friend.alias,
+                    count = summaries[friend.userId]?.count ?: 0
                 )
-            } ?: FriendMessageData(friendUserId = friend.userId, alias = friend.alias, count = 0)
-        }
-    }.asLiveData()
+            }
+        }.asLiveData()
 }
 
 @Composable
