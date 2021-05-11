@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat
 
-import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import com.squareup.moshi.FromJson
@@ -34,8 +33,6 @@ class DI(application: DhiffieChatApp) {
     private object LifeCycleAwareComponents {
         lateinit var sharedPreferences: WeakReference<SharedPreferences>
     }
-
-    private val applicationContext: Context = application
 
     private val moshi: Moshi = Moshi.Builder()
         .add(object {
@@ -71,7 +68,7 @@ class DI(application: DhiffieChatApp) {
 
     private val driver: SqlDriver = AndroidSqliteDriver(
         schema = Database.Schema,
-        context = applicationContext,
+        context = application,
         name = "dhiffiechat.db"
     )
     private val database = Database(driver)
@@ -82,6 +79,7 @@ class DI(application: DhiffieChatApp) {
     private val s3Service = S3Service(okhttp)
     private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
     val dhiffieChatService = DhiffieChatService(api, authManager, identityManager, s3Service)
+    val relationshipService = RelationshipService(database.aliasQueries, dhiffieChatService)
 }
 
 

@@ -1,0 +1,12 @@
+CREATE TABLE alias (
+  userId TEXT NOT NULL,
+  alias TEXT NOT NULL
+);
+
+CREATE INDEX alias_userId ON alias(userId);
+
+addAlias:
+INSERT INTO alias(userId, alias) VALUES (?, ?);
+
+getAliases:
+SELECT * FROM alias;

@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -31,12 +33,13 @@ import net.glxn.qrgen.android.MatrixToImageWriter
 class ManageFriendsViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val di = DhiffieChatApp.di
-        return ManageFriendsViewModel(di.dhiffieChatService, di.identityManager) as T
+        return ManageFriendsViewModel(di.dhiffieChatService, di.relationshipService, di.identityManager) as T
     }
 }
 
 class ManageFriendsViewModel(
     private val apiService: DhiffieChatService,
+    private val relationshipService: RelationshipService,
     identityManager: IdentityManager
 ) : ViewModel() {
 
@@ -50,10 +53,15 @@ class ManageFriendsViewModel(
         }
     }
 
+    fun addFriend(userId: String, alias: String) {
+        viewModelScope.launch {
+            relationshipService.addFriend(userId, alias)
+        }
+    }
+
     private suspend fun refresh() {
         _relationships.value = apiService.getUserRelationships()
     }
-
 }
 
 @Composable
@@ -61,6 +69,9 @@ fun ManageFriendsScreen() {
     val viewModel: ManageFriendsViewModel = viewModel(factory = ManageFriendsViewModelFactory())
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
+    var isAliasOpen by remember { mutableStateOf(false) }
+    var alias by remember { mutableStateOf("") }
+    var userId by remember { mutableStateOf<String?>(null) }
 
     Column(
         Modifier
@@ -103,8 +114,27 @@ fun ManageFriendsScreen() {
     if (isScanOpen) {
         Dialog(onDismissRequest = { isScanOpen = false }) {
             Card {
-                QRScannerWithJob {
+                QRScanner {
+                    userId = it
                     isScanOpen = false
+                    isAliasOpen = true
+                }
+            }
+        }
+    }
+
+    if (isAliasOpen) {
+        Dialog(onDismissRequest = { isAliasOpen = false }) {
+            Card {
+                Column {
+                    TextField(value = alias, onValueChange = {
+                        alias = it
+                    })
+                    Button(onClick = {
+                        viewModel.addFriend(userId!!, alias)
+                    }) {
+                        Text(text = "Submit")
+                    }
                 }
             }
         }
@@ -136,30 +166,6 @@ fun RequestList(title: String, requestList: List<String>, ifItemClicked: (userId
                 textAlign = TextAlign.Center
             )
         }
-    }
-}
-
-@Composable
-fun QRScannerWithJob(onDone: () -> Unit) {
-    val coroutineScope = rememberCoroutineScope()
-    var scanned by remember { mutableStateOf<String?>(null) }
-
-    val getUserIdOnScan: (String) -> Unit = { userId ->
-        coroutineScope.launch {
-            DhiffieChatApp.di.dhiffieChatService.scanQR(userId)
-            onDone()
-        }
-    }
-
-    if (scanned == null) {
-        QRScanner {
-            scanned = it
-        }
-    }
-
-    if (scanned != null) {
-        getUserIdOnScan(scanned!!)
-        LoadingIndicator()
     }
 }
 

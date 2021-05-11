@@ -1,6 +1,0 @@
-CREATE TABLE user (
-  user_id TEXT NOT NULL,
-  alias TEXT NOT NULL
-);
-
-CREATE INDEX user_user_id ON user(user_id);

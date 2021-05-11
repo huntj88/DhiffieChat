@@ -12,60 +12,39 @@ import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.*
 import androidx.navigation.compose.navigate
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.*
-import me.jameshunt.dhiffiechat.DhiffieChatApi.*
 import me.jameshunt.dhiffiechat.R
 
 class HomeViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return HomeViewModel(DhiffieChatApp.di.dhiffieChatService) as T
+        return HomeViewModel(DhiffieChatApp.di.dhiffieChatService, DhiffieChatApp.di.relationshipService) as T
     }
 }
 
-class HomeViewModel(private val apiService: DhiffieChatService) : ViewModel() {
-
-    private val _relationships: MutableLiveData<Relationships?> = MutableLiveData(null)
-    private val _messageSummaries: MutableLiveData<List<MessageFromUserSummary>?> =
-        MutableLiveData(null)
+class HomeViewModel(
+    private val apiService: DhiffieChatService,
+    relationshipService: RelationshipService
+) : ViewModel() {
 
     data class FriendMessageData(
         val friendUserId: String,
-        val count: Int
+        val count: Int,
+        val alias: String
     )
 
-    val friendMessageData: LiveData<List<FriendMessageData>?> = _relationships.combineWith(
-        _messageSummaries
-    ) { relationships: Relationships?, messageSummaries: List<MessageFromUserSummary>? ->
-        relationships ?: return@combineWith null
-        messageSummaries ?: return@combineWith null
-
-        relationships.friends.map { friendUserId ->
-            messageSummaries
-                .firstOrNull { friendUserId == it.from }
-                ?.let { FriendMessageData(it.from, it.count) }
-                ?: FriendMessageData(friendUserId = friendUserId, count = 0)
+    val friendMessageData: LiveData<List<FriendMessageData>> = relationshipService.getFriends().map { friends ->
+        val summaries = apiService.getMessageSummaries().associateBy { it.from }
+        friends.map { friend ->
+            summaries[friend.userId]?.let {
+                FriendMessageData(
+                    friend.userId,
+                    it.count,
+                    friend.alias
+                )
+            } ?: FriendMessageData(friendUserId = friend.userId, alias = friend.alias, count = 0)
         }
-    }
-
-    init {
-        viewModelScope.launch {
-            refresh()
-        }
-    }
-
-    private suspend fun refresh() {
-        coroutineScope {
-            listOf(
-                async { _messageSummaries.value = apiService.getMessageSummaries() },
-                async { _relationships.value = apiService.getUserRelationships() }
-            ).awaitAll()
-        }
-    }
-
+    }.asLiveData()
 }
 
 @Composable
@@ -93,7 +72,7 @@ fun HomeScreen(
         messageSummaries?.let { summaries ->
             Spacer(modifier = Modifier.height(8.dp))
             summaries.forEach { data ->
-                CallToAction(data.friendUserId, R.drawable.ic_baseline_qr_code_scanner_24) {
+                CallToAction(data.alias, R.drawable.ic_baseline_qr_code_scanner_24) {
                     when (data.count == 0) {
                         true -> onSendMessage {
                             navController.navigateToSendMessage(data.friendUserId)
@@ -111,19 +90,3 @@ fun HomeScreen(
         }
     }
 }
-
-
-fun <T, K, R> LiveData<T>.combineWith(
-    liveData: LiveData<K>,
-    block: (T?, K?) -> R
-): LiveData<R> {
-    val result = MediatorLiveData<R>()
-    result.addSource(this) {
-        result.value = block(this.value, liveData.value)
-    }
-    result.addSource(liveData) {
-        result.value = block(this.value, liveData.value)
-    }
-    return result
-}
-
