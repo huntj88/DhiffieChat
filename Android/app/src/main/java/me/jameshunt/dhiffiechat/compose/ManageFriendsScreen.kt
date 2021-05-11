@@ -33,13 +33,12 @@ import net.glxn.qrgen.android.MatrixToImageWriter
 class ManageFriendsViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val di = DhiffieChatApp.di
-        return ManageFriendsViewModel(di.dhiffieChatService, di.relationshipService, di.identityManager) as T
+        return ManageFriendsViewModel(di.relationshipService, di.identityManager) as T
     }
 }
 
 class ManageFriendsViewModel(
-    private val apiService: DhiffieChatService,
-    private val relationshipService: RelationshipService,
+    private val userService: UserService,
     identityManager: IdentityManager
 ) : ViewModel() {
 
@@ -55,12 +54,12 @@ class ManageFriendsViewModel(
 
     fun addFriend(userId: String, alias: String) {
         viewModelScope.launch {
-            relationshipService.addFriend(userId, alias)
+            userService.addFriend(userId, alias)
         }
     }
 
     private suspend fun refresh() {
-        _relationships.value = apiService.getUserRelationships()
+        _relationships.value = userService.getRelationships()
     }
 }
 

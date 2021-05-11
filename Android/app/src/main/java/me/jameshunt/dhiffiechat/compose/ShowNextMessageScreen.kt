@@ -13,18 +13,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.DhiffieChatApp
-import me.jameshunt.dhiffiechat.DhiffieChatService
-import me.jameshunt.dhiffiechat.toBitmap
+import me.jameshunt.dhiffiechat.*
 
 class ShowNextMessageViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return ShowNextMessageViewModel(DhiffieChatApp.di.dhiffieChatService) as T
+        val di = DhiffieChatApp.di
+        return ShowNextMessageViewModel(di.s3Service, di.userService) as T
     }
 }
 
 class ShowNextMessageViewModel(
-    private val apiService: DhiffieChatService
+    private val s3Service: S3Service,
+    private val userService: UserService
 ) : ViewModel() {
 
     private val _imageByteArray: MutableLiveData<ByteArray?> = MutableLiveData(null)
@@ -32,12 +32,12 @@ class ShowNextMessageViewModel(
 
     fun loadImage(fromUserId: String) {
         viewModelScope.launch {
-            val message = apiService
+            val message = userService
                 .getMessageSummaries()
                 .first { it.from == fromUserId }
                 .next
 
-            _imageByteArray.value = apiService.getDecryptedFile(message)
+            _imageByteArray.value = s3Service.getDecryptedFile(message)
         }
     }
 }

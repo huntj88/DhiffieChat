@@ -15,7 +15,7 @@ fun LauncherScreen(navController: NavController) {
 
     run {
         scope.launch {
-            DhiffieChatApp.di.dhiffieChatService.initialize()
+            DhiffieChatApp.di.userService.createIdentity()
             navController.navigate("home")
         }
     }

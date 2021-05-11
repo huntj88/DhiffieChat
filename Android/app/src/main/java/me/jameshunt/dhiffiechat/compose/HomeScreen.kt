@@ -18,13 +18,12 @@ import me.jameshunt.dhiffiechat.R
 
 class HomeViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return HomeViewModel(DhiffieChatApp.di.dhiffieChatService, DhiffieChatApp.di.relationshipService) as T
+        return HomeViewModel(DhiffieChatApp.di.relationshipService) as T
     }
 }
 
 class HomeViewModel(
-    private val apiService: DhiffieChatService,
-    relationshipService: RelationshipService
+    userService: UserService
 ) : ViewModel() {
 
     data class FriendMessageData(
@@ -33,8 +32,8 @@ class HomeViewModel(
         val alias: String
     )
 
-    val friendMessageData: LiveData<List<FriendMessageData>> = relationshipService.getFriends().map { friends ->
-        val summaries = apiService.getMessageSummaries().associateBy { it.from }
+    val friendMessageData: LiveData<List<FriendMessageData>> = userService.getFriends().map { friends ->
+        val summaries = userService.getMessageSummaries().associateBy { it.from }
         friends.map { friend ->
             summaries[friend.userId]?.let {
                 FriendMessageData(

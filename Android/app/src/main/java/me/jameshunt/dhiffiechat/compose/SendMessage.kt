@@ -50,7 +50,7 @@ private fun CoroutineScope.sendImage(recipientUserId: String, image: Bitmap) {
             val byteArray = stream.toByteArray()
             image.recycle()
 
-            DhiffieChatApp.di.dhiffieChatService.sendFile(recipientUserId, byteArray)
+            DhiffieChatApp.di.s3Service.sendFile(recipientUserId, byteArray)
         } catch (e: HttpException) {
             e.printStackTrace()
         }

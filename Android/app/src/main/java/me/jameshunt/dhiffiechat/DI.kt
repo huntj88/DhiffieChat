@@ -76,10 +76,11 @@ class DI(application: DhiffieChatApp) {
     val identityManager = IdentityManager { LifeCycleAwareComponents.sharedPreferences.get()!! }
 
     private val authManager = AuthManager(identityManager, moshi)
-    private val s3Service = S3Service(okhttp)
     private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
-    val dhiffieChatService = DhiffieChatService(api, authManager, identityManager, s3Service)
-    val relationshipService = RelationshipService(database.aliasQueries, dhiffieChatService)
+    private val networkHelper = NetworkHelper(identityManager, authManager)
+    val relationshipService = UserService(database.aliasQueries, networkHelper, api, authManager, identityManager)
+    val s3Service = S3Service(okhttp, networkHelper, authManager, api, relationshipService)
+    val userService = UserService(database.aliasQueries, networkHelper, api, authManager, identityManager)
 }
 
 
