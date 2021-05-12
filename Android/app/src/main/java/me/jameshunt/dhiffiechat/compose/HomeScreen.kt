@@ -2,21 +2,21 @@ package me.jameshunt.dhiffiechat.compose
 
 import LoadingIndicator
 import android.util.Log
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Card
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.R
 import java.math.BigInteger
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 
 class HomeViewModelFactory : ViewModelProvider.Factory {
@@ -42,7 +44,8 @@ class HomeViewModel(
     data class FriendMessageData(
         val friendUserId: String,
         val alias: String,
-        val count: Int
+        val count: Int,
+        val mostRecentAt: Instant?
     )
 
     val friendMessageData: LiveData<List<FriendMessageData>> = userService
@@ -50,10 +53,12 @@ class HomeViewModel(
         .map { friends ->
             val summaries = userService.getMessageSummaries().associateBy { it.from }
             friends.map { friend ->
+                val messageFromUserSummary = summaries[friend.userId]
                 FriendMessageData(
                     friendUserId = friend.userId,
                     alias = friend.alias,
-                    count = summaries[friend.userId]?.count ?: 0
+                    count = messageFromUserSummary?.count ?: 0,
+                    mostRecentAt = messageFromUserSummary?.next?.messageCreatedAt
                 )
             }
         }.asLiveData()
@@ -105,27 +110,60 @@ fun HomeScreen(
 
 @Composable
 fun FriendCard(friendData: HomeViewModel.FriendMessageData, onClick: () -> Unit) {
-    Card(
-        elevation = 2.dp,
+    Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        border = BorderStroke(width = 1.5.dp, Color.LightGray)
+            .padding(12.dp)
+            .clickable { onClick() }
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(12.dp)) {
+        Box(
+            Modifier
+                .clip(CircleShape)
+                .border(1.5.dp, Color.Green, CircleShape)
+                .padding(4.dp)
+        ) {
             Image(
                 painter = painterResource(id = R.drawable.ic_baseline_qr_code_scanner_24),
                 contentDescription = friendData.alias,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.requiredSize(50.dp),
+                modifier = Modifier
+                    .requiredSize(50.dp)
+                    .clip(CircleShape),
                 colorFilter = ColorFilter.tint(userIdToColor(userId = friendData.friendUserId))
             )
-            Spacer(modifier = Modifier.size(16.dp))
+        }
+        Spacer(modifier = Modifier.size(16.dp))
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)) {
             Text(
                 text = friendData.alias,
                 fontSize = 22.sp,
-                textAlign = TextAlign.Center
+                modifier = Modifier.align(Alignment.TopStart)
             )
+
+            friendData.mostRecentAt?.let { mostRecentAt ->
+                val duration = Duration.between(mostRecentAt, Instant.now())
+                val days = duration.toDays()
+                val hours = duration.toHours() % 24
+                val minutes = duration.toMinutes() % 60
+                val seconds = duration.toMillis() / 1000 % 60
+
+                val daysString = if (days > 0) "$days day" else ""
+                val hoursString = if (hours > 0) "$hours hr" else ""
+                val minutesString = if (minutes > 0) "$minutes min" else ""
+                val secondsString = "$seconds sec"
+
+                val elapsedTime = listOf(daysString, hoursString, minutesString, secondsString)
+                    .filter { it.isNotBlank() }
+                    .take(1)
+                    .first()
+
+                Text(
+                    text = elapsedTime,
+                    fontSize = 16.sp,
+                    modifier = Modifier.align(Alignment.TopEnd)
+                )
+            }
 
             val ctaText = when (friendData.count == 0) {
                 true -> "Send a message"
@@ -134,8 +172,7 @@ fun FriendCard(friendData: HomeViewModel.FriendMessageData, onClick: () -> Unit)
             Text(
                 text = ctaText,
                 fontSize = 16.sp,
-                textAlign = TextAlign.Right,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.align(Alignment.BottomStart)
             )
         }
     }
