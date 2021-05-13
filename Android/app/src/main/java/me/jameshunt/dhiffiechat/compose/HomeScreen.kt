@@ -156,15 +156,12 @@ fun FriendCard(friendData: HomeViewModel.FriendMessageData, onClick: () -> Unit)
                 val minutes = duration.toMinutes() % 60
                 val seconds = duration.toMillis() / 1000 % 60
 
-                val daysString = if (days > 0) "$days day" else ""
-                val hoursString = if (hours > 0) "$hours hr" else ""
-                val minutesString = if (minutes > 0) "$minutes min" else ""
-                val secondsString = "$seconds sec"
+                val daysString = if (days > 0) "$days day ago" else null
+                val hoursString = if (hours > 0) "$hours hr ago" else null
+                val minutesString = if (minutes > 0) "$minutes min ago" else null
+                val secondsString = "$seconds sec ago"
 
-                val elapsedTime = listOf(daysString, hoursString, minutesString, secondsString)
-                    .filter { it.isNotBlank() }
-                    .take(1)
-                    .first()
+                val elapsedTime = daysString ?: hoursString ?: minutesString ?: secondsString
 
                 Text(
                     text = elapsedTime,
