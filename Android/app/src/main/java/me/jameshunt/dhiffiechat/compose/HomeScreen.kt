@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat.compose
 
-import LoadingIndicator
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -20,7 +19,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.*
 import androidx.navigation.compose.navigate
 import kotlinx.coroutines.flow.map
@@ -61,7 +59,7 @@ fun HomeScreen(
     navController: NavController,
     onSendMessage: (gotCameraResult: () -> Unit) -> Unit
 ) {
-    val viewModel: HomeViewModel = viewModel(factory = InjectableViewModelFactory())
+    val viewModel: HomeViewModel = injectedViewModel()
 
     Column(
         Modifier

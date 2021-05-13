@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat.compose
 
-import LoadingIndicator
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -20,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
@@ -57,7 +55,7 @@ class ManageFriendsViewModel(
 
 @Composable
 fun ManageFriendsScreen() {
-    val viewModel: ManageFriendsViewModel = viewModel(factory = InjectableViewModelFactory())
+    val viewModel: ManageFriendsViewModel = injectedViewModel()
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
     var isAliasOpen by remember { mutableStateOf(false) }

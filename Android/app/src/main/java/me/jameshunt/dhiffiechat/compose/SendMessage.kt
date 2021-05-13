@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat.compose
 
-import LoadingIndicator
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -13,10 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.InjectableViewModelFactory
 import me.jameshunt.dhiffiechat.S3Service
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
@@ -44,7 +41,7 @@ class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
 
 @Composable
 fun SendMessage(navController: NavController, photoPath: String, recipientUserId: String) {
-    val viewModel: SendMessageViewModel = viewModel(factory = InjectableViewModelFactory())
+    val viewModel: SendMessageViewModel = injectedViewModel()
     val takenImage = BitmapFactory.decodeFile(photoPath)
     var text: String by remember { mutableStateOf("") }
     var isUploading by remember { mutableStateOf(false) }
@@ -57,7 +54,9 @@ fun SendMessage(navController: NavController, photoPath: String, recipientUserId
         TextField(
             value = text,
             onValueChange = { text = it },
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             placeholder = {
                 Text(text = "Message")
             }

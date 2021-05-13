@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat.compose
 
-import LoadingIndicator
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -11,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
 
@@ -37,7 +35,7 @@ class ShowNextMessageViewModel(
 
 @Composable
 fun ShowNextMessageScreen(fromUserId: String) {
-    val viewModel: ShowNextMessageViewModel = viewModel(factory = InjectableViewModelFactory())
+    val viewModel: ShowNextMessageViewModel = injectedViewModel()
     val imageBytes = viewModel.imageByteArray.observeAsState().value
 
     if (imageBytes == null) {
