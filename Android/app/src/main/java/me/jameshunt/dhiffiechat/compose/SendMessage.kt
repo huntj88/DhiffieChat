@@ -16,17 +16,10 @@ import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.DhiffieChatApp
+import me.jameshunt.dhiffiechat.InjectableViewModelFactory
 import me.jameshunt.dhiffiechat.S3Service
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
-
-class SendMessageViewModelFactory : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val di = DhiffieChatApp.di
-        return SendMessageViewModel(di.s3Service) as T
-    }
-}
 
 class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
     fun sendImage(recipientUserId: String, image: Bitmap, text: String, onFinish: () -> Unit) {
@@ -51,7 +44,7 @@ class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
 
 @Composable
 fun SendMessage(navController: NavController, photoPath: String, recipientUserId: String) {
-    val viewModel: SendMessageViewModel = viewModel(factory = SendMessageViewModelFactory())
+    val viewModel: SendMessageViewModel = viewModel(factory = InjectableViewModelFactory())
     val takenImage = BitmapFactory.decodeFile(photoPath)
     var text: String by remember { mutableStateOf("") }
     var isUploading by remember { mutableStateOf(false) }

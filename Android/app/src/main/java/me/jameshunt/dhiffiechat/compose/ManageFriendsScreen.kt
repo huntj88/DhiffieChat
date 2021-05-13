@@ -29,14 +29,6 @@ import me.jameshunt.dhiffiechat.DhiffieChatApi.*
 import me.jameshunt.dhiffiechat.R
 import net.glxn.qrgen.android.MatrixToImageWriter
 
-
-class ManageFriendsViewModelFactory : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val di = DhiffieChatApp.di
-        return ManageFriendsViewModel(di.relationshipService, di.identityManager) as T
-    }
-}
-
 class ManageFriendsViewModel(
     private val userService: UserService,
     identityManager: IdentityManager
@@ -65,7 +57,7 @@ class ManageFriendsViewModel(
 
 @Composable
 fun ManageFriendsScreen() {
-    val viewModel: ManageFriendsViewModel = viewModel(factory = ManageFriendsViewModelFactory())
+    val viewModel: ManageFriendsViewModel = viewModel(factory = InjectableViewModelFactory())
     var isShareOpen by remember { mutableStateOf(false) }
     var isScanOpen by remember { mutableStateOf(false) }
     var isAliasOpen by remember { mutableStateOf(false) }

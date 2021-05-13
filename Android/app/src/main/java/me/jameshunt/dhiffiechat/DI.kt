@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat
 
-import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
@@ -12,7 +11,6 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import java.lang.ref.WeakReference
 import java.net.URL
 import java.time.Instant
 import java.time.format.DateTimeFormatter
@@ -20,19 +18,10 @@ import java.util.concurrent.TimeUnit
 
 
 class DI(application: DhiffieChatApp) {
-
-    fun setLifecycleComponents(mainActivity: MainActivity) {
-        LifeCycleAwareComponents.sharedPreferences = WeakReference(
-            mainActivity.getSharedPreferences(
-                "prefs",
-                AppCompatActivity.MODE_PRIVATE
-            )
-        )
-    }
-
-    private object LifeCycleAwareComponents {
-        lateinit var sharedPreferences: WeakReference<SharedPreferences>
-    }
+    private val sharedPreferences = application.getSharedPreferences(
+        "prefs",
+        AppCompatActivity.MODE_PRIVATE
+    )
 
     private val moshi: Moshi = Moshi.Builder()
         .add(object {
@@ -73,12 +62,39 @@ class DI(application: DhiffieChatApp) {
     )
     private val database = Database(driver)
 
-    val identityManager = IdentityManager { LifeCycleAwareComponents.sharedPreferences.get()!! }
-
+    private val identityManager = IdentityManager(sharedPreferences)
     private val authManager = AuthManager(identityManager, moshi)
     private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
     private val networkHelper = NetworkHelper(identityManager, authManager)
-    val relationshipService = UserService(database.aliasQueries, networkHelper, api, authManager, identityManager)
-    val s3Service = S3Service(okhttp, networkHelper, authManager, api, relationshipService)
-    val userService = UserService(database.aliasQueries, networkHelper, api, authManager, identityManager)
+    private val userService = UserService(database.aliasQueries, networkHelper, api, authManager, identityManager)
+    private val s3Service = S3Service(okhttp, networkHelper, authManager, api, userService)
+
+    private val injectableComponents = mutableMapOf<String, Any>()
+
+    init {
+        register(identityManager, s3Service, userService)
+    }
+
+    private fun register(vararg entry: Any) {
+        entry.forEach {
+            injectableComponents[it::class.java.canonicalName!!] = it
+        }
+    }
+
+    fun <T> createInjected(classToInject: Class<T>): T {
+        val instance = classToInject.constructors.first().let { constructor ->
+            val args = constructor.parameters.map {
+                val canonicalName = it.type.canonicalName!!
+                injectableComponents[canonicalName] ?: throw IllegalStateException(
+                    """
+                         $canonicalName has not been registered, 
+                        and cannot be injected into ${classToInject.canonicalName!!}
+                    """.trimIndent()
+                )
+            }
+
+            constructor.newInstance(*args.toTypedArray())
+        }
+        return instance as T
+    }
 }

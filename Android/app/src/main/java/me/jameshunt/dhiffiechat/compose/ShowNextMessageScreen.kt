@@ -15,13 +15,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
 
-class ShowNextMessageViewModelFactory : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        val di = DhiffieChatApp.di
-        return ShowNextMessageViewModel(di.s3Service, di.userService) as T
-    }
-}
-
 class ShowNextMessageViewModel(
     private val s3Service: S3Service,
     private val userService: UserService
@@ -44,7 +37,7 @@ class ShowNextMessageViewModel(
 
 @Composable
 fun ShowNextMessageScreen(fromUserId: String) {
-    val viewModel: ShowNextMessageViewModel = viewModel(factory = ShowNextMessageViewModelFactory())
+    val viewModel: ShowNextMessageViewModel = viewModel(factory = InjectableViewModelFactory())
     val imageBytes = viewModel.imageByteArray.observeAsState().value
 
     if (imageBytes == null) {

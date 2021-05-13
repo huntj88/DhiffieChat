@@ -34,8 +34,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DhiffieChatApp.di.setLifecycleComponents(this)
-
         setContent {
             val colors = if (isSystemInDarkTheme()) DarkColors else LightColors
             MaterialTheme(colors = colors) {

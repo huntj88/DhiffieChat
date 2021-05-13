@@ -5,7 +5,8 @@ import android.util.Log
 import me.jameshunt.dhiffiechat.crypto.*
 import java.security.KeyPair
 
-class IdentityManager(private val getSharedPreferences: () -> SharedPreferences) {
+// TODO: move keypair to db
+class IdentityManager(private val prefs: SharedPreferences) {
     private var cached: KeyPair? = null
 
     fun getIdentity(): KeyPair = synchronized(this) {
@@ -15,9 +16,8 @@ class IdentityManager(private val getSharedPreferences: () -> SharedPreferences)
     private fun get(): KeyPair? {
         cached?.let { return it }
 
-        val sharedPreferences = getSharedPreferences()
-        val privateBase64 = sharedPreferences.getString("private", null) ?: return null
-        val publicBase64 = sharedPreferences.getString("public", null) ?: return null
+        val privateBase64 = prefs.getString("private", null) ?: return null
+        val publicBase64 = prefs.getString("public", null) ?: return null
 
         Log.d("public base64", publicBase64)
         Log.d("private base64", privateBase64)
@@ -30,7 +30,7 @@ class IdentityManager(private val getSharedPreferences: () -> SharedPreferences)
     private fun save(keyPair: KeyPair) {
         cached = keyPair
 
-        getSharedPreferences().edit()
+        prefs.edit()
             .putString("private", keyPair.private.toBase64String())
             .putString("public", keyPair.public.toBase64String())
             .apply()

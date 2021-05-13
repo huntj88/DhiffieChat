@@ -31,15 +31,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 
-class HomeViewModelFactory : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return HomeViewModel(DhiffieChatApp.di.relationshipService) as T
-    }
-}
-
-class HomeViewModel(
-    userService: UserService
-) : ViewModel() {
+class HomeViewModel(userService: UserService) : ViewModel() {
 
     data class FriendMessageData(
         val friendUserId: String,
@@ -69,7 +61,7 @@ fun HomeScreen(
     navController: NavController,
     onSendMessage: (gotCameraResult: () -> Unit) -> Unit
 ) {
-    val viewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory())
+    val viewModel: HomeViewModel = viewModel(factory = InjectableViewModelFactory())
 
     Column(
         Modifier
