@@ -1,36 +1,31 @@
 package me.jameshunt.dhiffiechat.compose
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.S3Service
 import retrofit2.HttpException
-import java.io.ByteArrayOutputStream
+import java.io.File
 
 class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
-    fun sendImage(recipientUserId: String, image: Bitmap, text: String, onFinish: () -> Unit) {
+    fun sendFile(recipientUserId: String, file: File, text: String, onFinish: () -> Unit) {
         // TODO: use text
 
         viewModelScope.launch {
             try {
-                val stream = ByteArrayOutputStream()
-                image.compress(Bitmap.CompressFormat.JPEG, 100, stream)
-                val byteArray = stream.toByteArray()
-                image.recycle()
-
-                s3Service.sendFile(recipientUserId, byteArray)
+                s3Service.sendFile(recipientUserId, file)
                 onFinish()
             } catch (e: HttpException) {
                 e.printStackTrace()
@@ -41,9 +36,8 @@ class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
 }
 
 @Composable
-fun SendMessage(navController: NavController, photoPath: String, recipientUserId: String) {
+fun SendMessage(navController: NavController, file: File, recipientUserId: String) {
     val viewModel: SendMessageViewModel = injectedViewModel()
-    val takenImage = BitmapFactory.decodeFile(photoPath)
     var text: String by remember { mutableStateOf("") }
     var isUploading by remember { mutableStateOf(false) }
 
@@ -52,10 +46,6 @@ fun SendMessage(navController: NavController, photoPath: String, recipientUserId
             LoadingIndicator()
         } else {
             Column {
-                Image(
-                    bitmap = takenImage.asImageBitmap(),
-                    contentDescription = "",
-                )
                 TextField(
                     value = text,
                     onValueChange = { text = it },
@@ -73,9 +63,9 @@ fun SendMessage(navController: NavController, photoPath: String, recipientUserId
                         .padding(16.dp),
                     onClick = {
                         isUploading = true
-                        viewModel.sendImage(
+                        viewModel.sendFile(
                             recipientUserId = recipientUserId,
-                            image = takenImage,
+                            file = file,
                             text = text,
                             onFinish = { navController.popBackStack() }
                         )

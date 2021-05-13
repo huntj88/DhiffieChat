@@ -60,14 +60,19 @@ class DI(application: DhiffieChatApp) {
         context = application,
         name = "dhiffiechat.db"
     )
+
     private val database = Database(driver)
 
     private val identityManager = IdentityManager(sharedPreferences)
     private val authManager = AuthManager(identityManager, moshi)
     private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
     private val networkHelper = NetworkHelper(identityManager, authManager)
-    private val userService = UserService(database.aliasQueries, networkHelper, api, authManager, identityManager)
-    private val s3Service = S3Service(okhttp, networkHelper, authManager, api, userService)
+    private val userService = UserService(
+        database.aliasQueries, networkHelper, api, authManager, identityManager
+    )
+    private val s3Service = S3Service(
+        okhttp, networkHelper, authManager, api, userService, FileLocationUtil(application)
+    )
 
     private val injectableComponents = mutableMapOf<String, Any>()
 
@@ -82,19 +87,16 @@ class DI(application: DhiffieChatApp) {
     }
 
     fun <T> createInjected(classToInject: Class<T>): T {
-        val instance = classToInject.constructors.first().let { constructor ->
-            val args = constructor.parameters.map {
-                val canonicalName = it.type.canonicalName!!
-                injectableComponents[canonicalName] ?: throw IllegalStateException(
-                    """
-                         $canonicalName has not been registered, 
-                        and cannot be injected into ${classToInject.canonicalName!!}
-                    """.trimIndent()
-                )
-            }
-
-            constructor.newInstance(*args.toTypedArray())
+        val constructor = classToInject.constructors.first()
+        val args = constructor.parameters.map {
+            val canonicalName = it.type.canonicalName!!
+            injectableComponents[canonicalName] ?: throw IllegalStateException(
+                """
+                $canonicalName has not been registered, 
+                and cannot be injected into ${classToInject.canonicalName!!}
+                """.trimIndent()
+            )
         }
-        return instance as T
+        return constructor.newInstance(*args.toTypedArray()) as T
     }
 }

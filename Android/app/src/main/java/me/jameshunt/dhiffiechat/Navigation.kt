@@ -5,9 +5,10 @@ import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import me.jameshunt.dhiffiechat.compose.*
+import java.io.File
 
 @Composable
-fun Navigation(setImageCallback: (() -> Unit) -> Unit, getPhotoFilePath: () -> String) {
+fun Navigation(setImageCallback: (() -> Unit) -> Unit, getInputFilePath: () -> File) {
     val navController = rememberNavController()
     NavHost(navController, startDestination = "launcher") {
         composable("launcher") { LauncherScreen(navController) }
@@ -25,7 +26,7 @@ fun Navigation(setImageCallback: (() -> Unit) -> Unit, getPhotoFilePath: () -> S
             content = {
                 SendMessage(
                     navController = navController,
-                    photoPath = getPhotoFilePath(),
+                    file = getInputFilePath(),
                     recipientUserId = it.arguments!!.getString("toUserId")!!
                 )
             }

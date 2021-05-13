@@ -1,10 +1,13 @@
 package me.jameshunt.dhiffiechat
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import me.jameshunt.dhiffiechat.crypto.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import java.io.IOException
 import java.net.URL
 import java.security.PublicKey
@@ -16,7 +19,8 @@ class S3Service(
     private val networkHelper: NetworkHelper,
     private val authManager: AuthManager,
     private val api: DhiffieChatApi,
-    private val userService: UserService
+    private val userService: UserService,
+    private val fileLocationUtil: FileLocationUtil
 ) {
 
     suspend fun getDecryptedFile(message: DhiffieChatApi.Message): ByteArray {
@@ -34,24 +38,32 @@ class S3Service(
         )
     }
 
-    suspend fun sendFile(recipientUserId: String, image: ByteArray) {
+    suspend fun sendFile(recipientUserId: String, file: File) {
+        // TODO: Remove metadata from files
         val recipientPublicKey = getUserPublicKey(recipientUserId)
         val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
 
-        val encryptedImage = AESCrypto.encrypt(
-            input = image,
-            key = userToUserCredentials.sharedSecret,
-            iv = userToUserCredentials.iv
-        )
+        val output = fileLocationUtil.outgoingEncryptedFile()
+
+        withContext(Dispatchers.Default) {
+            AESCrypto.encrypt(
+                file = file,
+                output = output,
+                key = userToUserCredentials.sharedSecret,
+                iv = userToUserCredentials.iv
+            )
+        }
 
         val response = api.sendFile(
             headers = networkHelper.standardHeaders(),
             recipientUserId = recipientUserId,
             iv = userToUserCredentials.iv.toBase64String(),
-            s3Key = encryptedImage.toS3Key()
+            s3Key = output.toS3Key()
         )
 
-        upload(encryptedImage, response.uploadUrl)
+        upload(output, response.uploadUrl)
+        file.delete()
+        output.delete()
     }
 
     private suspend fun getUserPublicKey(userId: String): PublicKey {
@@ -66,17 +78,17 @@ class S3Service(
                 val isLocalFriend = friends?.contains(userIdFromPublic) ?: false
 
                 // verify that public key given matches whats expected
-                if (userIdFromPublic != userId && isLocalFriend) {
+                val isValid = isLocalFriend && userId == userIdFromPublic
+                if (!isValid) {
                     throw IllegalStateException("Incorrect public key given for user: $userId")
                 }
             }
     }
 
-    private suspend fun upload(byteArray: ByteArray, url: URL) {
-        // TODO: probably not the right place for this? Remove metadata from files
+    private suspend fun upload(file: File, url: URL) {
         val request = Request.Builder()
             .url(url)
-            .put(byteArray.toRequestBody("application/octet-stream".toMediaTypeOrNull()))
+            .put(file.asRequestBody("application/octet-stream".toMediaTypeOrNull()))
             .build()
 
         suspendCoroutine<Unit> { continuation ->

@@ -1,5 +1,6 @@
 package me.jameshunt.dhiffiechat.crypto
 
+import java.io.*
 import java.math.BigInteger
 import java.security.*
 import java.security.spec.PKCS8EncodedKeySpec
@@ -9,6 +10,8 @@ import javax.crypto.*
 import javax.crypto.spec.DHParameterSpec
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import javax.crypto.CipherOutputStream
+
 
 // TODO: secure private key
 const val serverPrivate = "MIIBZwIBADCCARsGCSqGSIb3DQEDATCCAQwCgYEA/X9TgR11EilS30qcLuzk5/YRt1I870QAwx4/gLZRJmlFXUAiUftZPY1Y+r/F9bow9subVWzXgTuAHTRv8mZgt2uZUKWkn5/oBHsQIsJPu6nX/rfGG/g7V+fGqKYVDwT7g/bTxR7DAjVUE1oWkTL2dfOuK2HXKu/yIgMZndFIAccCgYEA9+GghdabPd7LvKtcNrhXuXmUr7v6OuqC+VdMCz0HgmdRWVeOutRZT+ZxBxCBgLRJFnEj6EwoFhO3zwkyjMim4TwWeotUfI0o4KOuHiuzpnWRbqN/C/ohNWLx+2J6ASQ7zKTxvqhRkImog9/hWuWfBpKLZl6Ae1UlZAFMO/7PSSoCAgIABEMCQQCPu0nb03BX15VXPWTCLlgsiKKJc3IXJKrzM/eLdvh1S8dg02liqxk7f2qoHT4gOsvfYdBB38NOORWesa1pWyCz"
@@ -44,7 +47,8 @@ object DHCrypto {
         // rather safe
         val sha256: MessageDigest = MessageDigest.getInstance("SHA-256")
         val bkey: ByteArray = Arrays.copyOf(
-            sha256.digest(secret), AES_KEY_SIZE / java.lang.Byte.SIZE)
+            sha256.digest(secret), AES_KEY_SIZE / java.lang.Byte.SIZE
+        )
         return SecretKeySpec(bkey, "AES")
     }
 
@@ -61,8 +65,12 @@ object AESCrypto {
     }
 
     @Throws(
-        NoSuchPaddingException::class, NoSuchAlgorithmException::class, InvalidAlgorithmParameterException::class,
-        InvalidKeyException::class, BadPaddingException::class, IllegalBlockSizeException::class
+        NoSuchPaddingException::class,
+        NoSuchAlgorithmException::class,
+        InvalidAlgorithmParameterException::class,
+        InvalidKeyException::class,
+        BadPaddingException::class,
+        IllegalBlockSizeException::class
     )
     fun encrypt(input: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
         val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
@@ -72,8 +80,31 @@ object AESCrypto {
     }
 
     @Throws(
-        NoSuchPaddingException::class, NoSuchAlgorithmException::class, InvalidAlgorithmParameterException::class,
-        InvalidKeyException::class, BadPaddingException::class, IllegalBlockSizeException::class
+        NoSuchPaddingException::class,
+        NoSuchAlgorithmException::class,
+        InvalidAlgorithmParameterException::class,
+        InvalidKeyException::class,
+        BadPaddingException::class,
+        IllegalBlockSizeException::class
+    )
+    fun encrypt(file: File, output: File, key: SecretKey, iv: IvParameterSpec) {
+        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, iv)
+        FileInputStream(file).use { inStream ->
+            val encoder = Base64.getEncoder()
+            CipherOutputStream(encoder.wrap(FileOutputStream(output)), cipher).use { outStream ->
+                inStream.copyTo(outStream)
+            }
+        }
+    }
+
+    @Throws(
+        NoSuchPaddingException::class,
+        NoSuchAlgorithmException::class,
+        InvalidAlgorithmParameterException::class,
+        InvalidKeyException::class,
+        BadPaddingException::class,
+        IllegalBlockSizeException::class
     )
     fun decrypt(cipherInput: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
