@@ -3,10 +3,10 @@ package me.jameshunt.dhiffiechat.compose
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.*
 import androidx.navigation.NavController
-import androidx.navigation.compose.navigate
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.UserService
+import me.jameshunt.dhiffiechat.toHome
 
 @Composable
 fun LauncherScreen(navController: NavController) {
@@ -20,7 +20,7 @@ fun LauncherScreen(navController: NavController) {
     run {
         scope.launch {
             userService.createIdentity()
-            navController.navigate("home")
+            navController.toHome()
         }
     }
 }

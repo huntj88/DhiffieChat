@@ -23,7 +23,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.navigation.NavController
-import androidx.navigation.compose.navigate
 import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.R
@@ -70,7 +69,8 @@ fun HomeScreen(
             Box(
                 modifier = Modifier
                     .wrapContentSize()
-                    .clickable { navController.navigate("manageFriends") }) {
+                    .clickable { navController.toManageFriends() }
+            ) {
                 Canvas(
                     modifier = Modifier
                         .wrapContentSize(align = Alignment.Center)
@@ -99,14 +99,14 @@ fun HomeScreen(
                 messageSummaries?.let { summaries ->
                     summaries.filter { it.count > 0 }.ShowList(
                         title = "Messages",
-                        onItemClick = { navController.navigateToShowNextMessage(it.friendUserId) }
+                        onItemClick = { navController.toShowNextMessage(it.friendUserId) }
                     )
 
                     summaries.filter { it.count == 0 }.ShowList(
                         title = "Friends",
                         onItemClick = {
                             onSendMessage {
-                                navController.navigateToSendMessage(it.friendUserId)
+                                navController.toSendMessage(it.friendUserId)
                             }
                         }
                     )
