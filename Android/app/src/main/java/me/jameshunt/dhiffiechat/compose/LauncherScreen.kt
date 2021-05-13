@@ -1,5 +1,6 @@
 package me.jameshunt.dhiffiechat.compose
 
+import androidx.compose.material.Scaffold
 import androidx.compose.runtime.*
 import androidx.navigation.NavController
 import androidx.navigation.compose.navigate
@@ -12,7 +13,9 @@ fun LauncherScreen(navController: NavController) {
     val scope = rememberCoroutineScope()
     val userService = getUserService()
 
-    LoadingIndicator()
+    Scaffold {
+        LoadingIndicator()
+    }
 
     run {
         scope.launch {

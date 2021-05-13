@@ -4,10 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.Card
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -62,32 +59,37 @@ fun ManageFriendsScreen() {
     var alias by remember { mutableStateOf("") }
     var userId by remember { mutableStateOf<String?>(null) }
 
-    Column(
-        Modifier
-            .fillMaxHeight()
-            .padding(8.dp)
-    ) {
-        CallToAction(text = "Share QR", drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
-            isShareOpen = true
-            Log.d("clicked", "click")
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        CallToAction(text = "Scan QR", drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
-            isScanOpen = true
-            Log.d("clicked", "click")
-        }
-
-        val relationships = viewModel.relationships.observeAsState().value
-
-        relationships?.let {
-            RequestList("Received Requests", it.receivedRequests) { userId ->
-                isScanOpen = true
+    Scaffold {
+        Column(
+            Modifier
+                .fillMaxHeight()
+                .padding(8.dp)
+        ) {
+            CallToAction(
+                text = "Share QR",
+                drawableId = R.drawable.ic_baseline_qr_code_scanner_24
+            ) {
+                isShareOpen = true
+                Log.d("clicked", "click")
             }
-            RequestList("Sent Requests", it.sentRequests) {}
-        } ?: run {
             Spacer(modifier = Modifier.height(8.dp))
-            Box(Modifier.align(Alignment.CenterHorizontally)) {
-                LoadingIndicator()
+            CallToAction(text = "Scan QR", drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
+                isScanOpen = true
+                Log.d("clicked", "click")
+            }
+
+            val relationships = viewModel.relationships.observeAsState().value
+
+            relationships?.let {
+                RequestList("Received Requests", it.receivedRequests) { userId ->
+                    isScanOpen = true
+                }
+                RequestList("Sent Requests", it.sentRequests) {}
+            } ?: run {
+                Spacer(modifier = Modifier.height(8.dp))
+                Box(Modifier.align(Alignment.CenterHorizontally)) {
+                    LoadingIndicator()
+                }
             }
         }
     }

@@ -8,21 +8,16 @@ import android.provider.MediaStore
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.Colors
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.Composable
 import androidx.core.content.FileProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
-import me.jameshunt.dhiffiechat.Colors.DarkColors
-import me.jameshunt.dhiffiechat.Colors.LightColors
 import me.jameshunt.dhiffiechat.compose.*
 import java.io.File
 
@@ -35,43 +30,40 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val colors = if (isSystemInDarkTheme()) DarkColors else LightColors
-            MaterialTheme(colors = colors) {
-                Surface(color = colors.primary, modifier = Modifier.fillMaxSize()) {
-                    val navController = rememberNavController()
-                    NavHost(navController, startDestination = "launcher") {
-                        composable("launcher") { LauncherScreen(navController) }
-                        composable("home") {
-                            HomeScreen(navController) { gotImage: () -> Unit ->
-                                gotImageCallback = gotImage
-                                dispatchTakePictureIntent()
-                            }
+            MaterialTheme(colors = activeColors()) {
+                val navController = rememberNavController()
+                NavHost(navController, startDestination = "launcher") {
+                    composable("launcher") { LauncherScreen(navController) }
+                    composable("home") {
+                        HomeScreen(navController) { gotImage: () -> Unit ->
+                            gotImageCallback = gotImage
+                            dispatchTakePictureIntent()
                         }
-                        composable("manageFriends") { ManageFriendsScreen() }
-                        composable(
-                            route = "sendMessage/{toUserId}",
-                            arguments = listOf(navArgument("toUserId") {
-                                type = NavType.StringType
-                            }),
-                            content = {
-                                SendMessage(
-                                    navController = navController,
-                                    photoPath = getPhotoFile().absolutePath,
-                                    recipientUserId = it.arguments!!.getString("toUserId")!!
-                                )
-                            }
-                        )
-                        composable(
-                            route = "showNextMessage/{fromUserId}",
-                            arguments = listOf(navArgument("fromUserId") {
-                                type = NavType.StringType
-                            }),
-                            content = {
-                                val userId = it.arguments!!.getString("fromUserId")!!
-                                ShowNextMessageScreen(userId)
-                            }
-                        )
                     }
+                    composable("manageFriends") { ManageFriendsScreen() }
+                    composable(
+                        route = "sendMessage/{toUserId}",
+                        arguments = listOf(navArgument("toUserId") {
+                            type = NavType.StringType
+                        }),
+                        content = {
+                            SendMessage(
+                                navController = navController,
+                                photoPath = getPhotoFile().absolutePath,
+                                recipientUserId = it.arguments!!.getString("toUserId")!!
+                            )
+                        }
+                    )
+                    composable(
+                        route = "showNextMessage/{fromUserId}",
+                        arguments = listOf(navArgument("fromUserId") {
+                            type = NavType.StringType
+                        }),
+                        content = {
+                            val userId = it.arguments!!.getString("fromUserId")!!
+                            ShowNextMessageScreen(userId)
+                        }
+                    )
                 }
             }
         }
@@ -115,22 +107,13 @@ fun NavController.navigateToShowNextMessage(friendUserId: String) {
     this.navigate("showNextMessage/$friendUserId")
 }
 
-object Colors {
-    private val white = Color(0xffffffff)
-    private val black = Color(0xff000000)
-    private val whiteVariant = Color(0xffdddddd)
-    private val darkPrimary = Color(0xFF16162c)
-    private val secondary = Color(0xFF00bc48)
+object DhiffieTheme {
+    val DarkColors = darkColors()
+    val LightColors = lightColors()
+}
 
-    val DarkColors = darkColors(
-        primary = darkPrimary,
-        secondary = secondary,
-        onPrimary = white
-    )
-    val LightColors = lightColors(
-        primary = white,
-        primaryVariant = whiteVariant,
-        secondary = secondary,
-        onPrimary = black
-    )
+@Composable
+fun activeColors(): Colors = when (isSystemInDarkTheme()) {
+    true -> DhiffieTheme.DarkColors
+    false -> DhiffieTheme.LightColors
 }

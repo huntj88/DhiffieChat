@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
@@ -46,40 +47,42 @@ fun SendMessage(navController: NavController, photoPath: String, recipientUserId
     var text: String by remember { mutableStateOf("") }
     var isUploading by remember { mutableStateOf(false) }
 
-    Column {
-        Image(
-            bitmap = takenImage.asImageBitmap(),
-            contentDescription = "",
-        )
-        TextField(
-            value = text,
-            onValueChange = { text = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            placeholder = {
-                Text(text = "Message")
-            }
-        )
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .requiredHeight(100.dp)
-                .padding(16.dp),
-            onClick = {
-                isUploading = true
-                viewModel.sendImage(
-                    recipientUserId = recipientUserId,
-                    image = takenImage,
-                    text = text,
-                    onFinish = { navController.popBackStack() }
+    Scaffold {
+        if (isUploading) {
+            LoadingIndicator()
+        } else {
+            Column {
+                Image(
+                    bitmap = takenImage.asImageBitmap(),
+                    contentDescription = "",
                 )
-            },
-            content = { Text(text = "Confirm") }
-        )
-    }
-
-    if (isUploading) {
-        LoadingIndicator()
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    placeholder = {
+                        Text(text = "Message")
+                    }
+                )
+                Button(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .requiredHeight(100.dp)
+                        .padding(16.dp),
+                    onClick = {
+                        isUploading = true
+                        viewModel.sendImage(
+                            recipientUserId = recipientUserId,
+                            image = takenImage,
+                            text = text,
+                            onFinish = { navController.popBackStack() }
+                        )
+                    },
+                    content = { Text(text = "Confirm") }
+                )
+            }
+        }
     }
 }

@@ -1,13 +1,14 @@
 package me.jameshunt.dhiffiechat.compose
 
-import android.util.Log
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,8 +19,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.*
-import androidx.navigation.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
+import androidx.navigation.NavController
 import androidx.navigation.compose.navigate
 import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.*
@@ -60,43 +63,61 @@ fun HomeScreen(
     onSendMessage: (gotCameraResult: () -> Unit) -> Unit
 ) {
     val viewModel: HomeViewModel = injectedViewModel()
+    val fabColor = activeColors().secondary
 
-    Column(
-        Modifier
-            .fillMaxHeight()
-            .padding(8.dp)
-    ) {
+    Scaffold(
+        floatingActionButton = {
+            Box(
+                modifier = Modifier
+                    .wrapContentSize()
+                    .clickable { navController.navigate("manageFriends") }) {
+                Canvas(
+                    modifier = Modifier
+                        .wrapContentSize(align = Alignment.Center)
+                        .padding(32.dp)
+                ) {
+                    drawCircle(fabColor, 80f)
+                }
+                Image(
+                    painter = painterResource(id = R.drawable.ic_baseline_qr_code_scanner_24),
+                    contentDescription = "Manage Friends",
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .size(36.dp),
+                    colorFilter = ColorFilter.tint(activeColors().onSecondary)
+                )
+            }
+        },
+        content = {
+            Column(
+                Modifier
+                    .fillMaxHeight()
+                    .padding(8.dp)
+            ) {
+                val messageSummaries = viewModel.friendMessageData.observeAsState().value
 
-        Spacer(modifier = Modifier.height(8.dp))
-        CallToAction(text = "Manage Friends", drawableId = R.drawable.ic_baseline_person_add_24) {
-            Log.d("clicked", "click")
-            navController.navigate("manageFriends")
-        }
+                messageSummaries?.let { summaries ->
+                    summaries.filter { it.count > 0 }.ShowList(
+                        title = "Messages",
+                        onItemClick = { navController.navigateToShowNextMessage(it.friendUserId) }
+                    )
 
-
-        val messageSummaries = viewModel.friendMessageData.observeAsState().value
-
-        messageSummaries?.let { summaries ->
-            summaries.filter { it.count > 0 }.ShowList(
-                title = "Messages",
-                onItemClick = { navController.navigateToShowNextMessage(it.friendUserId) }
-            )
-
-            summaries.filter { it.count == 0 }.ShowList(
-                title = "Friends",
-                onItemClick = {
-                    onSendMessage {
-                        navController.navigateToSendMessage(it.friendUserId)
+                    summaries.filter { it.count == 0 }.ShowList(
+                        title = "Friends",
+                        onItemClick = {
+                            onSendMessage {
+                                navController.navigateToSendMessage(it.friendUserId)
+                            }
+                        }
+                    )
+                } ?: run {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(Modifier.align(Alignment.CenterHorizontally)) {
+                        LoadingIndicator()
                     }
                 }
-            )
-        } ?: run {
-            Spacer(modifier = Modifier.height(8.dp))
-            Box(Modifier.align(Alignment.CenterHorizontally)) {
-                LoadingIndicator()
             }
-        }
-    }
+        })
 }
 
 @Composable

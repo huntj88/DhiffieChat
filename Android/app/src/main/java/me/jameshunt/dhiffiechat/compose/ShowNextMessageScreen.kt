@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
@@ -42,13 +43,15 @@ fun ShowNextMessageScreen(fromUserId: String) {
         viewModel.loadImage(fromUserId = fromUserId)
     }
 
-    Column(
-        Modifier
-            .fillMaxHeight()
-            .padding(8.dp)
-    ) {
-        imageBytes?.toBitmap()?.asImageBitmap()
-            ?.let { Image(it, contentDescription = "") }
-            ?: LoadingIndicator()
+    Scaffold {
+        Column(
+            Modifier
+                .fillMaxHeight()
+                .padding(8.dp)
+        ) {
+            imageBytes?.toBitmap()?.asImageBitmap()
+                ?.let { Image(it, contentDescription = "") }
+                ?: LoadingIndicator()
+        }
     }
 }
