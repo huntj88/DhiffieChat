@@ -117,6 +117,7 @@ fun NavController.navigateToShowNextMessage(friendUserId: String) {
 
 object Colors {
     private val white = Color(0xffffffff)
+    private val black = Color(0xff000000)
     private val whiteVariant = Color(0xffdddddd)
     private val darkPrimary = Color(0xFF16162c)
     private val secondary = Color(0xFF00bc48)
@@ -129,6 +130,7 @@ object Colors {
     val LightColors = lightColors(
         primary = white,
         primaryVariant = whiteVariant,
-        secondary = secondary
+        secondary = secondary,
+        onPrimary = black
     )
 }

@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat.compose
 
-import LoadingIndicator
 import androidx.compose.runtime.*
 import androidx.navigation.NavController
 import androidx.navigation.compose.navigate
