@@ -77,22 +77,38 @@ fun HomeScreen(
         val messageSummaries = viewModel.friendMessageData.observeAsState().value
 
         messageSummaries?.let { summaries ->
-            Spacer(modifier = Modifier.height(8.dp))
-            summaries.forEach { data ->
-                FriendCard(data) {
-                    when (data.count == 0) {
-                        true -> onSendMessage {
-                            navController.navigateToSendMessage(data.friendUserId)
-                        }
-                        false -> navController.navigateToShowNextMessage(data.friendUserId)
+            summaries.filter { it.count > 0 }.ShowList(
+                title = "Messages",
+                onItemClick = { navController.navigateToShowNextMessage(it.friendUserId) }
+            )
+
+            summaries.filter { it.count == 0 }.ShowList(
+                title = "Friends",
+                onItemClick = {
+                    onSendMessage {
+                        navController.navigateToSendMessage(it.friendUserId)
                     }
                 }
-            }
-
+            )
         } ?: run {
             Spacer(modifier = Modifier.height(8.dp))
             Box(Modifier.align(Alignment.CenterHorizontally)) {
                 LoadingIndicator()
+            }
+        }
+    }
+}
+
+@Composable
+fun List<HomeViewModel.FriendMessageData>.ShowList(
+    title: String,
+    onItemClick: (HomeViewModel.FriendMessageData) -> Unit
+) {
+    if (this.isNotEmpty()) {
+        Text(text = title, modifier = Modifier.padding(start = 12.dp, top = 24.dp))
+        this.forEach { data ->
+            FriendCard(data) {
+                onItemClick(data)
             }
         }
     }
@@ -122,9 +138,11 @@ fun FriendCard(friendData: HomeViewModel.FriendMessageData, onClick: () -> Unit)
             )
         }
         Spacer(modifier = Modifier.size(16.dp))
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .height(50.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+        ) {
             Text(
                 text = friendData.alias,
                 fontSize = 22.sp,
