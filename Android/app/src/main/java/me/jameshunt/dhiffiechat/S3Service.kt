@@ -41,7 +41,7 @@ class S3Service(
         return fileLocationUtil.incomingDecryptedFile()
     }
 
-    suspend fun sendFile(recipientUserId: String, file: File) {
+    suspend fun sendFile(recipientUserId: String, file: File, mediaType: MediaType) {
         // TODO: Remove metadata from files
         val recipientPublicKey = getUserPublicKey(recipientUserId)
         val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
@@ -60,8 +60,9 @@ class S3Service(
         val response = api.sendFile(
             headers = networkHelper.standardHeaders(),
             recipientUserId = recipientUserId,
+            s3Key = output.toS3Key(),
             iv = userToUserCredentials.iv.toBase64String(),
-            s3Key = output.toS3Key()
+            mediaType = mediaType
         )
 
         upload(response.uploadUrl, output)
@@ -152,4 +153,9 @@ class S3Service(
             })
         }
     }
+}
+
+enum class MediaType {
+    Image,
+    Video
 }

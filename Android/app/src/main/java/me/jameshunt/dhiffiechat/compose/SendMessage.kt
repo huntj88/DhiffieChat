@@ -15,6 +15,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import me.jameshunt.dhiffiechat.MediaType
 import me.jameshunt.dhiffiechat.S3Service
 import retrofit2.HttpException
 import java.io.File
@@ -25,7 +26,7 @@ class SendMessageViewModel(private val s3Service: S3Service) : ViewModel() {
 
         viewModelScope.launch {
             try {
-                s3Service.sendFile(recipientUserId, file)
+                s3Service.sendFile(recipientUserId, file, MediaType.Image)
                 onFinish()
             } catch (e: HttpException) {
                 e.printStackTrace()

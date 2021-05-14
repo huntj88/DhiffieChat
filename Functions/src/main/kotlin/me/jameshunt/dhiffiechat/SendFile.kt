@@ -28,6 +28,7 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 text = null, // TODO
                 fileKey = params.s3Key,
                 iv = params.userUserIv,
+                mediaType = params.mediaType,
                 signedS3Url = null,
                 signedS3UrlExpiration = null
             )
@@ -41,8 +42,9 @@ class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 
 data class UserUserQueryParams(
     val userId: String,
+    val s3Key: String,
     val userUserIv: String,
-    val s3Key: String
+    val mediaType: String
 )
 
 data class SendFileResponse(val uploadUrl: URL)

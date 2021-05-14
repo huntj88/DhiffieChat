@@ -38,9 +38,10 @@ interface DhiffieChatApi {
     @POST("SendFile")
     suspend fun sendFile(
         @HeaderMap headers: Map<String, String>,
-        @Query("s3Key") s3Key: String,
         @Query("userId") recipientUserId: String,
-        @Query("userUserIv") iv: String
+        @Query("s3Key") s3Key: String,
+        @Query("userUserIv") iv: String,
+        @Query("mediaType") mediaType: MediaType
     ): SendFileResponse
 
     data class GetFileResponse(val s3Url: URL)
@@ -65,6 +66,7 @@ interface DhiffieChatApi {
         val text: String?,
         val fileKey: String,
         val iv: String,
+        val mediaType: MediaType,
         val signedS3Url: URL?
     )
 

@@ -50,6 +50,7 @@ data class Message(
     val text: String?,
     val fileKey: String,
     val iv: String,
+    val mediaType: String,
     val signedS3Url: URL?,
     val signedS3UrlExpiration: Instant?
 )
@@ -62,6 +63,7 @@ fun Item.toMessage(): Message {
         text = this.getString("text"),
         fileKey = this.getString("fileKey"),
         iv = this.getString("iv"),
+        mediaType = this.getString("mediaType"),
         signedS3Url = this.getString("signedS3Url")?.let { URL(it) },
         signedS3UrlExpiration = this.getString("signedS3UrlExpiration")?.let { Instant.parse(it) },
     )
@@ -75,6 +77,7 @@ fun Message.toItem(): Item {
         "text" to text,
         "fileKey" to fileKey,
         "iv" to iv,
+        "mediaType" to mediaType,
         "signedS3Url" to signedS3Url?.toString(),
         "signedS3UrlExpiration" to signedS3UrlExpiration?.format()
     )
