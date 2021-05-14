@@ -8,7 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import me.jameshunt.dhiffiechat.compose.*
 
-class NavigationViewModel(val fileLocationUtil: FileLocationUtil): ViewModel()
+class NavigationViewModel(val fileLocationUtil: FileLocationUtil) : ViewModel()
 
 @Composable
 fun Navigation() {
@@ -16,8 +16,8 @@ fun Navigation() {
     val navController = rememberNavController()
 
     val mediaContract = rememberLauncherForActivityResult(
-        contract = ImageAndCameraContract(navViewModel.fileLocationUtil),
-        onResult = { friendUserId -> navController.toSendMessage(friendUserId) }
+        contract = PhotoAndVideoContract(navViewModel.fileLocationUtil),
+        onResult = { friendUserId -> friendUserId?.let { navController.toSendMessage(it) } }
     )
 
     NavHost(navController, startDestination = "launcher") {

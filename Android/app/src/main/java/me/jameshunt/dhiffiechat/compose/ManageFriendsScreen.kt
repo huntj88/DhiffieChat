@@ -1,6 +1,9 @@
 package me.jameshunt.dhiffiechat.compose
 
+import android.Manifest
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -59,6 +62,17 @@ fun ManageFriendsScreen() {
     var alias by remember { mutableStateOf("") }
     var userId by remember { mutableStateOf<String?>(null) }
 
+    val cameraPermissionContract = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { permissionGranted ->
+            if (permissionGranted) {
+                isScanOpen = true
+            } else {
+                Log.e("Camera", "camera permission denied")
+            }
+        }
+    )
+
     Scaffold {
         Column(
             Modifier
@@ -74,7 +88,7 @@ fun ManageFriendsScreen() {
             }
             Spacer(modifier = Modifier.height(8.dp))
             CallToAction(text = "Scan QR", drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
-                isScanOpen = true
+                cameraPermissionContract.launch(Manifest.permission.CAMERA)
                 Log.d("clicked", "click")
             }
 
@@ -82,7 +96,7 @@ fun ManageFriendsScreen() {
 
             relationships?.let {
                 RequestList("Received Requests", it.receivedRequests) { userId ->
-                    isScanOpen = true
+                    cameraPermissionContract.launch(Manifest.permission.CAMERA)
                 }
                 RequestList("Sent Requests", it.sentRequests) {}
             } ?: run {

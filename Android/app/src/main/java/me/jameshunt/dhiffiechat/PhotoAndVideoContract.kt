@@ -1,5 +1,6 @@
 package me.jameshunt.dhiffiechat
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -7,9 +8,9 @@ import android.provider.MediaStore
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.core.content.FileProvider
 
-class ImageAndCameraContract(
+class PhotoAndVideoContract(
     private val fileHelper: FileLocationUtil
-) : ActivityResultContract<String, String>() {
+) : ActivityResultContract<String, String?>() {
     private var friendUserId: String? = null
 
     override fun createIntent(context: Context, input: String): Intent {
@@ -29,7 +30,10 @@ class ImageAndCameraContract(
         return chooserIntent
     }
 
-    override fun parseResult(resultCode: Int, intent: Intent?): String {
-        return friendUserId!!
+    override fun parseResult(resultCode: Int, intent: Intent?): String? {
+        return when (resultCode == Activity.RESULT_OK) {
+            true -> friendUserId!!
+            false -> null
+        }
     }
 }
