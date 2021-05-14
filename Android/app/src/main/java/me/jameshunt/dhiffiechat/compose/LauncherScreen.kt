@@ -3,22 +3,22 @@ package me.jameshunt.dhiffiechat.compose
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.*
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.UserService
 import me.jameshunt.dhiffiechat.toHome
 
 @Composable
 fun LauncherScreen(navController: NavController) {
-    val scope = rememberCoroutineScope()
-    val userService = getUserService()
+    val userService by remember { mutableStateOf(getUserService()) }
+    var isLoading by remember { mutableStateOf(false) }
 
     Scaffold {
         LoadingIndicator()
     }
 
-    run {
-        scope.launch {
+    LaunchedEffect(key1 = "init") {
+        if (!isLoading) {
+            isLoading = true
             userService.createIdentity()
             navController.toHome()
         }

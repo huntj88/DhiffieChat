@@ -13,23 +13,24 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.*
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
+import java.io.File
 
 class ShowNextMessageViewModel(
     private val s3Service: S3Service,
     private val userService: UserService
 ) : ViewModel() {
 
-    private val _imageByteArray: MutableLiveData<ByteArray?> = MutableLiveData(null)
-    val imageByteArray: LiveData<ByteArray?> = _imageByteArray
+    private val _file: MutableLiveData<File?> = MutableLiveData(null)
+    val file: LiveData<File?> = _file
 
-    fun loadImage(fromUserId: String) {
+    fun loadFile(fromUserId: String) {
         viewModelScope.launch {
             val message = userService
                 .getMessageSummaries()
                 .first { it.from == fromUserId }
                 .next
 
-            _imageByteArray.value = s3Service.getDecryptedFile(message)
+            _file.value = s3Service.getDecryptedFile(message)
         }
     }
 }
@@ -37,10 +38,10 @@ class ShowNextMessageViewModel(
 @Composable
 fun ShowNextMessageScreen(fromUserId: String) {
     val viewModel: ShowNextMessageViewModel = injectedViewModel()
-    val imageBytes = viewModel.imageByteArray.observeAsState().value
+    val file = viewModel.file.observeAsState().value
 
-    if (imageBytes == null) {
-        viewModel.loadImage(fromUserId = fromUserId)
+    if (file == null) {
+        viewModel.loadFile(fromUserId = fromUserId)
     }
 
     Scaffold {
@@ -49,7 +50,7 @@ fun ShowNextMessageScreen(fromUserId: String) {
                 .fillMaxHeight()
                 .padding(8.dp)
         ) {
-            imageBytes?.toBitmap()?.asImageBitmap()
+            file?.inputStream()?.readBytes()?.toBitmap()?.asImageBitmap()
                 ?.let { Image(it, contentDescription = "") }
                 ?: LoadingIndicator()
         }

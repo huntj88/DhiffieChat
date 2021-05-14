@@ -7,8 +7,7 @@ import me.jameshunt.dhiffiechat.crypto.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
-import java.io.IOException
+import java.io.*
 import java.net.URL
 import java.security.PublicKey
 import java.time.format.DateTimeFormatter
@@ -23,19 +22,23 @@ class S3Service(
     private val fileLocationUtil: FileLocationUtil
 ) {
 
-    suspend fun getDecryptedFile(message: DhiffieChatApi.Message): ByteArray {
+    suspend fun getDecryptedFile(message: DhiffieChatApi.Message): File {
         val otherUserPublicKey = getUserPublicKey(message.from)
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
         val timeSent = DateTimeFormatter.ISO_INSTANT.format(message.messageCreatedAt)
         val s3Url = api.getFile(networkHelper.standardHeaders(), message.fileKey, timeSent).s3Url
 
-        val encryptedBody = download(s3Url)
-        return AESCrypto.decrypt(
-            cipherInput = encryptedBody,
-            key = userToUserCredentials.sharedSecret,
-            iv = message.iv.toIv()
-        )
+        withContext(Dispatchers.Default) {
+            AESCrypto.decrypt(
+                inputStream = downloadStream(s3Url),
+                output = fileLocationUtil.incomingDecryptedFile(),
+                key = userToUserCredentials.sharedSecret,
+                iv = message.iv.toIv()
+            )
+        }
+
+        return fileLocationUtil.incomingDecryptedFile()
     }
 
     suspend fun sendFile(recipientUserId: String, file: File) {
@@ -61,7 +64,7 @@ class S3Service(
             s3Key = output.toS3Key()
         )
 
-        upload(output, response.uploadUrl)
+        upload(response.uploadUrl, output)
         file.delete()
         output.delete()
     }
@@ -85,7 +88,7 @@ class S3Service(
             }
     }
 
-    private suspend fun upload(file: File, url: URL) {
+    private suspend fun upload(url: URL, file: File) {
         val request = Request.Builder()
             .url(url)
             .put(file.asRequestBody("application/octet-stream".toMediaTypeOrNull()))
@@ -120,6 +123,27 @@ class S3Service(
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful) {
                         continuation.resumeWith(Result.success(response.body!!.bytes()))
+                    } else {
+                        // will crash if file not finished uploading yet
+                        TODO()
+                    }
+                }
+            })
+        }
+    }
+
+    private suspend fun downloadStream(url: URL): InputStream {
+        val request = Request.Builder().url(url).get().build()
+
+        return suspendCoroutine { continuation ->
+            okHttpClient.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    continuation.resumeWith(Result.failure(e))
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    if (response.isSuccessful) {
+                        continuation.resumeWith(Result.success(response.body!!.byteStream()))
                     } else {
                         // will crash if file not finished uploading yet
                         TODO()

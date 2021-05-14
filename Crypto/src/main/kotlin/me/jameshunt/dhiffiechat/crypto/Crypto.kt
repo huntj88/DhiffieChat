@@ -88,14 +88,32 @@ object AESCrypto {
         IllegalBlockSizeException::class
     )
     fun encrypt(file: File, output: File, key: SecretKey, iv: IvParameterSpec) {
+        val encoder = Base64.getEncoder()
         val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.ENCRYPT_MODE, key, iv)
-        FileInputStream(file).use { inStream ->
-            val encoder = Base64.getEncoder()
-            CipherOutputStream(encoder.wrap(FileOutputStream(output)), cipher).use { outStream ->
-                inStream.copyTo(outStream)
-            }
+
+        val cipherStream = CipherOutputStream(encoder.wrap(output.outputStream()), cipher)
+        file.inputStream().use { inStream ->
+            cipherStream.use { outStream -> inStream.copyTo(outStream) }
         }
+    }
+
+    @Throws(
+        NoSuchPaddingException::class,
+        NoSuchAlgorithmException::class,
+        InvalidAlgorithmParameterException::class,
+        InvalidKeyException::class,
+        BadPaddingException::class,
+        IllegalBlockSizeException::class
+    )
+    fun decrypt(inputStream: InputStream, output: File, key: SecretKey, iv: IvParameterSpec) {
+        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        cipher.init(Cipher.DECRYPT_MODE, key, iv)
+
+        inputStream
+            .let { Base64.getDecoder().wrap(it) }
+            .let { CipherInputStream(it, cipher) }
+            .use { it.copyTo(output.outputStream()) }
     }
 
     @Throws(

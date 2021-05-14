@@ -23,6 +23,17 @@ class FileLocationUtil(context: Context) {
         return File(file, "encrypted")
     }
 
+    fun incomingDecryptedFile(): File {
+        val file = File(cacheDir, "receive")
+
+        // Create the storage directory if it does not exist
+        if (!file.exists() && !file.mkdirs()) {
+            Log.d("DhiffieChat", "failed to create directory")
+        }
+
+        return File(file, "decrypted")
+    }
+
     fun getInputFile(): File {
         // Create the storage directory if it does not exist
         if (!fileProviderDir.exists() && !fileProviderDir.mkdirs()) {
