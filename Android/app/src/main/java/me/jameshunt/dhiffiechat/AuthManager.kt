@@ -3,7 +3,7 @@ package me.jameshunt.dhiffiechat
 import com.squareup.moshi.Moshi
 import me.jameshunt.dhiffiechat.crypto.AESCrypto
 import me.jameshunt.dhiffiechat.crypto.DHCrypto
-import java.nio.charset.StandardCharsets
+import me.jameshunt.dhiffiechat.crypto.toBase64String
 import java.security.PublicKey
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -47,12 +47,15 @@ class AuthManager(
         )
         val iv = AESCrypto.generateIv()
         val token = Token(expires = Instant.now().plus(5L, ChronoUnit.MINUTES))
-        val encryptedToken = AESCrypto.encrypt(input = token.toSerialized(), sharedSecretKey, iv)
+
+        val encryptedToken = AESCrypto
+            .encrypt(input = token.toSerialized(), sharedSecretKey, iv)
+            .toBase64String()
 
         return AuthCredentials(
             userId = identityManager.getIdentity().toUserId(),
             iv = iv,
-            encryptedToken = encryptedToken.toString(StandardCharsets.UTF_8),
+            encryptedToken = encryptedToken,
             sharedSecret = sharedSecretKey
         )
     }

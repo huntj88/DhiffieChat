@@ -26,7 +26,7 @@ data class Identity(val publicKey: PublicKey) {
 fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedToken: String): Boolean {
     val token = try {
         val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
-        val tokenString = AESCrypto.decrypt(encryptedToken.toByteArray(), sharedSecretKey, iv)
+        val tokenString = AESCrypto.decrypt(encryptedToken.base64ToByteArray(), sharedSecretKey, iv)
         Singletons.objectMapper.readValue<Token>(tokenString)
     } catch (e: GeneralSecurityException) {
         e.printStackTrace()
@@ -50,14 +50,6 @@ fun getUserPublicKey(userId: String): PublicKey {
         .getItem(PrimaryKey("userId", userId))
         .asMap()
         .let { it["publicKey"] as String }
-        .toPublicKey()
-}
-
-fun getClientPublicKey(userId: String): PublicKey {
-    return Singletons.dynamoDB.getTable("User")
-        .getItem(PrimaryKey("userId", userId))
-        .asMap()["publicKey"]
-        .let { it as String }
         .toPublicKey()
 }
 

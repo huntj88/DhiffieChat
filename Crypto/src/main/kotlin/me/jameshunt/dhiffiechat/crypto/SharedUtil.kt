@@ -9,7 +9,11 @@ import java.util.*
 fun PublicKey.toUserId(): String = MessageDigest
     .getInstance("SHA-256")
     .digest(this.encoded)
-    .let { Base64.getEncoder().encodeToString(it) }
+    .toBase64String()
+
+fun ByteArray.toBase64String(): String {
+    return Base64.getEncoder().encodeToString(this)
+}
 
 
 fun File.toS3Key(): String {
@@ -23,6 +27,6 @@ fun File.toS3Key(): String {
     return MessageDigest
         .getInstance("SHA-256")
         .digest(bytes)
-        .let { Base64.getEncoder().encodeToString(it) }
+        .toBase64String()
         .replace("/", "_") // don't make folders
 }

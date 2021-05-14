@@ -75,8 +75,7 @@ object AESCrypto {
     fun encrypt(input: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
         val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.ENCRYPT_MODE, key, iv)
-        val cipherText: ByteArray = cipher.doFinal(input)
-        return Base64.getEncoder().encode(cipherText)
+        return cipher.doFinal(input)
     }
 
     @Throws(
@@ -88,11 +87,10 @@ object AESCrypto {
         IllegalBlockSizeException::class
     )
     fun encrypt(file: File, output: File, key: SecretKey, iv: IvParameterSpec) {
-        val encoder = Base64.getEncoder()
         val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.ENCRYPT_MODE, key, iv)
 
-        val cipherStream = CipherOutputStream(encoder.wrap(output.outputStream()), cipher)
+        val cipherStream = CipherOutputStream(output.outputStream(), cipher)
         file.inputStream().use { inStream ->
             cipherStream.use { outStream -> inStream.copyTo(outStream) }
         }
@@ -110,10 +108,9 @@ object AESCrypto {
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.DECRYPT_MODE, key, iv)
 
-        inputStream
-            .let { Base64.getDecoder().wrap(it) }
-            .let { CipherInputStream(it, cipher) }
-            .use { it.copyTo(output.outputStream()) }
+        CipherInputStream(inputStream, cipher).use {
+            it.copyTo(output.outputStream())
+        }
     }
 
     @Throws(
@@ -127,22 +124,24 @@ object AESCrypto {
     fun decrypt(cipherInput: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.DECRYPT_MODE, key, iv)
-        return cipher.doFinal(Base64.getDecoder().decode(cipherInput))
+        return cipher.doFinal(cipherInput)
     }
 }
 
 fun String.toPublicKey(): PublicKey {
-    val bytes = Base64.getDecoder().decode(this)
+    val bytes = this.base64ToByteArray()
     return KeyFactory.getInstance("DH").generatePublic(X509EncodedKeySpec(bytes))
 }
 
 fun String.toPrivateKey(): PrivateKey {
-    val bytes = Base64.getDecoder().decode(this)
+    val bytes = this.base64ToByteArray()
     return KeyFactory.getInstance("DH").generatePrivate(PKCS8EncodedKeySpec(bytes))
 }
 
-fun String.toIv(): IvParameterSpec = IvParameterSpec(Base64.getDecoder().decode(this))
+fun String.toIv(): IvParameterSpec = IvParameterSpec(this.base64ToByteArray())
 
-fun IvParameterSpec.toBase64String(): String = Base64.getEncoder().encodeToString(iv)
-fun PublicKey.toBase64String(): String = Base64.getEncoder().encodeToString(encoded)
-fun PrivateKey.toBase64String(): String = Base64.getEncoder().encodeToString(encoded)
+fun IvParameterSpec.toBase64String(): String = iv.toBase64String()
+fun PublicKey.toBase64String(): String = encoded.toBase64String()
+fun PrivateKey.toBase64String(): String = encoded.toBase64String()
+
+fun String.base64ToByteArray(): ByteArray = Base64.getDecoder().decode(this)
