@@ -18,6 +18,8 @@ import java.util.concurrent.TimeUnit
 
 
 class DI(application: DhiffieChatApp) {
+    private val fileLocationUtil = FileLocationUtil(application)
+
     private val sharedPreferences = application.getSharedPreferences(
         "prefs",
         AppCompatActivity.MODE_PRIVATE
@@ -71,13 +73,13 @@ class DI(application: DhiffieChatApp) {
         database.aliasQueries, networkHelper, api, authManager, identityManager
     )
     private val s3Service = S3Service(
-        okhttp, networkHelper, authManager, api, userService, FileLocationUtil(application)
+        okhttp, networkHelper, authManager, api, userService, fileLocationUtil
     )
 
     private val injectableComponents = mutableMapOf<String, Any>()
 
     init {
-        register(identityManager, s3Service, userService)
+        register(identityManager, s3Service, userService, fileLocationUtil)
     }
 
     private fun register(vararg entry: Any) {
