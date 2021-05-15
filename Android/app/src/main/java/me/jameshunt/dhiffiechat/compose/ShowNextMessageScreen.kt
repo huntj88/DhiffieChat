@@ -5,7 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
-import androidx.compose.runtime.Composable
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
@@ -19,9 +20,10 @@ class ShowNextMessageViewModel(
     private val s3Service: S3Service,
     private val userService: UserService
 ) : ViewModel() {
+    data class MediaMessage(val message: DhiffieChatApi.Message, val file: File)
 
-    private val _file: MutableLiveData<File?> = MutableLiveData(null)
-    val file: LiveData<File?> = _file
+    private val _media: MutableLiveData<MediaMessage?> = MutableLiveData(null)
+    val media: LiveData<MediaMessage?> = _media
 
     fun loadFile(fromUserId: String) {
         viewModelScope.launch {
@@ -30,7 +32,7 @@ class ShowNextMessageViewModel(
                 .first { it.from == fromUserId }
                 .next
 
-            _file.value = s3Service.getDecryptedFile(message)
+            _media.value = MediaMessage(message, s3Service.getDecryptedFile(message))
         }
     }
 }
@@ -38,11 +40,7 @@ class ShowNextMessageViewModel(
 @Composable
 fun ShowNextMessageScreen(fromUserId: String) {
     val viewModel: ShowNextMessageViewModel = injectedViewModel()
-    val file = viewModel.file.observeAsState().value
-
-    if (file == null) {
-        viewModel.loadFile(fromUserId = fromUserId)
-    }
+    val media = viewModel.media.observeAsState().value
 
     Scaffold {
         Column(
@@ -50,9 +48,23 @@ fun ShowNextMessageScreen(fromUserId: String) {
                 .fillMaxHeight()
                 .padding(8.dp)
         ) {
-            file?.inputStream()?.readBytes()?.toBitmap()?.asImageBitmap()
-                ?.let { Image(it, contentDescription = "") }
-                ?: LoadingIndicator()
+            media?.let {
+                when (it.message.mediaType) {
+                    MediaType.Image -> ImageMessage(file = media.file)
+                    MediaType.Video -> VideoMessage(file = media.file)
+                }
+            } ?: LoadingIndicator().also { viewModel.loadFile(fromUserId = fromUserId) }
         }
     }
+}
+
+@Composable
+fun ImageMessage(file: File) {
+    val image = file.inputStream().readBytes().toBitmap().asImageBitmap()
+    Image(image, contentDescription = "")
+}
+
+@Composable
+fun VideoMessage(file: File) {
+    Text("a video")
 }
