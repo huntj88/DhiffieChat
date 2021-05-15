@@ -6,15 +6,15 @@ import me.jameshunt.dhiffiechat.crypto.toBase64String
 
 class GetUserPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(data: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<Unit, ClientPublicKeyQueryParams, Map<String, String>>(
+        return awsTransformAuthed<GetUserPublicKeyRequest, Unit, Map<String, String>>(
             request = data,
             context = context,
-            handle = { _, queryParams, _ ->
-                val userPublicKey = getUserPublicKey(queryParams.userId)
+            handle = { body, _, _ ->
+                val userPublicKey = getUserPublicKey(body.userId)
                 mapOf("publicKey" to userPublicKey.toBase64String())
             }
         )
     }
 }
 
-data class ClientPublicKeyQueryParams(val userId: String)
+data class GetUserPublicKeyRequest(val userId: String)

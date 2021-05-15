@@ -7,14 +7,15 @@ import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
+import me.jameshunt.dhiffiechat.crypto.toBase64String
+import me.jameshunt.dhiffiechat.crypto.toIv
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
 import java.net.URL
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import javax.crypto.spec.IvParameterSpec
 
 
 class DI(application: DhiffieChatApp) {
@@ -40,6 +41,13 @@ class DI(application: DhiffieChatApp) {
             @FromJson
             fun fromJson(string: String): URL = URL(string)
         })
+        .add(object {
+            @ToJson
+            fun toJson(iv: IvParameterSpec): String = iv.toBase64String()
+
+            @FromJson
+            fun fromJson(base64: String): IvParameterSpec = base64.toIv()
+        })
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
@@ -49,12 +57,6 @@ class DI(application: DhiffieChatApp) {
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .writeTimeout(20, TimeUnit.SECONDS)
-        .build()
-
-    private val retrofit = Retrofit.Builder()
-        .client(okhttp)
-        .baseUrl("https://lbedr5sli7.execute-api.us-east-1.amazonaws.com/stage/")
-        .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
     private val driver: SqlDriver = AndroidSqliteDriver(
@@ -67,13 +69,13 @@ class DI(application: DhiffieChatApp) {
 
     private val identityManager = IdentityManager(sharedPreferences)
     private val authManager = AuthManager(identityManager, moshi)
-    private val api: DhiffieChatApi = retrofit.create(DhiffieChatApi::class.java)
     private val networkHelper = NetworkHelper(identityManager, authManager)
+    private val singleEndpointApi = SingleEndpointApi(okhttp, moshi, networkHelper)
     private val userService = UserService(
-        database.aliasQueries, networkHelper, api, authManager, identityManager
+        database.aliasQueries, networkHelper, singleEndpointApi, authManager, identityManager
     )
     private val s3Service = S3Service(
-        okhttp, networkHelper, authManager, api, userService, fileLocationUtil
+        okhttp, authManager, singleEndpointApi, userService, fileLocationUtil
     )
 
     private val injectableComponents = mutableMapOf<String, Any>()

@@ -161,89 +161,21 @@ resource "aws_api_gateway_rest_api" "chat_gateway" {
   description = "Chat Gateway"
 }
 
-module "create_identity" {
+module "perform_request" {
   source                   = "../tfmodules/provisioned-lambda"
-  function_name            = "CreateIdentity"
+  function_name            = "PerformRequest"
   gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id               = aws_api_gateway_rest_api.chat_gateway.id
   gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
   http_method              = "POST"
   role                     = aws_iam_role.function_role.arn
 }
-
-module "get_user_public_key" {
-  source                   = "../tfmodules/provisioned-lambda"
-  function_name            = "GetUserPublicKey"
-  gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
-  gateway_id               = aws_api_gateway_rest_api.chat_gateway.id
-  gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
-  http_method              = "GET"
-  role                     = aws_iam_role.function_role.arn
-}
-
-
-module "scan_qr" {
-  source                   = "../tfmodules/provisioned-lambda"
-  function_name            = "ScanQR"
-  gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
-  gateway_id               = aws_api_gateway_rest_api.chat_gateway.id
-  gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
-  http_method              = "POST"
-  role                     = aws_iam_role.function_role.arn
-}
-
-module "send_file" {
-  source                   = "../tfmodules/provisioned-lambda"
-  function_name            = "SendFile"
-  gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
-  gateway_id               = aws_api_gateway_rest_api.chat_gateway.id
-  gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
-  http_method              = "POST"
-  role                     = aws_iam_role.function_role.arn
-}
-
-module "get_file" {
-  source                   = "../tfmodules/provisioned-lambda"
-  function_name            = "GetFile"
-  gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
-  gateway_id               = aws_api_gateway_rest_api.chat_gateway.id
-  gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
-  http_method              = "GET"
-  role                     = aws_iam_role.function_role.arn
-}
-
-module "get_message_summaries" {
-  source                   = "../tfmodules/provisioned-lambda"
-  function_name            = "GetMessageSummaries"
-  gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
-  gateway_id               = aws_api_gateway_rest_api.chat_gateway.id
-  gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
-  http_method              = "GET"
-  role                     = aws_iam_role.function_role.arn
-}
-
-module "get_user_relationships" {
-  source                   = "../tfmodules/provisioned-lambda"
-  function_name            = "GetUserRelationships"
-  gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
-  gateway_id               = aws_api_gateway_rest_api.chat_gateway.id
-  gateway_root_resource_id = aws_api_gateway_rest_api.chat_gateway.root_resource_id
-  http_method              = "GET"
-  role                     = aws_iam_role.function_role.arn
-}
-
 
 resource "aws_api_gateway_deployment" "chat_deployment" {
 
   triggers = {
     redeployment = sha1(jsonencode([
-      module.create_identity.redeploy_hash,
-      module.get_user_public_key.redeploy_hash,
-      module.scan_qr.redeploy_hash,
-      module.send_file.redeploy_hash,
-      module.get_file.redeploy_hash,
-      module.get_message_summaries.redeploy_hash,
-      module.get_user_relationships.redeploy_hash,
+      module.perform_request.redeploy_hash,
     ]))
   }
 

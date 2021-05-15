@@ -10,41 +10,41 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 
-class SendFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
+class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<Unit, UserUserQueryParams, SendFileResponse>(request, context) { _, params, identity ->
+        return awsTransformAuthed<SendMessageRequest, Unit, SendMessageResponse>(request, context) { body, _, identity ->
             // TODO: check if friends
 
-            val signedUrlRequest = GeneratePresignedUrlRequest("encrypted-file-bucket-z00001", params.s3Key)
+            val signedUrlRequest = GeneratePresignedUrlRequest("encrypted-file-bucket-z00001", body.s3Key)
                 .withMethod(HttpMethod.PUT)
                 .withExpiration(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
 
             val signedUrl: URL = Singletons.s3.generatePresignedUrl(signedUrlRequest)
 
             val message = Message(
-                to = params.userId,
+                to = body.recipientUserId,
                 from = identity.userId,
                 messageCreatedAt = Instant.now(),
                 text = null, // TODO
-                fileKey = params.s3Key,
-                iv = params.userUserIv,
-                mediaType = params.mediaType,
+                fileKey = body.s3Key,
+                iv = body.userUserIv,
+                mediaType = body.mediaType,
                 signedS3Url = null,
                 signedS3UrlExpiration = null
             )
 
             Singletons.dynamoDB.getTable("Message").putItem(message.toItem())
 
-            SendFileResponse(signedUrl)
+            SendMessageResponse(signedUrl)
         }
     }
 }
 
-data class UserUserQueryParams(
-    val userId: String,
+data class SendMessageRequest(
+    val recipientUserId: String,
     val s3Key: String,
     val userUserIv: String,
     val mediaType: String
 )
 
-data class SendFileResponse(val uploadUrl: URL)
+data class SendMessageResponse(val uploadUrl: URL)

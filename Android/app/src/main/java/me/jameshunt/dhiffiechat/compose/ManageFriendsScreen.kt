@@ -23,8 +23,8 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
-import me.jameshunt.dhiffiechat.DhiffieChatApi.*
 import me.jameshunt.dhiffiechat.R
+import me.jameshunt.dhiffiechat.RequestType.*
 import net.glxn.qrgen.android.MatrixToImageWriter
 
 class ManageFriendsViewModel(
@@ -32,8 +32,8 @@ class ManageFriendsViewModel(
     identityManager: IdentityManager
 ) : ViewModel() {
 
-    private val _relationships: MutableLiveData<Relationships?> = MutableLiveData(null)
-    val relationships: LiveData<Relationships?> = _relationships
+    private val _relationships: MutableLiveData<GetUserRelationships.Response?> = MutableLiveData(null)
+    val relationships: LiveData<GetUserRelationships.Response?> = _relationships
     val userId = identityManager.getIdentity().toUserId()
 
     init {

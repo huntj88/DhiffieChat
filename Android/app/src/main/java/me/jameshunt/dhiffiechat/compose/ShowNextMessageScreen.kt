@@ -21,13 +21,14 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
+import me.jameshunt.dhiffiechat.RequestType.*
 import java.io.File
 
 class ShowNextMessageViewModel(
     private val s3Service: S3Service,
     private val userService: UserService
 ) : ViewModel() {
-    data class MediaMessage(val message: DhiffieChatApi.Message, val file: File)
+    data class MediaMessage(val message: GetMessageSummaries.Message, val file: File)
 
     private val _media: MutableLiveData<MediaMessage?> = MutableLiveData(null)
     val media: LiveData<MediaMessage?> = _media

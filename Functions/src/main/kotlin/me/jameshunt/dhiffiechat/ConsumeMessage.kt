@@ -10,15 +10,15 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
 
-class GetFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
+class ConsumeMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<Unit, GetFileQueryParams, GetFileResponse>(request, context) { _, params, identity ->
-            context.logger.log("params: $params")
+        return awsTransformAuthed<ConsumeMessageRequest, Unit, ConsumeMessageResponse>(request, context) { body, _, identity ->
+            context.logger.log("body: $body")
             val messageTable = Singletons.dynamoDB.getTable("Message")
 
             val message = messageTable.getItem(
                 "to", identity.userId,
-                "messageCreatedAt", params.timeSent.format()
+                "messageCreatedAt", body.timeSent.format()
             ).toMessage()
 
             if (message.signedS3UrlExpiration?.isBefore(Instant.now()) == true) {
@@ -27,7 +27,7 @@ class GetFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
 
             val signedUrl = message.signedS3Url ?: generateAndSaveS3Url(message)
 
-            GetFileResponse(s3Url = signedUrl)
+            ConsumeMessageResponse(s3Url = signedUrl)
         }
     }
 
@@ -54,11 +54,11 @@ class GetFile : RequestHandler<Map<String, Any?>, GatewayResponse> {
     }
 }
 
-data class GetFileQueryParams(
+data class ConsumeMessageRequest(
     val fileKey: String,
     val timeSent: Instant
 )
 
-data class GetFileResponse(
+data class ConsumeMessageResponse(
     val s3Url: URL
 )

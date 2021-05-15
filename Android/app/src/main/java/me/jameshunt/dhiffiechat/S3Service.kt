@@ -15,19 +15,19 @@ import kotlin.coroutines.suspendCoroutine
 
 class S3Service(
     private val okHttpClient: OkHttpClient,
-    private val networkHelper: NetworkHelper,
     private val authManager: AuthManager,
-    private val api: DhiffieChatApi,
+    private val singleEndpointApi: SingleEndpointApi,
     private val userService: UserService,
-    private val fileLocationUtil: FileLocationUtil
+    private val fileLocationUtil: FileLocationUtil,
 ) {
 
-    suspend fun getDecryptedFile(message: DhiffieChatApi.Message): File {
+    suspend fun getDecryptedFile(message: RequestType.GetMessageSummaries.Message): File {
         val otherUserPublicKey = getUserPublicKey(message.from)
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
         val timeSent = DateTimeFormatter.ISO_INSTANT.format(message.messageCreatedAt)
-        val s3Url = api.getFile(networkHelper.standardHeaders(), message.fileKey, timeSent).s3Url
+        val requestType = RequestType.ConsumeMessage(message.fileKey, timeSent)
+        val s3Url = singleEndpointApi.consumeMessage(requestType).s3Url
 
         withContext(Dispatchers.Default) {
             AESCrypto.decrypt(
@@ -57,21 +57,22 @@ class S3Service(
             )
         }
 
-        val response = api.sendFile(
-            headers = networkHelper.standardHeaders(),
-            recipientUserId = recipientUserId,
-            s3Key = output.toS3Key(),
-            iv = userToUserCredentials.iv.toBase64String(),
-            mediaType = mediaType
+        val response = singleEndpointApi.sendMessage(
+            RequestType.SendMessage(
+                recipientUserId = recipientUserId,
+                s3Key = output.toS3Key(),
+                userUserIv = userToUserCredentials.iv,
+                mediaType = mediaType
+            )
         )
-
         upload(response.uploadUrl, output)
         file.delete()
         output.delete()
     }
 
     private suspend fun getUserPublicKey(userId: String): PublicKey {
-        return api.getUserPublicKey(headers = networkHelper.standardHeaders(), userId = userId)
+        return singleEndpointApi
+            .getUserPublicKey(RequestType.GetUserPublicKey(userId = userId))
             .publicKey
             .toPublicKey()
             .also { publicKey ->
