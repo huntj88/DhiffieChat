@@ -12,7 +12,7 @@ import java.util.*
 
 class ConsumeMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<ConsumeMessageRequest, Unit, ConsumeMessageResponse>(request, context) { body, _, identity ->
+        return awsTransformAuthed<ConsumeMessageRequest, ConsumeMessageResponse>(request, context) { body, identity ->
             context.logger.log("body: $body")
             val messageTable = Singletons.dynamoDB.getTable("Message")
 

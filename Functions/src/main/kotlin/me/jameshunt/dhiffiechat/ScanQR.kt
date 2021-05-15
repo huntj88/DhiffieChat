@@ -11,7 +11,7 @@ data class QR(val scannedUserId: String)
 
 class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<QR, Unit, Unit>(request, context) { body, _, identity ->
+        return awsTransformAuthed<QR, Unit>(request, context) { body, identity ->
             val table = Singletons.dynamoDB.getTable("User")
             val item = table.getItem("userId", identity.userId)
 

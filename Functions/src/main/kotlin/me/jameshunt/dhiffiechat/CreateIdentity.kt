@@ -16,7 +16,7 @@ data class RequestData(
 
 class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransform<RequestData, Unit, Unit>(request, context) { body, _ ->
+        return awsTransform<RequestData, Unit>(request, context) { body ->
             if (!doesUserHavePrivateKey(body.publicKey.toPublicKey(), body.iv.toIv(), body.encryptedToken)) {
                 throw Unauthorized()
             }

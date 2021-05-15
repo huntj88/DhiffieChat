@@ -12,7 +12,7 @@ import java.util.*
 
 class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<SendMessageRequest, Unit, SendMessageResponse>(request, context) { body, _, identity ->
+        return awsTransformAuthed<SendMessageRequest, SendMessageResponse>(request, context) { body, identity ->
             // TODO: check if friends
 
             val signedUrlRequest = GeneratePresignedUrlRequest("encrypted-file-bucket-z00001", body.s3Key)

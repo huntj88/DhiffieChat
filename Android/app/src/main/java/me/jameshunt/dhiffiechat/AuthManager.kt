@@ -17,7 +17,7 @@ class AuthManager(
         val expires: Instant
     )
 
-    data class AuthCredentials(
+    data class ServerCredentials(
         val userId: String,
         val iv: IvParameterSpec,
         val encryptedToken: String,
@@ -37,20 +37,19 @@ class AuthManager(
         .toJson(this)
         .toByteArray()
 
-    // TODO: caching, return null after expiration
-    fun userToServerAuth(): AuthCredentials {
+    fun userToServerAuth(): ServerCredentials {
         val sharedSecretKey = DHCrypto.agreeSecretKey(
             prkSelf = identityManager.getIdentity().private,
             pbkPeer = getServerPublicKey()
         )
         val iv = AESCrypto.generateIv()
-        val token = Token(expires = Instant.now().plus(5L, ChronoUnit.MINUTES))
+        val token = Token(expires = Instant.now().plus(1L, ChronoUnit.MINUTES))
 
         val encryptedToken = AESCrypto
             .encrypt(input = token.toSerialized(), sharedSecretKey, iv)
             .toBase64String()
 
-        return AuthCredentials(
+        return ServerCredentials(
             userId = identityManager.getIdentity().toUserId(),
             iv = iv,
             encryptedToken = encryptedToken,

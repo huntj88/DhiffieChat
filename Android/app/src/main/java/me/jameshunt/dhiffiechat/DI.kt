@@ -24,7 +24,6 @@ import javax.crypto.spec.IvParameterSpec
 
 class DI(application: DhiffieChatApp) {
     private val fileLocationUtil = FileLocationUtil(application)
-
     private val sharedPreferences = application.getSharedPreferences(
         "prefs",
         AppCompatActivity.MODE_PRIVATE
@@ -84,14 +83,9 @@ class DI(application: DhiffieChatApp) {
     )
 
     private val database = Database(driver)
-
     private val api = retrofit.create(LambdaApi::class.java)
-    private val userService = UserService(
-        database.aliasQueries, api, authManager, identityManager
-    )
-    private val s3Service = S3Service(
-        okhttp, authManager, api, userService, fileLocationUtil
-    )
+    private val userService = UserService(database.aliasQueries, api, authManager, identityManager)
+    private val s3Service = S3Service(okhttp, authManager, api, userService, fileLocationUtil)
 
     private val injectableComponents = mutableMapOf<String, Any>()
 

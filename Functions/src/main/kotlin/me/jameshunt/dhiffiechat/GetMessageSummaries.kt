@@ -11,7 +11,7 @@ import java.time.temporal.ChronoUnit
 
 class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<Unit, Unit, List<MessageFromUserSummary>>(request, context) { _, _, identity ->
+        return awsTransformAuthed<Unit, List<MessageFromUserSummary>>(request, context) { _, identity ->
             val messageTable = Singletons.dynamoDB.getTable("Message")
             val startPeriod = Instant.now().minus(14, ChronoUnit.DAYS)
 

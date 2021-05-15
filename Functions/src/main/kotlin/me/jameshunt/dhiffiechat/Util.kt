@@ -17,10 +17,10 @@ data class GatewayResponse(
     val body: String
 )
 
-inline fun <reified Body, reified Params, Out> awsTransform(
+inline fun <reified Body, Out> awsTransform(
     request: Map<String, Any?>,
     context: Context,
-    handle: (Body, Params) -> Out
+    handle: (Body) -> Out
 ): GatewayResponse {
     // TODO: truncate large non human readable bodies when logging
     context.logger.log(Singletons.objectMapper.writeValueAsBytes(request))
@@ -28,12 +28,9 @@ inline fun <reified Body, reified Params, Out> awsTransform(
     val bodyResult = getBody<Body>(request, context.logger)
     val body = bodyResult.right() ?: return bodyResult.left()
 
-    val queryParamsResult = getQueryParams<Params>(request, context.logger)
-    val queryParams = queryParamsResult.right() ?: return queryParamsResult.left()
-
     return try {
         val out = Singletons.objectMapper.writeValueAsString(
-            when (val result = handle(body, queryParams)) {
+            when (val result = handle(body)) {
                 is Unit -> mapOf("message" to "success")
                 else -> result
             }
@@ -47,10 +44,10 @@ inline fun <reified Body, reified Params, Out> awsTransform(
     }
 }
 
-inline fun <reified Body, reified Params, Out> awsTransformAuthed(
+inline fun <reified Body, Out> awsTransformAuthed(
     request: Map<String, Any?>,
     context: Context,
-    handle: (Body, Params, Identity) -> Out
+    handle: (Body, Identity) -> Out
 ): GatewayResponse {
     // TODO: truncate large non human readable bodies when logging
     context.logger.log(Singletons.objectMapper.writeValueAsBytes(request))
@@ -60,12 +57,9 @@ inline fun <reified Body, reified Params, Out> awsTransformAuthed(
     val bodyResult = getBody<Body>(request, context.logger)
     val body = bodyResult.right() ?: return bodyResult.left()
 
-    val queryParamsResult = getQueryParams<Params>(request, context.logger)
-    val queryParams = queryParamsResult.right() ?: return queryParamsResult.left()
-
     return try {
         val out = Singletons.objectMapper.writeValueAsString(
-            when (val result = handle(body, queryParams, identity)) {
+            when (val result = handle(body, identity)) {
                 is Unit -> mapOf("message" to "success")
                 else -> result
             }
