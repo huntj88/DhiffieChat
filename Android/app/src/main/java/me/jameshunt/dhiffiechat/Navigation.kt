@@ -1,32 +1,19 @@
 package me.jameshunt.dhiffiechat
 
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import me.jameshunt.dhiffiechat.compose.*
 
-class NavigationViewModel(val fileLocationUtil: FileLocationUtil) : ViewModel()
-
 @Composable
 fun Navigation() {
-    val navViewModel: NavigationViewModel = injectedViewModel()
     val navController = rememberNavController()
-
-    val mediaContract = rememberLauncherForActivityResult(
-        contract = PhotoAndVideoContract(navViewModel.fileLocationUtil),
-        onResult = { friendUserId -> friendUserId?.let { navController.toSendMessage(it) } }
-    )
 
     NavHost(navController, startDestination = "launcher") {
         composable("launcher") { LauncherScreen(navController) }
         composable("home") {
-            HomeScreen(
-                navController = navController,
-                onSendMessage = { friendUserId -> mediaContract.launch(friendUserId) }
-            )
+            HomeScreen(navController = navController)
         }
         composable("manageFriends") { ManageFriendsScreen() }
         composable(
@@ -37,7 +24,6 @@ fun Navigation() {
             content = {
                 SendMessage(
                     navController = navController,
-                    file = navViewModel.fileLocationUtil.getInputFile(),
                     recipientUserId = it.arguments!!.getString("toUserId")!!
                 )
             }

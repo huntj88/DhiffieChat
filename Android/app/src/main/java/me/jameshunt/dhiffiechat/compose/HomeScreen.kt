@@ -57,10 +57,7 @@ class HomeViewModel(userService: UserService) : ViewModel() {
 }
 
 @Composable
-fun HomeScreen(
-    navController: NavController,
-    onSendMessage: (friendUserId: String) -> Unit
-) {
+fun HomeScreen(navController: NavController) {
     val viewModel: HomeViewModel = injectedViewModel()
     val fabColor = activeColors().secondary
 
@@ -105,7 +102,7 @@ fun HomeScreen(
                     summaries.filter { it.count == 0 }.ShowList(
                         title = "Friends",
                         onItemClick = {
-                            onSendMessage(it.friendUserId)
+                            navController.toSendMessage(it.friendUserId)
                         }
                     )
                 } ?: run {
