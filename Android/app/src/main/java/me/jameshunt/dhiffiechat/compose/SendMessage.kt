@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -31,7 +32,12 @@ class SendMessageViewModel(
     private val fileLocationUtil: FileLocationUtil
 ) : ViewModel() {
 
-    fun sendFile(recipientUserId: String, mediaType: MediaType, text: String, onFinish: () -> Unit) {
+    fun sendFile(
+        recipientUserId: String,
+        mediaType: MediaType,
+        text: String,
+        onFinish: () -> Unit
+    ) {
         // TODO: use text
 
         viewModelScope.launch {
@@ -104,7 +110,25 @@ fun SendMessage(navController: NavController, recipientUserId: String) {
 
 @Composable
 fun SelectMediaType(onMediaTypeSelected: (MediaType) -> Unit) {
-    onMediaTypeSelected(MediaType.Video)
+    Column {
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            onClick = { onMediaTypeSelected(MediaType.Image) },
+            content = {
+                Text(text = "Take Picture", fontSize = 24f.sp)
+            }
+        )
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            onClick = { onMediaTypeSelected(MediaType.Video) },
+            content = {
+                Text(text = "Record Video", fontSize = 24f.sp)
+            })
+    }
 }
 
 @Composable
