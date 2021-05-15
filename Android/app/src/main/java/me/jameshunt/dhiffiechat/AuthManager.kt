@@ -1,9 +1,7 @@
 package me.jameshunt.dhiffiechat
 
 import com.squareup.moshi.Moshi
-import me.jameshunt.dhiffiechat.crypto.AESCrypto
-import me.jameshunt.dhiffiechat.crypto.DHCrypto
-import me.jameshunt.dhiffiechat.crypto.toBase64String
+import me.jameshunt.dhiffiechat.crypto.*
 import java.security.PublicKey
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -40,10 +38,10 @@ class AuthManager(
         .toByteArray()
 
     // TODO: caching, return null after expiration
-    fun userToServerAuth(serverPublicKey: PublicKey): AuthCredentials {
+    fun userToServerAuth(): AuthCredentials {
         val sharedSecretKey = DHCrypto.agreeSecretKey(
             prkSelf = identityManager.getIdentity().private,
-            pbkPeer = serverPublicKey
+            pbkPeer = getServerPublicKey()
         )
         val iv = AESCrypto.generateIv()
         val token = Token(expires = Instant.now().plus(5L, ChronoUnit.MINUTES))
@@ -71,5 +69,9 @@ class AuthManager(
             iv = AESCrypto.generateIv(),
             sharedSecret = sharedSecretKey
         )
+    }
+
+    private fun getServerPublicKey(): PublicKey {
+        return serverPublic.toPublicKey()
     }
 }

@@ -15,17 +15,17 @@ import kotlin.coroutines.suspendCoroutine
 class S3Service(
     private val okHttpClient: OkHttpClient,
     private val authManager: AuthManager,
-    private val api: SingleEndpointApi,
+    private val api: LambdaApi,
     private val userService: UserService,
     private val fileLocationUtil: FileLocationUtil,
 ) {
 
-    suspend fun getDecryptedFile(message: RequestType.GetMessageSummaries.Message): File {
+    suspend fun getDecryptedFile(message: LambdaApi.Message): File {
         val otherUserPublicKey = getUserPublicKey(message.from)
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
-        val requestType = RequestType.ConsumeMessage(message.fileKey, message.messageCreatedAt)
-        val s3Url = api.consumeMessage(requestType).s3Url
+        val body = LambdaApi.ConsumeMessage(message.fileKey, message.messageCreatedAt)
+        val s3Url = api.consumeMessage(body = body).s3Url
 
         withContext(Dispatchers.Default) {
             AESCrypto.decrypt(
@@ -55,14 +55,14 @@ class S3Service(
             )
         }
 
-        val response = api.sendMessage(
-            RequestType.SendMessage(
-                recipientUserId = recipientUserId,
-                s3Key = output.toS3Key(),
-                userUserIv = userToUserCredentials.iv,
-                mediaType = mediaType
-            )
+        val body = LambdaApi.SendMessage(
+            recipientUserId = recipientUserId,
+            s3Key = output.toS3Key(),
+            userUserIv = userToUserCredentials.iv,
+            mediaType = mediaType
         )
+        val response = api.sendMessage(body = body)
+
         upload(response.uploadUrl, output)
         file.delete()
         output.delete()
@@ -70,7 +70,7 @@ class S3Service(
 
     private suspend fun getUserPublicKey(userId: String): PublicKey {
         return api
-            .getUserPublicKey(RequestType.GetUserPublicKey(userId = userId))
+            .getUserPublicKey(body = LambdaApi.GetUserPublicKey(userId = userId))
             .publicKey
             .toPublicKey()
             .also { publicKey ->

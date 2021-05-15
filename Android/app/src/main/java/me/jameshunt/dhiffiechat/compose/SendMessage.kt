@@ -120,7 +120,8 @@ fun SelectMediaType(onMediaTypeSelected: (MediaType) -> Unit) {
             onClick = { onMediaTypeSelected(MediaType.Video) },
             content = {
                 Text(text = "Record Video", fontSize = 24f.sp)
-            })
+            }
+        )
     }
 }
 

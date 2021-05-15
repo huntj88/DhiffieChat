@@ -18,13 +18,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.*
+import me.jameshunt.dhiffiechat.IdentityManager
+import me.jameshunt.dhiffiechat.LambdaApi.GetUserRelationshipsResponse
 import me.jameshunt.dhiffiechat.R
-import me.jameshunt.dhiffiechat.RequestType.*
+import me.jameshunt.dhiffiechat.UserService
+import me.jameshunt.dhiffiechat.toUserId
 import net.glxn.qrgen.android.MatrixToImageWriter
 
 class ManageFriendsViewModel(
@@ -32,8 +37,8 @@ class ManageFriendsViewModel(
     identityManager: IdentityManager
 ) : ViewModel() {
 
-    private val _relationships: MutableLiveData<GetUserRelationships.Response?> = MutableLiveData(null)
-    val relationships: LiveData<GetUserRelationships.Response?> = _relationships
+    private val _relationships: MutableLiveData<GetUserRelationshipsResponse?> = MutableLiveData(null)
+    val relationships: LiveData<GetUserRelationshipsResponse?> = _relationships
     val userId = identityManager.getIdentity().toUserId()
 
     init {

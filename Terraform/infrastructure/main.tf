@@ -162,7 +162,7 @@ resource "aws_api_gateway_rest_api" "chat_gateway" {
 }
 
 module "perform_request" {
-  source                   = "../tfmodules/provisioned-lambda"
+  source                   = "../modules/provisioned-lambda"
   function_name            = "PerformRequest"
   gateway_execution_arn    = aws_api_gateway_rest_api.chat_gateway.execution_arn
   gateway_id               = aws_api_gateway_rest_api.chat_gateway.id

@@ -12,6 +12,8 @@ import me.jameshunt.dhiffiechat.crypto.toIv
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import java.net.URL
 import java.security.PublicKey
 import java.time.Instant
@@ -56,12 +58,23 @@ class DI(application: DhiffieChatApp) {
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
+    private val identityManager = IdentityManager(sharedPreferences)
+    private val authManager = AuthManager(identityManager, moshi)
+    private val headerInterceptor = HeaderInterceptor(identityManager, authManager)
+
     private val okhttp = OkHttpClient
         .Builder()
         .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+        .addInterceptor(headerInterceptor)
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .writeTimeout(20, TimeUnit.SECONDS)
+        .build()
+
+    private val retrofit = Retrofit.Builder()
+        .client(okhttp)
+        .baseUrl("https://tbpqloglof.execute-api.us-east-1.amazonaws.com/stage/")
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
     private val driver: SqlDriver = AndroidSqliteDriver(
@@ -72,12 +85,9 @@ class DI(application: DhiffieChatApp) {
 
     private val database = Database(driver)
 
-    private val identityManager = IdentityManager(sharedPreferences)
-    private val authManager = AuthManager(identityManager, moshi)
-    private val networkHelper = NetworkHelper(identityManager, authManager)
-    private val api = SingleEndpointApi(okhttp, moshi, networkHelper)
+    private val api = retrofit.create(LambdaApi::class.java)
     private val userService = UserService(
-        database.aliasQueries, networkHelper, api, authManager, identityManager
+        database.aliasQueries, api, authManager, identityManager
     )
     private val s3Service = S3Service(
         okhttp, authManager, api, userService, fileLocationUtil

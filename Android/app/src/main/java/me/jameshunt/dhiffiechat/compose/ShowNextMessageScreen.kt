@@ -1,5 +1,7 @@
 package me.jameshunt.dhiffiechat.compose
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -21,14 +23,14 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
-import me.jameshunt.dhiffiechat.RequestType.*
+import me.jameshunt.dhiffiechat.LambdaApi.*
 import java.io.File
 
 class ShowNextMessageViewModel(
     private val s3Service: S3Service,
     private val userService: UserService
 ) : ViewModel() {
-    data class MediaMessage(val message: GetMessageSummaries.Message, val file: File)
+    data class MediaMessage(val message: Message, val file: File)
 
     private val _media: MutableLiveData<MediaMessage?> = MutableLiveData(null)
     val media: LiveData<MediaMessage?> = _media
@@ -71,6 +73,8 @@ fun ImageMessage(file: File) {
     val image = file.inputStream().readBytes().toBitmap().asImageBitmap()
     Image(image, contentDescription = "")
 }
+
+fun ByteArray.toBitmap(): Bitmap = BitmapFactory.decodeByteArray(this, 0, this.size)
 
 @Composable
 fun VideoMessage(file: File) {
