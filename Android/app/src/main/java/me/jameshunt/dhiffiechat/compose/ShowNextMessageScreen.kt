@@ -40,7 +40,7 @@ class ShowNextMessageViewModel(
             val message = userService
                 .getMessageSummaries()
                 .first { it.from == fromUserId }
-                .next
+                .next!!
 
             _media.value = MediaMessage(message, s3Service.getDecryptedFile(message))
         }

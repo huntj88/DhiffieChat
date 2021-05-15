@@ -30,9 +30,11 @@ class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
                     MessageFromUserSummary(
                         from = from,
                         count = messagesFromOneUser.count(),
+                        mostRecentCreatedAt = messagesFromOneUser.maxOfOrNull { it.messageCreatedAt },
                         next = messagesFromOneUser.minByOrNull { it.messageCreatedAt }!!
                     )
                 }
+                .sortedByDescending { it.mostRecentCreatedAt }
         }
     }
 }
@@ -40,7 +42,8 @@ class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
 data class MessageFromUserSummary(
     val from: String,
     val count: Int,
-    val next: Message
+    val mostRecentCreatedAt: Instant?,
+    val next: Message?
 )
 
 data class Message(

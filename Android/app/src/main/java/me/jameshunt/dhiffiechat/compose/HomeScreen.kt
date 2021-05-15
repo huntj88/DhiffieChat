@@ -50,7 +50,7 @@ class HomeViewModel(userService: UserService) : ViewModel() {
                     friendUserId = friend.userId,
                     alias = friend.alias,
                     count = messageFromUserSummary?.count ?: 0,
-                    mostRecentAt = messageFromUserSummary?.next?.messageCreatedAt
+                    mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
                 )
             }
         }.asLiveData()

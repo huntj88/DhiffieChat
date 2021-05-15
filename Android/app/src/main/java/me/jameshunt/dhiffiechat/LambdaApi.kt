@@ -27,7 +27,8 @@ interface LambdaApi {
     data class MessageSummary(
         val from: String,
         val count: Int,
-        val next: Message
+        val mostRecentCreatedAt: Instant?,
+        val next: Message?
     )
 
     data class Message(
