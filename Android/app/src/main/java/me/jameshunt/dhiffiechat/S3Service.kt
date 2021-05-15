@@ -10,7 +10,6 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.*
 import java.net.URL
 import java.security.PublicKey
-import java.time.format.DateTimeFormatter
 import kotlin.coroutines.suspendCoroutine
 
 class S3Service(
@@ -30,7 +29,7 @@ class S3Service(
 
         withContext(Dispatchers.Default) {
             AESCrypto.decrypt(
-                inputStream = downloadStream(s3Url),
+                inputStream = download(s3Url),
                 output = fileLocationUtil.incomingDecryptedFile(),
                 key = userToUserCredentials.sharedSecret,
                 iv = message.iv
@@ -112,28 +111,7 @@ class S3Service(
         }
     }
 
-    private suspend fun download(url: URL): ByteArray {
-        val request = Request.Builder().url(url).get().build()
-
-        return suspendCoroutine { continuation ->
-            okHttpClient.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    continuation.resumeWith(Result.failure(e))
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    if (response.isSuccessful) {
-                        continuation.resumeWith(Result.success(response.body!!.bytes()))
-                    } else {
-                        // will crash if file not finished uploading yet
-                        TODO()
-                    }
-                }
-            })
-        }
-    }
-
-    private suspend fun downloadStream(url: URL): InputStream {
+    private suspend fun download(url: URL): InputStream {
         val request = Request.Builder().url(url).get().build()
 
         return suspendCoroutine { continuation ->

@@ -32,28 +32,24 @@ class DI(application: DhiffieChatApp) {
         .add(object {
             @ToJson
             fun toJson(instant: Instant): String = DateTimeFormatter.ISO_INSTANT.format(instant)
-
             @FromJson
             fun fromJson(string: String): Instant = Instant.parse(string)
         })
         .add(object {
             @ToJson
             fun toJson(url: URL): String = url.toString()
-
             @FromJson
             fun fromJson(string: String): URL = URL(string)
         })
         .add(object {
             @ToJson
             fun toJson(iv: IvParameterSpec): String = iv.toBase64String()
-
             @FromJson
             fun fromJson(base64: String): IvParameterSpec = base64.toIv()
         })
         .add(object {
             @ToJson
             fun toJson(publicKey: PublicKey): String = publicKey.toBase64String()
-
             @FromJson
             fun fromJson(base64: String): PublicKey = base64.toPublicKey()
         })
