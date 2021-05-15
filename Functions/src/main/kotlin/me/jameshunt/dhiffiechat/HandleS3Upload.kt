@@ -16,17 +16,11 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
     override fun handleRequest(request: Map<String, Any?>, context: Context) {
         context.logger.log(Singletons.objectMapper.writeValueAsString(request))
 
-        val s3Key = request["Records"]
-            .let { it as List<Map<String, Any?>> }
-            .also { if (it.size != 1) TODO() }
-            .first()["s3"]
-            .let { it as Map<String, Any?> }["object"]
-            .let { it as Map<String, Any?> }["key"]
-            .let { it as String }
-            .let { URLDecoder.decode(it, Charsets.UTF_8.toString()) }
-
-        val file = Singletons.s3.getObject(Singletons.encryptedFileBucket, s3Key)
-        val userId = file.objectMetadata.userMetadata["recipient-id"]
+        val s3Key = getS3Key(request)
+        val userId = Singletons.s3
+            .getObject(Singletons.encryptedFileBucket, s3Key)
+            .objectMetadata
+            .userMetadata["recipient-id"]
 
         val startRange = Instant.now().minus(30, ChronoUnit.MINUTES).format()
         val endRange = Instant.now().format()
@@ -40,12 +34,21 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
         val message = messages
             .map { it.toMessage() }
             .filter { it.fileKey == s3Key }
-            .also { if (it.size != 1) TODO() }
-            .first()
+            .singleItem()
 
         context.logger.log(Singletons.objectMapper.writeValueAsString(message))
         message.setUploadFinished()
         message.sendNotification()
+    }
+
+    private fun getS3Key(request: Map<String, Any?>): String {
+        return request["Records"]
+            .let { it as List<Map<String, Any?>> }
+            .singleItem()["s3"]
+            .let { it as Map<String, Any?> }["object"]
+            .let { it as Map<String, Any?> }["key"]
+            .let { it as String }
+            .let { URLDecoder.decode(it, Charsets.UTF_8.toString()) }
     }
 
     private fun Message.setUploadFinished() {
@@ -60,3 +63,7 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
         // TODO
     }
 }
+
+fun <T> List<T>.singleItem(): T = this
+    .also { if (it.size != 1) throw IllegalStateException("Expected list to have a single item") }
+    .first()
