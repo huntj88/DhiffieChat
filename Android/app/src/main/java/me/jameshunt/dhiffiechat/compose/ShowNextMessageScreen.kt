@@ -1,17 +1,24 @@
 package me.jameshunt.dhiffiechat.compose
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.*
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
 import java.io.File
@@ -66,5 +73,39 @@ fun ImageMessage(file: File) {
 
 @Composable
 fun VideoMessage(file: File) {
-    Text("a video")
+    Player(file = file)
+}
+
+@Composable
+fun Player(file: File) {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+
+    AndroidView(
+        factory = { PlayerView(context) },
+        modifier = Modifier.fillMaxWidth()
+    ) { playerView ->
+        val player = SimpleExoPlayer.Builder(context).build()
+        player.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+        player.prepare()
+        player.playWhenReady = true
+
+        lifecycle.addObserver(object : LifecycleObserver {
+            @OnLifecycleEvent(Lifecycle.Event.ON_START)
+            fun onStart() {
+                playerView.onResume()
+            }
+
+            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+            fun onPause() {
+                playerView.onPause()
+            }
+
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            fun onDestroy() {
+                player.release()
+            }
+        })
+        playerView.player = player
+    }
 }
