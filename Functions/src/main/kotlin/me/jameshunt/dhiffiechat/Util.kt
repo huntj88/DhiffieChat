@@ -22,7 +22,6 @@ inline fun <reified Body, Out> awsTransform(
     context: Context,
     handle: (Body) -> Out
 ): GatewayResponse {
-    // TODO: truncate large non human readable bodies when logging
     context.logger.log(Singletons.objectMapper.writeValueAsBytes(request))
 
     val bodyResult = getBody<Body>(request, context.logger)
@@ -49,7 +48,6 @@ inline fun <reified Body, Out> awsTransformAuthed(
     context: Context,
     handle: (Body, Identity) -> Out
 ): GatewayResponse {
-    // TODO: truncate large non human readable bodies when logging
     context.logger.log(Singletons.objectMapper.writeValueAsBytes(request))
 
     val identity = validateAndGetIdentity(request)

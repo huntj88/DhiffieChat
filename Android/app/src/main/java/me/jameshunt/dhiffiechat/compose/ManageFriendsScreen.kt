@@ -137,14 +137,19 @@ fun ManageFriendsScreen() {
         Dialog(onDismissRequest = { isAliasOpen = false }) {
             Card {
                 Column {
-                    TextField(value = alias, onValueChange = {
-                        alias = it
-                    })
-                    Button(onClick = {
-                        viewModel.addFriend(userId!!, alias)
-                    }) {
-                        Text(text = "Submit")
-                    }
+                    TextField(
+                        value = alias,
+                        placeholder = { Text("Alias") },
+                        modifier = Modifier.padding(16.dp),
+                        onValueChange = { alias = it }
+                    )
+                    Button(
+                        modifier = Modifier
+                            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+                            .fillMaxWidth(),
+                        onClick = { viewModel.addFriend(userId!!, alias) },
+                        content = { Text(text = "Submit") }
+                    )
                 }
             }
         }
