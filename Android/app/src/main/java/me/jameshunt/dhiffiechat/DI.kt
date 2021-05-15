@@ -70,12 +70,12 @@ class DI(application: DhiffieChatApp) {
     private val identityManager = IdentityManager(sharedPreferences)
     private val authManager = AuthManager(identityManager, moshi)
     private val networkHelper = NetworkHelper(identityManager, authManager)
-    private val singleEndpointApi = SingleEndpointApi(okhttp, moshi, networkHelper)
+    private val api = SingleEndpointApi(okhttp, moshi, networkHelper)
     private val userService = UserService(
-        database.aliasQueries, networkHelper, singleEndpointApi, authManager, identityManager
+        database.aliasQueries, networkHelper, api, authManager, identityManager
     )
     private val s3Service = S3Service(
-        okhttp, authManager, singleEndpointApi, userService, fileLocationUtil
+        okhttp, authManager, api, userService, fileLocationUtil
     )
 
     private val injectableComponents = mutableMapOf<String, Any>()

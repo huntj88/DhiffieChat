@@ -10,7 +10,7 @@ import me.jameshunt.dhiffiechat.crypto.toBase64String
 class UserService(
     private val aliasQueries: AliasQueries,
     private val networkHelper: NetworkHelper,
-    private val singleEndpointApi: SingleEndpointApi,
+    private val api: SingleEndpointApi,
     private val authManager: AuthManager,
     private val identityManager: IdentityManager
 ) {
@@ -23,23 +23,23 @@ class UserService(
     }
 
     suspend fun getRelationships(): GetUserRelationships.Response {
-        return singleEndpointApi.getUserRelationships()
+        return api.getUserRelationships()
     }
 
     suspend fun addFriend(userId: String, alias: String) {
         aliasQueries.addAlias(userId, alias)
-        singleEndpointApi.scanQR(ScanQR(scannedUserId = userId))
+        api.scanQR(ScanQR(scannedUserId = userId))
     }
 
     suspend fun getMessageSummaries(): List<GetMessageSummaries.MessageSummary> {
-        return singleEndpointApi.getMessageSummaries()
+        return api.getMessageSummaries()
     }
 
     suspend fun createIdentity() {
         val userToServerCredentials =
             authManager.userToServerAuth(serverPublicKey = networkHelper.getServerPublicKey())
 
-        singleEndpointApi.createIdentity(
+        api.createIdentity(
             CreateIdentity(
                 publicKey = identityManager.getIdentity().public.toBase64String(),
                 iv = userToServerCredentials.iv.toBase64String(),

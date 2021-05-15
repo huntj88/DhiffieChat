@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.FileLocationUtil
 import me.jameshunt.dhiffiechat.MediaType
 import me.jameshunt.dhiffiechat.S3Service
-import retrofit2.HttpException
 import java.io.File
 
 class SendMessageViewModel(
@@ -39,19 +38,13 @@ class SendMessageViewModel(
         onFinish: () -> Unit
     ) {
         // TODO: use text
-
         viewModelScope.launch {
-            try {
-                s3Service.sendFile(
-                    recipientUserId,
-                    fileLocationUtil.getInputFile(),
-                    mediaType
-                )
-                onFinish()
-            } catch (e: HttpException) {
-                e.printStackTrace()
-                throw e
-            }
+            s3Service.sendFile(
+                recipientUserId,
+                fileLocationUtil.getInputFile(),
+                mediaType
+            )
+            onFinish()
         }
     }
 

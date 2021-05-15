@@ -91,7 +91,7 @@ class SingleEndpointApi(
 
     suspend fun createIdentity(requestType: CreateIdentity) {
         val request = Request.Builder()
-            .defaultUrl<CreateIdentity>()
+            .defaultUrl(requestType::class.java.simpleName)
             .handleRequestBody(moshi.adapter(CreateIdentity::class.java), requestType).build()
 
         return suspendCoroutine {
@@ -113,7 +113,7 @@ class SingleEndpointApi(
 
     suspend fun getUserPublicKey(requestType: GetUserPublicKey): GetUserPublicKey.Response {
         val request = Request.Builder()
-            .defaultUrl<GetUserPublicKey>()
+            .defaultUrl(requestType::class.java.simpleName)
             .handleRequestBody(moshi.adapter(GetUserPublicKey::class.java), requestType)
             .headers(networkHelper.standardHeaders())
             .build()
@@ -140,7 +140,7 @@ class SingleEndpointApi(
 
     suspend fun sendMessage(requestType: SendMessage): SendMessage.Response {
         val request = Request.Builder()
-            .defaultUrl<SendMessage>()
+            .defaultUrl(requestType::class.java.simpleName)
             .handleRequestBody(moshi.adapter(SendMessage::class.java), requestType)
             .headers(networkHelper.standardHeaders())
             .build()
@@ -167,7 +167,7 @@ class SingleEndpointApi(
 
     suspend fun consumeMessage(requestType: ConsumeMessage): ConsumeMessage.Response {
         val request = Request.Builder()
-            .defaultUrl<ConsumeMessage>()
+            .defaultUrl(requestType::class.java.simpleName)
             .handleRequestBody(moshi.adapter(ConsumeMessage::class.java), requestType)
             .headers(networkHelper.standardHeaders())
             .build()
@@ -194,7 +194,7 @@ class SingleEndpointApi(
 
     suspend fun scanQR(requestType: ScanQR) {
         val request = Request.Builder()
-            .defaultUrl<GetUserRelationships>()
+            .defaultUrl(requestType::class.java.simpleName)
             .handleRequestBody(moshi.adapter(ScanQR::class.java), requestType)
             .headers(networkHelper.standardHeaders())
             .build()
@@ -218,7 +218,7 @@ class SingleEndpointApi(
 
     suspend fun getUserRelationships(): GetUserRelationships.Response {
         val request = Request.Builder()
-            .defaultUrl<GetUserRelationships>()
+            .defaultUrl(GetUserRelationships::class.java.simpleName)
             .emptyBody()
             .headers(networkHelper.standardHeaders())
             .build()
@@ -245,7 +245,7 @@ class SingleEndpointApi(
 
     suspend fun getMessageSummaries(): List<GetMessageSummaries.MessageSummary> {
         val request = Request.Builder()
-            .defaultUrl<GetMessageSummaries>()
+            .defaultUrl(GetMessageSummaries::class.java.simpleName)
             .emptyBody()
             .headers(networkHelper.standardHeaders())
             .build()
@@ -275,8 +275,8 @@ class SingleEndpointApi(
         }
     }
 
-    private inline fun <reified T> Request.Builder.defaultUrl(): Request.Builder = this
-        .url("https://lbedr5sli7.execute-api.us-east-1.amazonaws.com/stage/PerformRequest?type=${T::class.java.simpleName}")
+    private fun Request.Builder.defaultUrl(type: String): Request.Builder = this
+        .url("https://lbedr5sli7.execute-api.us-east-1.amazonaws.com/stage/PerformRequest?type=$type")
 
     private fun <T> Request.Builder.handleRequestBody(
         adapter: JsonAdapter<T>,

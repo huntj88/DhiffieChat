@@ -16,7 +16,7 @@ import kotlin.coroutines.suspendCoroutine
 class S3Service(
     private val okHttpClient: OkHttpClient,
     private val authManager: AuthManager,
-    private val singleEndpointApi: SingleEndpointApi,
+    private val api: SingleEndpointApi,
     private val userService: UserService,
     private val fileLocationUtil: FileLocationUtil,
 ) {
@@ -27,7 +27,7 @@ class S3Service(
 
         val timeSent = DateTimeFormatter.ISO_INSTANT.format(message.messageCreatedAt)
         val requestType = RequestType.ConsumeMessage(message.fileKey, timeSent)
-        val s3Url = singleEndpointApi.consumeMessage(requestType).s3Url
+        val s3Url = api.consumeMessage(requestType).s3Url
 
         withContext(Dispatchers.Default) {
             AESCrypto.decrypt(
@@ -57,7 +57,7 @@ class S3Service(
             )
         }
 
-        val response = singleEndpointApi.sendMessage(
+        val response = api.sendMessage(
             RequestType.SendMessage(
                 recipientUserId = recipientUserId,
                 s3Key = output.toS3Key(),
@@ -71,7 +71,7 @@ class S3Service(
     }
 
     private suspend fun getUserPublicKey(userId: String): PublicKey {
-        return singleEndpointApi
+        return api
             .getUserPublicKey(RequestType.GetUserPublicKey(userId = userId))
             .publicKey
             .toPublicKey()
