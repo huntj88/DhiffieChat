@@ -15,5 +15,7 @@ object Singletons {
         .registerKotlinModule()
 
     val dynamoDB = DynamoDB(AmazonDynamoDBClientBuilder.defaultClient())
+
+    val encryptedFileBucket = "encrypted-file-bucket-z00001"
     val s3 = AmazonS3ClientBuilder.standard().build()
 }

@@ -171,6 +171,37 @@ module "perform_request" {
   role                     = aws_iam_role.function_role.arn
 }
 
+resource "aws_lambda_permission" "allow_bucket_event" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.handle_s3_upload.arn
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.bucket.arn
+}
+
+resource "aws_lambda_function" "handle_s3_upload" {
+  description = "handle s3 upload"
+  function_name = "HandleS3Upload"
+  filename = "../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
+  handler = "me.jameshunt.dhiffiechat.HandleS3Upload::handleRequest"
+  role = aws_iam_role.function_role.arn
+  runtime = "java8"
+  timeout = 30
+  memory_size = 1024
+}
+
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket = aws_s3_bucket.bucket.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.handle_s3_upload.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.allow_bucket_event]
+}
+
 resource "aws_api_gateway_deployment" "chat_deployment" {
 
   triggers = {

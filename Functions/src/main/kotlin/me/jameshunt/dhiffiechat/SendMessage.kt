@@ -3,6 +3,7 @@ package me.jameshunt.dhiffiechat
 import com.amazonaws.HttpMethod
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import com.amazonaws.services.s3.Headers
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
 import java.net.URL
 import java.time.Instant
@@ -15,9 +16,11 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
         return awsTransformAuthed<SendMessageRequest, SendMessageResponse>(request, context) { body, identity ->
             // TODO: check if friends
 
-            val signedUrlRequest = GeneratePresignedUrlRequest("encrypted-file-bucket-z00001", body.s3Key)
+            val signedUrlRequest = GeneratePresignedUrlRequest(Singletons.encryptedFileBucket, body.s3Key)
                 .withMethod(HttpMethod.PUT)
-                .withExpiration(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES)))
+                .withExpiration(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES))).apply {
+                    addRequestParameter(Headers.S3_USER_METADATA_PREFIX + "recipient-id", body.recipientUserId)
+                }
 
             val signedUrl: URL = Singletons.s3.generatePresignedUrl(signedUrlRequest)
 
@@ -29,6 +32,7 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 fileKey = body.s3Key,
                 iv = body.userUserIv,
                 mediaType = body.mediaType,
+                uploadFinished = false,
                 signedS3Url = null,
                 signedS3UrlExpiration = null
             )

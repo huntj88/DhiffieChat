@@ -21,9 +21,9 @@ class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
                     // TODO: kicks off lambda to set upload finished, and send notification
                     "to", identity.userId,
                     RangeKeyCondition("messageCreatedAt").between(startPeriod.format(), Instant.now().format()),
-                    QueryFilter("signedS3Url").eq(null)
+                    QueryFilter("signedS3Url").eq(null),
+                    QueryFilter("uploadFinished").eq(true)
                 )
-                .asIterable()
                 .map { it.toMessage() }
                 .groupBy { it.from }
                 .map { (from, messagesFromOneUser) ->
@@ -51,6 +51,7 @@ data class Message(
     val fileKey: String,
     val iv: String,
     val mediaType: String,
+    val uploadFinished: Boolean,
     val signedS3Url: URL?,
     val signedS3UrlExpiration: Instant?
 )
@@ -64,6 +65,7 @@ fun Item.toMessage(): Message {
         fileKey = this.getString("fileKey"),
         iv = this.getString("iv"),
         mediaType = this.getString("mediaType"),
+        uploadFinished = this.getBoolean("uploadFinished"),
         signedS3Url = this.getString("signedS3Url")?.let { URL(it) },
         signedS3UrlExpiration = this.getString("signedS3UrlExpiration")?.let { Instant.parse(it) },
     )
@@ -78,6 +80,7 @@ fun Message.toItem(): Item {
         "fileKey" to fileKey,
         "iv" to iv,
         "mediaType" to mediaType,
+        "uploadFinished" to uploadFinished,
         "signedS3Url" to signedS3Url?.toString(),
         "signedS3UrlExpiration" to signedS3UrlExpiration?.format()
     )
