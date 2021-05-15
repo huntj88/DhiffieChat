@@ -38,7 +38,7 @@ sealed class RequestType {
             val messageCreatedAt: Instant,
             val text: String?,
             val fileKey: String,
-            val iv: String,
+            val iv: IvParameterSpec,
             val mediaType: MediaType,
             val signedS3Url: URL?
         )
@@ -58,8 +58,8 @@ sealed class RequestType {
      * mutating below
      */
     data class CreateIdentity(
-        val publicKey: String,
-        val iv: String,
+        val publicKey: PublicKey,
+        val iv: IvParameterSpec,
         val encryptedToken: String
     ) : RequestType()
 
@@ -76,7 +76,7 @@ sealed class RequestType {
 
     data class ConsumeMessage(
         val fileKey: String,
-        val timeSent: String
+        val timeSent: Instant
     ) : RequestType() {
         data class Response(val s3Url: URL)
     }

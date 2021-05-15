@@ -9,9 +9,11 @@ import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
 import me.jameshunt.dhiffiechat.crypto.toBase64String
 import me.jameshunt.dhiffiechat.crypto.toIv
+import me.jameshunt.dhiffiechat.crypto.toPublicKey
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.net.URL
+import java.security.PublicKey
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
@@ -47,6 +49,13 @@ class DI(application: DhiffieChatApp) {
 
             @FromJson
             fun fromJson(base64: String): IvParameterSpec = base64.toIv()
+        })
+        .add(object {
+            @ToJson
+            fun toJson(publicKey: PublicKey): String = publicKey.toBase64String()
+
+            @FromJson
+            fun fromJson(base64: String): PublicKey = base64.toPublicKey()
         })
         .addLast(KotlinJsonAdapterFactory())
         .build()

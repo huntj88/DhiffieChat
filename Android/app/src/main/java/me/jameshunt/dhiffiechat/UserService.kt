@@ -41,8 +41,8 @@ class UserService(
 
         api.createIdentity(
             CreateIdentity(
-                publicKey = identityManager.getIdentity().public.toBase64String(),
-                iv = userToServerCredentials.iv.toBase64String(),
+                publicKey = identityManager.getIdentity().public,
+                iv = userToServerCredentials.iv,
                 encryptedToken = userToServerCredentials.encryptedToken
             )
         )

@@ -25,8 +25,7 @@ class S3Service(
         val otherUserPublicKey = getUserPublicKey(message.from)
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
-        val timeSent = DateTimeFormatter.ISO_INSTANT.format(message.messageCreatedAt)
-        val requestType = RequestType.ConsumeMessage(message.fileKey, timeSent)
+        val requestType = RequestType.ConsumeMessage(message.fileKey, message.messageCreatedAt)
         val s3Url = api.consumeMessage(requestType).s3Url
 
         withContext(Dispatchers.Default) {
@@ -34,7 +33,7 @@ class S3Service(
                 inputStream = downloadStream(s3Url),
                 output = fileLocationUtil.incomingDecryptedFile(),
                 key = userToUserCredentials.sharedSecret,
-                iv = message.iv.toIv()
+                iv = message.iv
             )
         }
 
