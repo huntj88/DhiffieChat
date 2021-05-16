@@ -67,7 +67,8 @@ interface LambdaApi {
     data class CreateIdentity(
         val publicKey: PublicKey,
         val iv: IvParameterSpec,
-        val encryptedToken: String
+        val encryptedToken: String,
+        val fcmToken: String
     )
 
     @POST("PerformRequest")

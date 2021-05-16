@@ -18,4 +18,6 @@ object Singletons {
 
     val encryptedFileBucket = "encrypted-file-bucket-z00001"
     val s3 = AmazonS3ClientBuilder.standard().build()
+
+    val firebase by lazy { FirebaseManager() }
 }

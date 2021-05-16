@@ -5,9 +5,11 @@ import com.amazonaws.services.dynamodbv2.document.QueryFilter
 import com.amazonaws.services.dynamodbv2.document.RangeKeyCondition
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+
 import java.net.URLDecoder
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+
 
 class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
     /**
@@ -60,7 +62,14 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
     }
 
     private fun Message.sendNotification() {
-        // TODO
+        val fcmToken = Singletons.dynamoDB
+            .getTable("User")
+            .getItem("userId", this.to)["fcmToken"] as String
+        Singletons.firebase.sendMessage(
+            token = fcmToken,
+            title = "New Message",
+            body = "New Message in DhiffieChat"
+        )
     }
 }
 
