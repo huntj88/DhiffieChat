@@ -126,12 +126,10 @@ class TakeVideo : ActivityResultContract<Uri, Boolean>() {
     override fun getSynchronousResult(
         context: Context,
         input: Uri
-    ): SynchronousResult<Boolean>? {
-        return null
-    }
+    ): SynchronousResult<Boolean>? = null
 
     override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
-        return !(intent == null || resultCode != Activity.RESULT_OK)
+        return resultCode == Activity.RESULT_OK && intent != null
     }
 }
 
