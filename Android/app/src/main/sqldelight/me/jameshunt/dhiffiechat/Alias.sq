@@ -1,12 +1,12 @@
 CREATE TABLE alias (
-  userId TEXT NOT NULL,
+  userId TEXT NOT NULL PRIMARY KEY,
   alias TEXT NOT NULL
 );
 
-CREATE INDEX alias_userId ON alias(userId);
-
 addAlias:
-INSERT INTO alias(userId, alias) VALUES (?, ?);
+INSERT INTO alias(userId, alias) VALUES (:userId, :alias)
+ON CONFLICT (userId) DO
+UPDATE SET alias=excluded.alias;
 
 getAliases:
 SELECT * FROM alias;

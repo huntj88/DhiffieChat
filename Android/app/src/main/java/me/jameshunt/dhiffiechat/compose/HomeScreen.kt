@@ -52,7 +52,7 @@ class HomeViewModel(userService: UserService) : ViewModel() {
                     count = messageFromUserSummary?.count ?: 0,
                     mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
                 )
-            }
+            }.sortedByDescending { it.mostRecentAt }
         }.asLiveData()
 }
 

@@ -7,6 +7,7 @@ import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import com.squareup.sqldelight.android.AndroidSqliteDriver
 import com.squareup.sqldelight.db.SqlDriver
+import io.requery.android.database.sqlite.RequerySQLiteOpenHelperFactory
 import me.jameshunt.dhiffiechat.crypto.toBase64String
 import me.jameshunt.dhiffiechat.crypto.toIv
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
@@ -79,7 +80,8 @@ class DI(application: DhiffieChatApp) {
     private val driver: SqlDriver = AndroidSqliteDriver(
         schema = Database.Schema,
         context = application,
-        name = "dhiffiechat.db"
+        name = "dhiffiechat.db",
+        factory = { RequerySQLiteOpenHelperFactory().create(it) }
     )
 
     private val database = Database(driver)
