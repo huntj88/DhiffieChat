@@ -57,7 +57,11 @@ class HomeViewModel(userService: UserService) : ViewModel() {
 }
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    toManageFriends: () -> Unit,
+    toShowNextMessage: (friendUserId: String) -> Unit,
+    toSendMessage: (friendUserId: String) -> Unit
+) {
     val viewModel: HomeViewModel = injectedViewModel()
     val fabColor = activeColors().secondary
 
@@ -66,7 +70,7 @@ fun HomeScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .wrapContentSize()
-                    .clickable { navController.toManageFriends() }
+                    .clickable { toManageFriends() }
             ) {
                 Canvas(
                     modifier = Modifier
@@ -96,14 +100,12 @@ fun HomeScreen(navController: NavController) {
                 messageSummaries?.let { summaries ->
                     summaries.filter { it.count > 0 }.ShowList(
                         title = "Messages",
-                        onItemClick = { navController.toShowNextMessage(it.friendUserId) }
+                        onItemClick = { toShowNextMessage(it.friendUserId) }
                     )
 
                     summaries.filter { it.count == 0 }.ShowList(
                         title = "Friends",
-                        onItemClick = {
-                            navController.toSendMessage(it.friendUserId)
-                        }
+                        onItemClick = { toSendMessage(it.friendUserId) }
                     )
                 } ?: run {
                     Spacer(modifier = Modifier.height(8.dp))

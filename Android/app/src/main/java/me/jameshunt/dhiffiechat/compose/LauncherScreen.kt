@@ -3,13 +3,11 @@ package me.jameshunt.dhiffiechat.compose
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.navigation.NavController
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.UserService
-import me.jameshunt.dhiffiechat.toHome
 
 @Composable
-fun LauncherScreen(navController: NavController) {
+fun LauncherScreen(onFinishedLoading: () -> Unit) {
     val userService by remember { mutableStateOf(getUserService()) }
     var isLoading by rememberSaveable { mutableStateOf(false) }
 
@@ -22,7 +20,7 @@ fun LauncherScreen(navController: NavController) {
             isLoading = true
             userService.createIdentity()
             isLoading = false
-            navController.toHome()
+            onFinishedLoading()
         }
     }
 }

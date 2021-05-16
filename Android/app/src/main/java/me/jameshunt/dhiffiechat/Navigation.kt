@@ -15,11 +15,23 @@ fun Navigation() {
     val navController = rememberNavController()
 
     NavHost(navController, startDestination = "launcher") {
-        composable("launcher") { LauncherScreen(navController) }
-        composable("home") {
-            HomeScreen(navController = navController)
+        composable("launcher") {
+            LauncherScreen { navController.navigate("home") }
         }
-        composable("manageFriends") { ManageFriendsScreen(navController) }
+        composable("home") {
+            HomeScreen(
+                toManageFriends = { navController.navigate("manageFriends") },
+                toShowNextMessage = { navController.toShowNextMessage(friendUserId = it) },
+                toSendMessage = { navController.toSendMessage(friendUserId = it) }
+            )
+        }
+        composable("manageFriends") {
+            ManageFriendsScreen {
+                navController.navigate("home") {
+                    popUpTo("home") { inclusive = true }
+                }
+            }
+        }
         sendMessageSubGraph(navController)
         composable(
             route = "showNextMessage/{fromUserId}",
@@ -33,7 +45,6 @@ fun Navigation() {
         )
     }
 }
-
 
 
 @Composable
@@ -52,19 +63,10 @@ inline fun <reified VM : ViewModel> NavBackStackEntry.parentViewModel(
     return ViewModelProvider(parentBackStackEntry, InjectableViewModelFactory()).get()
 }
 
-
 fun NavController.toSendMessage(friendUserId: String) {
     this.navigate("sendMessage/$friendUserId")
 }
 
 fun NavController.toShowNextMessage(friendUserId: String) {
     this.navigate("showNextMessage/$friendUserId")
-}
-
-fun NavController.toManageFriends() {
-    this.navigate("manageFriends")
-}
-
-fun NavController.toHome() {
-    this.navigate("home")
 }

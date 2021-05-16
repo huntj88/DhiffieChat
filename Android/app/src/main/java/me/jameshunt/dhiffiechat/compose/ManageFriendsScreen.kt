@@ -62,7 +62,7 @@ class ManageFriendsViewModel(
 }
 
 @Composable
-fun ManageFriendsScreen(navController: NavController) {
+fun ManageFriendsScreen(onFriendAdded: () -> Unit) {
     val viewModel: ManageFriendsViewModel = injectedViewModel()
     var isShareOpen by rememberSaveable { mutableStateOf(false) }
     var isScanOpen by rememberSaveable { mutableStateOf(false) }
@@ -166,7 +166,7 @@ fun ManageFriendsScreen(navController: NavController) {
                                 alias = alias,
                                 onFinish = {
                                     isLoadingAddFriend = false
-                                    navController.popBackStack()
+                                    onFriendAdded()
                                 }
                             )
                         },
