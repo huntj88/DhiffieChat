@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,11 +23,12 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.IdentityManager
-import me.jameshunt.dhiffiechat.LambdaApi.GetUserRelationshipsResponse
+import me.jameshunt.dhiffiechat.LambdaApi.UserRelationships
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.UserService
 import me.jameshunt.dhiffiechat.toUserId
@@ -37,8 +39,8 @@ class ManageFriendsViewModel(
     identityManager: IdentityManager
 ) : ViewModel() {
 
-    private val _relationships: MutableLiveData<GetUserRelationshipsResponse?> = MutableLiveData(null)
-    val relationships: LiveData<GetUserRelationshipsResponse?> = _relationships
+    private val _relationships: MutableLiveData<UserRelationships?> = MutableLiveData(null)
+    val relationships: LiveData<UserRelationships?> = _relationships
     val userId = identityManager.getIdentity().toUserId()
 
     init {
@@ -47,9 +49,10 @@ class ManageFriendsViewModel(
         }
     }
 
-    fun addFriend(userId: String, alias: String) {
+    fun addFriend(userId: String, alias: String, onFinish: () -> Unit) {
         viewModelScope.launch {
             userService.addFriend(userId, alias)
+            onFinish()
         }
     }
 
@@ -59,13 +62,14 @@ class ManageFriendsViewModel(
 }
 
 @Composable
-fun ManageFriendsScreen() {
+fun ManageFriendsScreen(navController: NavController) {
     val viewModel: ManageFriendsViewModel = injectedViewModel()
-    var isShareOpen by remember { mutableStateOf(false) }
-    var isScanOpen by remember { mutableStateOf(false) }
-    var isAliasOpen by remember { mutableStateOf(false) }
-    var alias by remember { mutableStateOf("") }
-    var userId by remember { mutableStateOf<String?>(null) }
+    var isShareOpen by rememberSaveable { mutableStateOf(false) }
+    var isScanOpen by rememberSaveable { mutableStateOf(false) }
+    var isAliasOpen by rememberSaveable { mutableStateOf(false) }
+    var alias by rememberSaveable { mutableStateOf("") }
+    var userId by rememberSaveable { mutableStateOf<String?>(null) }
+    var isLoadingAddFriend: Boolean by rememberSaveable { mutableStateOf(false) }
 
     val cameraPermissionContract = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -79,35 +83,42 @@ fun ManageFriendsScreen() {
     )
 
     Scaffold {
-        Column(
-            Modifier
-                .fillMaxHeight()
-                .padding(8.dp)
-        ) {
-            CallToAction(
-                text = "Share QR",
-                drawableId = R.drawable.ic_baseline_qr_code_scanner_24
+        if (isLoadingAddFriend) {
+            LoadingIndicator()
+        } else {
+            Column(
+                Modifier
+                    .fillMaxHeight()
+                    .padding(8.dp)
             ) {
-                isShareOpen = true
-                Log.d("clicked", "click")
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            CallToAction(text = "Scan QR", drawableId = R.drawable.ic_baseline_qr_code_scanner_24) {
-                cameraPermissionContract.launch(Manifest.permission.CAMERA)
-                Log.d("clicked", "click")
-            }
-
-            val relationships = viewModel.relationships.observeAsState().value
-
-            relationships?.let {
-                RequestList("Received Requests", it.receivedRequests) { userId ->
-                    cameraPermissionContract.launch(Manifest.permission.CAMERA)
+                CallToAction(
+                    text = "Share QR",
+                    drawableId = R.drawable.ic_baseline_qr_code_scanner_24
+                ) {
+                    isShareOpen = true
+                    Log.d("clicked", "click")
                 }
-                RequestList("Sent Requests", it.sentRequests) {}
-            } ?: run {
                 Spacer(modifier = Modifier.height(8.dp))
-                Box(Modifier.align(Alignment.CenterHorizontally)) {
-                    LoadingIndicator()
+                CallToAction(
+                    text = "Scan QR",
+                    drawableId = R.drawable.ic_baseline_qr_code_scanner_24
+                ) {
+                    cameraPermissionContract.launch(Manifest.permission.CAMERA)
+                    Log.d("clicked", "click")
+                }
+
+                val relationships = viewModel.relationships.observeAsState().value
+
+                relationships?.let {
+                    RequestList("Received Requests", it.receivedRequests) { userId ->
+                        cameraPermissionContract.launch(Manifest.permission.CAMERA)
+                    }
+                    RequestList("Sent Requests", it.sentRequests) {}
+                } ?: run {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Box(Modifier.align(Alignment.CenterHorizontally)) {
+                        LoadingIndicator()
+                    }
                 }
             }
         }
@@ -147,7 +158,18 @@ fun ManageFriendsScreen() {
                         modifier = Modifier
                             .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
                             .fillMaxWidth(),
-                        onClick = { viewModel.addFriend(userId!!, alias) },
+                        onClick = {
+                            isAliasOpen = false
+                            isLoadingAddFriend = true
+                            viewModel.addFriend(
+                                userId = userId!!,
+                                alias = alias,
+                                onFinish = {
+                                    isLoadingAddFriend = false
+                                    navController.popBackStack()
+                                }
+                            )
+                        },
                         content = { Text(text = "Submit") }
                     )
                 }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -32,10 +33,14 @@ class ShowNextMessageViewModel(
 ) : ViewModel() {
     data class MediaMessage(val message: Message, val file: File)
 
+    private var downloadEnabled = true
     private val _media: MutableLiveData<MediaMessage?> = MutableLiveData(null)
     val media: LiveData<MediaMessage?> = _media
 
     fun loadFile(fromUserId: String) {
+        if (!downloadEnabled) return
+        downloadEnabled = false
+
         viewModelScope.launch {
             val message = userService
                 .getMessageSummaries()
@@ -85,32 +90,37 @@ fun VideoMessage(file: File) {
 fun Player(file: File) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
+    var position by rememberSaveable { mutableStateOf(0L) }
 
     AndroidView(
-        factory = { PlayerView(context) },
+        factory = {
+            PlayerView(context).apply {
+                val player = SimpleExoPlayer.Builder(context).build().apply {
+                    setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
+                    playWhenReady = true
+                    seekTo(position)
+                    prepare()
+                }
+                this.player = player
+                lifecycle.addObserver(object : LifecycleObserver {
+                    @OnLifecycleEvent(Lifecycle.Event.ON_START)
+                    fun onStart() {
+                        this@apply.onResume()
+                    }
+
+                    @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
+                    fun onPause() {
+                        position = player.currentPosition
+                        this@apply.onPause()
+                    }
+
+                    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+                    fun onDestroy() {
+                        player.release()
+                    }
+                })
+            }
+        },
         modifier = Modifier.fillMaxWidth()
-    ) { playerView ->
-        val player = SimpleExoPlayer.Builder(context).build()
-        player.setMediaItem(MediaItem.fromUri(Uri.fromFile(file)))
-        player.prepare()
-        player.playWhenReady = true
-
-        lifecycle.addObserver(object : LifecycleObserver {
-            @OnLifecycleEvent(Lifecycle.Event.ON_START)
-            fun onStart() {
-                playerView.onResume()
-            }
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
-            fun onPause() {
-                playerView.onPause()
-            }
-
-            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-            fun onDestroy() {
-                player.release()
-            }
-        })
-        playerView.player = player
-    }
+    )
 }

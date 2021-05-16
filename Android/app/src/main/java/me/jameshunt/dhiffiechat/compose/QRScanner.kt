@@ -80,7 +80,6 @@ fun QRScanner(onScanned: (userId: String) -> Unit) {
             cameraExecutor = Executors.newSingleThreadExecutor()
             lastCheck = Instant.now()
             cameraProviderFuture.addListener({
-
                 val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
 
                 val preview = androidx.camera.core.Preview.Builder().build().apply {

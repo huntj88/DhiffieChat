@@ -26,7 +26,7 @@ class UserService(
         }
     }
 
-    suspend fun getRelationships(): GetUserRelationshipsResponse {
+    suspend fun getRelationships(): UserRelationships {
         return api.getUserRelationships()
     }
 

@@ -15,7 +15,7 @@ fun Navigation() {
         composable("home") {
             HomeScreen(navController = navController)
         }
-        composable("manageFriends") { ManageFriendsScreen() }
+        composable("manageFriends") { ManageFriendsScreen(navController) }
         composable(
             route = "sendMessage/{toUserId}",
             arguments = listOf(navArgument("toUserId") {

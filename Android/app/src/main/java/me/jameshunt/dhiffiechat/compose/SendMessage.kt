@@ -18,6 +18,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -62,10 +63,10 @@ class SendMessageViewModel(
 @Composable
 fun SendMessage(navController: NavController, recipientUserId: String) {
     val viewModel: SendMessageViewModel = injectedViewModel()
-    var mediaType: MediaType? by remember { mutableStateOf(null) }
-    var mediaProvided: Boolean by remember { mutableStateOf(false) }
-    var text: String? by remember { mutableStateOf(null) }
-    var loading: Boolean by remember { mutableStateOf(false) }
+    var mediaType: MediaType? by rememberSaveable { mutableStateOf(null) }
+    var mediaProvided: Boolean by rememberSaveable { mutableStateOf(false) }
+    var text: String? by rememberSaveable { mutableStateOf(null) }
+    var loading: Boolean by rememberSaveable { mutableStateOf(false) }
 
     val imageContract = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
@@ -108,7 +109,10 @@ fun SendMessage(navController: NavController, recipientUserId: String) {
                         recipientUserId = recipientUserId,
                         mediaType = mediaType!!,
                         text = text!!,
-                        onFinish = { navController.popBackStack() }
+                        onFinish = {
+                            loading = false
+                            navController.popBackStack()
+                        }
                     )
                 }
             }

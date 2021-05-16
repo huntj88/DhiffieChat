@@ -48,7 +48,7 @@ interface LambdaApi {
     ): List<MessageSummary>
 
 
-    data class GetUserRelationshipsResponse(
+    data class UserRelationships(
         val sentRequests: List<String>,
         val receivedRequests: List<String>,
         val friends: List<String>,
@@ -57,7 +57,7 @@ interface LambdaApi {
     @POST("PerformRequest")
     suspend fun getUserRelationships(
         @Query("type") type: String = "GetUserRelationships"
-    ): GetUserRelationshipsResponse
+    ): UserRelationships
 
     /**
      * idempotent above
