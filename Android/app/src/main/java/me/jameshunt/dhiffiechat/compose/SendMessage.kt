@@ -1,8 +1,14 @@
 package me.jameshunt.dhiffiechat.compose
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
+import android.provider.MediaStore
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.CallSuper
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -63,12 +69,22 @@ fun SendMessage(navController: NavController, recipientUserId: String) {
 
     val imageContract = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
-        onResult = { mediaProvided = it }
+        onResult = { tookPicture ->
+            mediaProvided = tookPicture
+            if (!tookPicture) {
+                mediaType = null
+            }
+        }
     )
 
     val videoContract = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakeVideo(),
-        onResult = { mediaProvided = true }
+        contract = TakeVideo(),
+        onResult = { recordedVideo ->
+            mediaProvided = recordedVideo
+            if (!recordedVideo) {
+                mediaType = null
+            }
+        }
     )
 
     Scaffold {
@@ -97,6 +113,25 @@ fun SendMessage(navController: NavController, recipientUserId: String) {
                 }
             }
         }
+    }
+}
+
+class TakeVideo : ActivityResultContract<Uri, Boolean>() {
+    @CallSuper
+    override fun createIntent(context: Context, input: Uri): Intent {
+        return Intent(MediaStore.ACTION_VIDEO_CAPTURE)
+            .putExtra(MediaStore.EXTRA_OUTPUT, input)
+    }
+
+    override fun getSynchronousResult(
+        context: Context,
+        input: Uri
+    ): SynchronousResult<Boolean>? {
+        return null
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
+        return !(intent == null || resultCode != Activity.RESULT_OK)
     }
 }
 
