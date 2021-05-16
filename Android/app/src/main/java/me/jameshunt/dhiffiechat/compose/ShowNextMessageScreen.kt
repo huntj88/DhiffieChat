@@ -4,11 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Scaffold
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -16,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.*
 import com.google.android.exoplayer2.MediaItem
@@ -55,28 +50,21 @@ class ShowNextMessageViewModel(
 @Composable
 fun ShowNextMessageScreen(fromUserId: String) {
     val viewModel: ShowNextMessageViewModel = injectedViewModel()
-    val media = viewModel.media.observeAsState().value
 
-    Scaffold {
-        Column(
-            Modifier
-                .fillMaxHeight()
-                .padding(8.dp)
-        ) {
-            media?.let {
-                when (it.message.mediaType) {
-                    MediaType.Image -> ImageMessage(file = media.file)
-                    MediaType.Video -> VideoMessage(file = media.file)
-                }
-            } ?: LoadingIndicator().also { viewModel.loadFile(fromUserId = fromUserId) }
+    viewModel.media.observeAsState().value
+        ?.let { media ->
+            when (media.message.mediaType) {
+                MediaType.Image -> ImageMessage(file = media.file)
+                MediaType.Video -> VideoMessage(file = media.file)
+            }
         }
-    }
+        ?: LoadingIndicator().also { viewModel.loadFile(fromUserId = fromUserId) }
 }
 
 @Composable
 fun ImageMessage(file: File) {
     val image = file.inputStream().readBytes().toBitmap().asImageBitmap()
-    Image(image, contentDescription = "")
+    Image(bitmap = image, contentDescription = "", modifier = Modifier.fillMaxSize())
 }
 
 fun ByteArray.toBitmap(): Bitmap = BitmapFactory.decodeByteArray(this, 0, this.size)
@@ -121,6 +109,6 @@ fun Player(file: File) {
                 })
             }
         },
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxSize()
     )
 }
