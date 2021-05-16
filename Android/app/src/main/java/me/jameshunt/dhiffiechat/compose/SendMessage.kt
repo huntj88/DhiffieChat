@@ -45,6 +45,37 @@ import me.jameshunt.dhiffiechat.S3Service
 import me.jameshunt.dhiffiechat.parentViewModel
 import java.io.File
 
+class SendMessageViewModel(
+    private val s3Service: S3Service,
+    private val fileLocationUtil: FileLocationUtil
+) : ViewModel() {
+    lateinit var recipientUserId: String
+    var mediaType: MediaType? = null
+    var text: String? = null
+
+    enum class SendState {
+        CollectMessageText,
+        Loading,
+        Finish
+    }
+
+    private val _sendState = MutableLiveData(SendState.CollectMessageText)
+    val sendState: LiveData<SendState> = _sendState
+
+    fun sendMessage(text: String) {
+        // TODO: use text
+        _sendState.value = SendState.Loading
+        viewModelScope.launch {
+            s3Service.sendFile(recipientUserId, fileLocationUtil.getInputFile(), mediaType!!)
+            _sendState.value = SendState.Finish
+        }
+    }
+
+    fun getInputFile(): File {
+        return fileLocationUtil.getInputFile()
+    }
+}
+
 fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
     navigation("", "sendMessage/{toUserId}") {
         composable("") {
@@ -59,35 +90,10 @@ fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
             route = "selectMedia",
             content = {
                 val sharedViewModel: SendMessageViewModel = it.parentViewModel(navController)
-                val imageContract = rememberLauncherForActivityResult(
-                    contract = ActivityResultContracts.TakePicture(),
-                    onResult = { capturedMedia ->
-                        if (capturedMedia) {
-                            navController.navigate("confirmMessage")
-                        }
-                    }
+                SelectMedia(
+                    sharedViewModel = sharedViewModel,
+                    onMediaSelected = { navController.navigate("confirmMessage") }
                 )
-
-                val videoContract = rememberLauncherForActivityResult(
-                    contract = TakeVideo(),
-                    onResult = { capturedMedia ->
-                        if (capturedMedia) {
-                            navController.navigate("confirmMessage")
-                        }
-                    }
-                )
-                val context = LocalContext.current
-                val fp = "${context.applicationInfo.packageName}.fileprovider"
-                val inputFile = sharedViewModel.getInputFile()
-                val fpUri: Uri = FileProvider.getUriForFile(context, fp, inputFile)
-
-                SelectMediaType { mediaType ->
-                    sharedViewModel.mediaType = mediaType
-                    when (mediaType) {
-                        MediaType.Image -> imageContract.launch(fpUri)
-                        MediaType.Video -> videoContract.launch(fpUri)
-                    }
-                }
             }
         )
         composable(
@@ -109,36 +115,6 @@ fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
     }
 }
 
-class SendMessageViewModel(
-    private val s3Service: S3Service,
-    private val fileLocationUtil: FileLocationUtil
-): ViewModel() {
-    lateinit var recipientUserId: String
-    var mediaType: MediaType? = null
-    var text: String? = null
-
-    enum class SendState {
-        CollectMessageText,
-        Loading,
-        Finish
-    }
-    private val _sendState = MutableLiveData(SendState.CollectMessageText)
-    val sendState: LiveData<SendState> =_sendState
-
-    fun sendMessage(text: String) {
-        // TODO: use text
-        _sendState.value = SendState.Loading
-        viewModelScope.launch {
-            s3Service.sendFile(recipientUserId, fileLocationUtil.getInputFile(), mediaType!!)
-            _sendState.value = SendState.Finish
-        }
-    }
-
-    fun getInputFile(): File {
-        return fileLocationUtil.getInputFile()
-    }
-}
-
 class TakeVideo : ActivityResultContract<Uri, Boolean>() {
     @CallSuper
     override fun createIntent(context: Context, input: Uri): Intent {
@@ -153,6 +129,39 @@ class TakeVideo : ActivityResultContract<Uri, Boolean>() {
 
     override fun parseResult(resultCode: Int, intent: Intent?): Boolean {
         return resultCode == Activity.RESULT_OK && intent != null
+    }
+}
+
+@Composable
+fun SelectMedia(sharedViewModel: SendMessageViewModel, onMediaSelected: () -> Unit) {
+    val imageContract = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { capturedMedia ->
+            if (capturedMedia) {
+                onMediaSelected()
+            }
+        }
+    )
+
+    val videoContract = rememberLauncherForActivityResult(
+        contract = TakeVideo(),
+        onResult = { capturedMedia ->
+            if (capturedMedia) {
+                onMediaSelected()
+            }
+        }
+    )
+    val context = LocalContext.current
+    val fp = "${context.applicationInfo.packageName}.fileprovider"
+    val inputFile = sharedViewModel.getInputFile()
+    val fpUri: Uri = FileProvider.getUriForFile(context, fp, inputFile)
+
+    SelectMediaType { mediaType ->
+        sharedViewModel.mediaType = mediaType
+        when (mediaType) {
+            MediaType.Image -> imageContract.launch(fpUri)
+            MediaType.Video -> videoContract.launch(fpUri)
+        }
     }
 }
 
