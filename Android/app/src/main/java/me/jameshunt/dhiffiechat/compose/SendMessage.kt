@@ -17,8 +17,12 @@ import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -29,122 +33,109 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigate
+import androidx.navigation.compose.navigation
+import androidx.navigation.compose.popUpTo
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.FileLocationUtil
 import me.jameshunt.dhiffiechat.MediaType
 import me.jameshunt.dhiffiechat.S3Service
-import me.jameshunt.dhiffiechat.compose.SendMessageViewModel.*
+import me.jameshunt.dhiffiechat.parentViewModel
 import java.io.File
+
+fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
+    navigation("", "sendMessage/{toUserId}") {
+        composable("") {
+            val recipientUserId = it.arguments!!.getString("toUserId")!!
+            val sharedViewModel: SendMessageViewModel = it.parentViewModel(navController)
+            sharedViewModel.recipientUserId = recipientUserId
+            navController.navigate("selectMedia") {
+                popUpTo("sendMessage/{toUserId}") { inclusive = false }
+            }
+        }
+        composable(
+            route = "selectMedia",
+            content = {
+                val sharedViewModel: SendMessageViewModel = it.parentViewModel(navController)
+                val imageContract = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.TakePicture(),
+                    onResult = { capturedMedia ->
+                        if (capturedMedia) {
+                            navController.navigate("confirmMessage")
+                        }
+                    }
+                )
+
+                val videoContract = rememberLauncherForActivityResult(
+                    contract = TakeVideo(),
+                    onResult = { capturedMedia ->
+                        if (capturedMedia) {
+                            navController.navigate("confirmMessage")
+                        }
+                    }
+                )
+                val context = LocalContext.current
+                val fp = "${context.applicationInfo.packageName}.fileprovider"
+                val inputFile = sharedViewModel.getInputFile()
+                val fpUri: Uri = FileProvider.getUriForFile(context, fp, inputFile)
+
+                SelectMediaType { mediaType ->
+                    sharedViewModel.mediaType = mediaType
+                    when (mediaType) {
+                        MediaType.Image -> imageContract.launch(fpUri)
+                        MediaType.Video -> videoContract.launch(fpUri)
+                    }
+                }
+            }
+        )
+        composable(
+            route = "confirmMessage",
+            content = {
+                val sharedViewModel: SendMessageViewModel = it.parentViewModel(navController)
+
+                when (sharedViewModel.sendState.observeAsState().value!!) {
+                    SendMessageViewModel.SendState.CollectMessageText -> TextConfirmation { msg ->
+                        sharedViewModel.sendMessage(msg)
+                    }
+                    SendMessageViewModel.SendState.Loading -> LoadingIndicator()
+                    SendMessageViewModel.SendState.Finish -> navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
+            }
+        )
+    }
+}
 
 class SendMessageViewModel(
     private val s3Service: S3Service,
     private val fileLocationUtil: FileLocationUtil
-) : ViewModel() {
+): ViewModel() {
+    lateinit var recipientUserId: String
+    var mediaType: MediaType? = null
+    var text: String? = null
 
-    data class State(
-        val data: StateData,
-        val currentState: CurrentState
-    )
-
-    data class StateData(
-        val mediaType: MediaType?,
-        val mediaProvided: Boolean,
-        val text: String?
-    )
-
-    enum class CurrentState {
-        SelectMediaType,
-        ProvideMedia,
-        ProvideText,
-        Send,
-        Done
+    enum class SendState {
+        CollectMessageText,
+        Loading,
+        Finish
     }
+    private val _sendState = MutableLiveData(SendState.CollectMessageText)
+    val sendState: LiveData<SendState> =_sendState
 
-    private val _currentState: MutableLiveData<State> = MutableLiveData(
-        State(
-            StateData(null, false, null),
-            CurrentState.SelectMediaType
-        )
-    )
-
-    val currentState: LiveData<State> = _currentState
-
-    fun setMediaType(mediaType: MediaType) {
-        val existing = _currentState.value!!
-
-        _currentState.value = existing.copy(
-            data = existing.data.copy(mediaType = mediaType),
-            currentState = CurrentState.ProvideMedia
-        )
-    }
-
-    fun setMediaProvided(provided: Boolean) {
-        val existing = _currentState.value!!
-        _currentState.value = when (provided) {
-            true -> existing.copy(
-                data = existing.data.copy(mediaProvided = true),
-                currentState = CurrentState.ProvideText
-            )
-            false -> existing.copy(
-                data = existing.data.copy(mediaProvided = false, mediaType = null),
-                currentState = CurrentState.SelectMediaType
-            )
-        }
-    }
-
-    fun confirm(recipientUserId: String, text: String) {
-        val existing = _currentState.value!!
-        _currentState.value = existing.copy(
-            data = existing.data.copy(text = text),
-            currentState = CurrentState.Send
-        )
-        sendFile(recipientUserId, _currentState.value!!.data.mediaType!!, text)
-    }
-
-    private fun sendFile(recipientUserId: String, mediaType: MediaType, text: String) {
+    fun sendMessage(text: String) {
         // TODO: use text
+        _sendState.value = SendState.Loading
         viewModelScope.launch {
-            s3Service.sendFile(recipientUserId, fileLocationUtil.getInputFile(), mediaType)
-            _currentState.value = _currentState.value!!.copy(currentState = CurrentState.Done)
+            s3Service.sendFile(recipientUserId, fileLocationUtil.getInputFile(), mediaType!!)
+            _sendState.value = SendState.Finish
         }
     }
 
     fun getInputFile(): File {
         return fileLocationUtil.getInputFile()
-    }
-}
-
-@Composable
-fun SendMessage(navController: NavController, recipientUserId: String) {
-    val viewModel: SendMessageViewModel = injectedViewModel()
-
-    val imageContract = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { tookPicture -> viewModel.setMediaProvided(tookPicture) }
-    )
-
-    val videoContract = rememberLauncherForActivityResult(
-        contract = TakeVideo(),
-        onResult = { recordedVideo -> viewModel.setMediaProvided(recordedVideo) }
-    )
-
-    Scaffold {
-        val (data, step) = viewModel.currentState.observeAsState().value!!
-        when (step) {
-            CurrentState.SelectMediaType -> SelectMediaType { viewModel.setMediaType(it) }
-            CurrentState.ProvideMedia -> {
-                val context = LocalContext.current
-                val fp = "${context.applicationInfo.packageName}.fileprovider"
-                val fpUri: Uri = FileProvider.getUriForFile(context, fp, viewModel.getInputFile())
-                when (data.mediaType) {
-                    MediaType.Image -> imageContract.launch(fpUri)
-                    MediaType.Video -> videoContract.launch(fpUri)
-                }
-            }
-            CurrentState.ProvideText -> TextConfirmation { viewModel.confirm(recipientUserId, it) }
-            CurrentState.Send -> LoadingIndicator()
-            CurrentState.Done -> navController.popBackStack()
-        }
     }
 }
 
@@ -167,52 +158,56 @@ class TakeVideo : ActivityResultContract<Uri, Boolean>() {
 
 @Composable
 fun SelectMediaType(onMediaTypeSelected: (MediaType) -> Unit) {
-    Column {
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            onClick = { onMediaTypeSelected(MediaType.Image) },
-            content = {
-                Text(text = "Take Picture", fontSize = 24f.sp)
-            }
-        )
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            onClick = { onMediaTypeSelected(MediaType.Video) },
-            content = {
-                Text(text = "Record Video", fontSize = 24f.sp)
-            }
-        )
+    Scaffold {
+        Column {
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                onClick = { onMediaTypeSelected(MediaType.Image) },
+                content = {
+                    Text(text = "Take Picture", fontSize = 24f.sp)
+                }
+            )
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                onClick = { onMediaTypeSelected(MediaType.Video) },
+                content = {
+                    Text(text = "Record Video", fontSize = 24f.sp)
+                }
+            )
+        }
     }
 }
 
 @Composable
 fun TextConfirmation(onConfirm: (String) -> Unit) {
-    var providedText: String by remember { mutableStateOf("") }
+    var providedText: String by rememberSaveable { mutableStateOf("") }
 
-    Column {
-        TextField(
-            value = providedText,
-            onValueChange = { providedText = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            placeholder = {
-                Text(text = "Message")
-            }
-        )
-        Button(
-            modifier = Modifier
-                .fillMaxWidth()
-                .requiredHeight(100.dp)
-                .padding(16.dp),
-            onClick = {
-                onConfirm(providedText)
-            },
-            content = { Text(text = "Confirm") }
-        )
+    Scaffold {
+        Column {
+            TextField(
+                value = providedText,
+                onValueChange = { providedText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                placeholder = {
+                    Text(text = "Message")
+                }
+            )
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .requiredHeight(100.dp)
+                    .padding(16.dp),
+                onClick = {
+                    onConfirm(providedText)
+                },
+                content = { Text(text = "Confirm") }
+            )
+        }
     }
 }

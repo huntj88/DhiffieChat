@@ -73,7 +73,7 @@ class DI(application: DhiffieChatApp) {
 
     private val retrofit = Retrofit.Builder()
         .client(okhttp)
-        .baseUrl("https://tbpqloglof.execute-api.us-east-1.amazonaws.com/stage/")
+        .baseUrl("https://nfg3h6fz41.execute-api.us-east-1.amazonaws.com/stage/")
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 

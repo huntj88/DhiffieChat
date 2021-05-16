@@ -1,6 +1,10 @@
 package me.jameshunt.dhiffiechat
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.get
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
@@ -16,18 +20,7 @@ fun Navigation() {
             HomeScreen(navController = navController)
         }
         composable("manageFriends") { ManageFriendsScreen(navController) }
-        composable(
-            route = "sendMessage/{toUserId}",
-            arguments = listOf(navArgument("toUserId") {
-                type = NavType.StringType
-            }),
-            content = {
-                SendMessage(
-                    navController = navController,
-                    recipientUserId = it.arguments!!.getString("toUserId")!!
-                )
-            }
-        )
+        sendMessageSubGraph(navController)
         composable(
             route = "showNextMessage/{fromUserId}",
             arguments = listOf(navArgument("fromUserId") {
@@ -40,6 +33,25 @@ fun Navigation() {
         )
     }
 }
+
+
+
+@Composable
+inline fun <reified VM : ViewModel> NavBackStackEntry.parentViewModel(
+    navController: NavController
+): VM {
+    // First, get the parent of the current destination
+    // This always exists since every destination in your graph has a parent
+    val parentId = destination.parent!!.id
+
+    // Now get the NavBackStackEntry associated with the parent
+    val parentBackStackEntry = navController.getBackStackEntry(parentId)
+
+    // And since we can't use viewModel(), we use ViewModelProvider directly
+    // to get the ViewModel instance, using the lifecycle-viewmodel-ktx extension
+    return ViewModelProvider(parentBackStackEntry, InjectableViewModelFactory()).get()
+}
+
 
 fun NavController.toSendMessage(friendUserId: String) {
     this.navigate("sendMessage/$friendUserId")
