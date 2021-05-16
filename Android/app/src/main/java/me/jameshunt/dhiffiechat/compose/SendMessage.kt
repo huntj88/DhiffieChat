@@ -75,10 +75,9 @@ fun SendMessage(navController: NavController, recipientUserId: String) {
         when {
             mediaType == null -> SelectMediaType { mediaType = it }
             !mediaProvided -> {
-                val fp = "me.jameshunt.dhiffiechat.fileprovider"
-                val fpUri: Uri = FileProvider.getUriForFile(
-                    LocalContext.current, fp, viewModel.getInputFile()
-                )
+                val context = LocalContext.current
+                val fp = "${context.applicationInfo.packageName}.fileprovider"
+                val fpUri: Uri = FileProvider.getUriForFile(context, fp, viewModel.getInputFile())
                 when (mediaType) {
                     MediaType.Image -> imageContract.launch(fpUri)
                     MediaType.Video -> videoContract.launch(fpUri)

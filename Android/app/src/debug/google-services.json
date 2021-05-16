@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "626837101615",
+    "project_id": "dhiffiechat",
+    "storage_bucket": "dhiffiechat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626837101615:android:5a41220095b990cbc9fada",
+        "android_client_info": {
+          "package_name": "me.jameshunt.dhiffiechat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "626837101615-690v7k2r6go3csla4knat0qj7q5bu5rg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBunVzPLwIX9yVoiWK7vDLYgyxbEEjv7nc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "626837101615-690v7k2r6go3csla4knat0qj7q5bu5rg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626837101615:android:7db91eb867ad4ec9c9fada",
+        "android_client_info": {
+          "package_name": "me.jameshunt.dhiffiechat.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "626837101615-690v7k2r6go3csla4knat0qj7q5bu5rg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBunVzPLwIX9yVoiWK7vDLYgyxbEEjv7nc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "626837101615-690v7k2r6go3csla4knat0qj7q5bu5rg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
