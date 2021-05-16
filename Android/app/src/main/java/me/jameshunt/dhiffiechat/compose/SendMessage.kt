@@ -79,9 +79,13 @@ class SendMessageViewModel(
 fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
     navigation("", "sendMessage/{toUserId}") {
         composable("") {
-            val recipientUserId = it.arguments!!.getString("toUserId")!!
-            val sharedViewModel: SendMessageViewModel = it.parentViewModel(navController)
+            val recipientUserId = it.arguments
+                ?.getString("toUserId")
+                ?: throw IllegalArgumentException("Missing toUserId")
+
+            val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
             sharedViewModel.recipientUserId = recipientUserId
+
             navController.navigate("selectMedia") {
                 popUpTo("sendMessage/{toUserId}") { inclusive = false }
             }
@@ -89,7 +93,7 @@ fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
         composable(
             route = "selectMedia",
             content = {
-                val sharedViewModel: SendMessageViewModel = it.parentViewModel(navController)
+                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
                 SelectMedia(
                     sharedViewModel = sharedViewModel,
                     onMediaSelected = { navController.navigate("confirmMessage") }
@@ -99,7 +103,7 @@ fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
         composable(
             route = "confirmMessage",
             content = {
-                val sharedViewModel: SendMessageViewModel = it.parentViewModel(navController)
+                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
 
                 when (sharedViewModel.sendState.observeAsState().value!!) {
                     SendMessageViewModel.SendState.CollectMessageText -> TextConfirmation { msg ->
