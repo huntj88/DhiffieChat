@@ -18,7 +18,6 @@ import androidx.lifecycle.ViewModel
 import me.jameshunt.dhiffiechat.UserService
 
 class UserProfileViewModel(private val service: UserService) : ViewModel() {
-
     fun getAlias(): String? = service.getAlias()?.alias
 
     fun setAlias(alias: String) {
@@ -28,7 +27,7 @@ class UserProfileViewModel(private val service: UserService) : ViewModel() {
 
 
 @Composable
-fun UserProfile() {
+fun UserProfile(onAliasSet: () -> Unit) {
     val viewModel = injectedViewModel<UserProfileViewModel>()
     var alias by rememberSaveable { mutableStateOf(viewModel.getAlias() ?: "") }
     Scaffold {
@@ -36,7 +35,7 @@ fun UserProfile() {
             TextField(
                 value = alias,
                 placeholder = { Text("Alias") },
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(16.dp).fillMaxWidth(),
                 onValueChange = { alias = it }
             )
             // TODO: Select icon
@@ -46,8 +45,9 @@ fun UserProfile() {
                     .fillMaxWidth(),
                 onClick = {
                     viewModel.setAlias(alias)
+                    onAliasSet()
                 },
-                content = { Text(text = "Submit") }
+                content = { Text(text = "Set Alias") }
             )
         }
     }

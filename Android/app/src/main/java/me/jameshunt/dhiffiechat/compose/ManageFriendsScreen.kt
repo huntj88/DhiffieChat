@@ -23,25 +23,23 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.squareup.moshi.Moshi
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.IdentityManager
 import me.jameshunt.dhiffiechat.LambdaApi.UserRelationships
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.UserService
-import me.jameshunt.dhiffiechat.toUserId
 import net.glxn.qrgen.android.MatrixToImageWriter
 
-class ManageFriendsViewModel(
-    private val userService: UserService,
-    identityManager: IdentityManager
-) : ViewModel() {
-
+class ManageFriendsViewModel(private val userService: UserService, moshi: Moshi) : ViewModel() {
+    private val qrAdapter = moshi.adapter(QRData::class.java)
     private val _relationships: MutableLiveData<UserRelationships?> = MutableLiveData(null)
+
     val relationships: LiveData<UserRelationships?> = _relationships
-    val userId = identityManager.getIdentity().toUserId()
+    val qrDataShare: String = qrAdapter
+        .toJson(userService.getAlias()
+        !!.let { QRData(it.userId, it.alias) })
 
     init {
         viewModelScope.launch {
@@ -49,7 +47,8 @@ class ManageFriendsViewModel(
         }
     }
 
-    fun addFriend(userId: String, alias: String, onFinish: () -> Unit) {
+    fun addFriend(qrJson: String, onFinish: () -> Unit) {
+        val (userId, alias) = qrAdapter.fromJson(qrJson)!!
         viewModelScope.launch {
             userService.addFriend(userId, alias)
             onFinish()
@@ -61,14 +60,16 @@ class ManageFriendsViewModel(
     }
 }
 
+data class QRData(
+    val userId: String,
+    val alias: String
+)
+
 @Composable
 fun ManageFriendsScreen(onFriendAdded: () -> Unit) {
     val viewModel: ManageFriendsViewModel = injectedViewModel()
     var isShareOpen by rememberSaveable { mutableStateOf(false) }
     var isScanOpen by rememberSaveable { mutableStateOf(false) }
-    var isAliasOpen by rememberSaveable { mutableStateOf(false) }
-    var alias by rememberSaveable { mutableStateOf("") }
-    var userId by rememberSaveable { mutableStateOf<String?>(null) }
     var isLoadingAddFriend: Boolean by rememberSaveable { mutableStateOf(false) }
 
     val cameraPermissionContract = rememberLauncherForActivityResult(
@@ -127,7 +128,7 @@ fun ManageFriendsScreen(onFriendAdded: () -> Unit) {
     if (isShareOpen) {
         Dialog(onDismissRequest = { isShareOpen = false }) {
             Card {
-                QRCodeImage(viewModel.userId)
+                QRCodeImage(viewModel.qrDataShare)
             }
         }
     }
@@ -135,42 +136,16 @@ fun ManageFriendsScreen(onFriendAdded: () -> Unit) {
     if (isScanOpen) {
         Dialog(onDismissRequest = { isScanOpen = false }) {
             Card {
-                QRScanner {
-                    userId = it
+                QRScanner { qrData ->
                     isScanOpen = false
-                    isAliasOpen = true
-                }
-            }
-        }
-    }
 
-    if (isAliasOpen) {
-        Dialog(onDismissRequest = { isAliasOpen = false }) {
-            Card {
-                Column {
-                    TextField(
-                        value = alias,
-                        placeholder = { Text("Alias") },
-                        modifier = Modifier.padding(16.dp),
-                        onValueChange = { alias = it }
-                    )
-                    Button(
-                        modifier = Modifier
-                            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
-                            .fillMaxWidth(),
-                        onClick = {
-                            isAliasOpen = false
-                            isLoadingAddFriend = true
-                            viewModel.addFriend(
-                                userId = userId!!,
-                                alias = alias,
-                                onFinish = {
-                                    isLoadingAddFriend = false
-                                    onFriendAdded()
-                                }
-                            )
-                        },
-                        content = { Text(text = "Submit") }
+                    isLoadingAddFriend = true
+                    viewModel.addFriend(
+                        qrJson = qrData,
+                        onFinish = {
+                            isLoadingAddFriend = false
+                            onFriendAdded()
+                        }
                     )
                 }
             }

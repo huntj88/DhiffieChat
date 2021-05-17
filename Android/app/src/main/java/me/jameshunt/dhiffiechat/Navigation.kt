@@ -22,7 +22,12 @@ fun Navigation() {
             )
         }
         composable("userProfile") {
-            UserProfile()
+            UserProfile {
+                // TODO: Jank, should not be dependent on launcher screen jank
+                navController.navigate("launcher") {
+                    popUpTo("launcher") { inclusive = true }
+                }
+            }
         }
         composable("home") {
             HomeScreen(

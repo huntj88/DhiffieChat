@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 @Composable
-fun QRScanner(onScanned: (userId: String) -> Unit) {
+fun QRScanner(onScanned: (data: String) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -58,11 +58,11 @@ fun QRScanner(onScanned: (userId: String) -> Unit) {
                 client
                     .process(InputImage.fromMediaImage(mediaImage, image.imageInfo.rotationDegrees))
                     .addOnSuccessListener { barcodes ->
-                        barcodes.firstOrNull()?.rawValue?.let { userId ->
-                            Log.d("scanned", "result: $userId")
+                        barcodes.firstOrNull()?.rawValue?.let {
+                            Log.d("scanned", "result: $it")
                             cameraExecutor.shutdown()
                             cameraProviderFuture.cancel(true)
-                            onScanned(userId)
+                            onScanned(it)
                         }
                     }
                     .addOnCompleteListener { image.close() }
@@ -93,7 +93,12 @@ fun QRScanner(onScanned: (userId: String) -> Unit) {
                     cameraProvider.unbindAll()
 
                     // Bind use cases to camera
-                    cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, qrAnalyzer)
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview,
+                        qrAnalyzer
+                    )
                 } catch (exc: Exception) {
                     Log.e("Blah", "Use case binding failed", exc)
                 }

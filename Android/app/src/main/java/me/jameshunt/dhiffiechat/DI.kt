@@ -87,7 +87,7 @@ class DI(application: DhiffieChatApp) {
     private val injectableComponents = mutableMapOf<String, Any>()
 
     init {
-        register(identityManager, s3Service, userService, fileLocationUtil)
+        register(moshi, s3Service, userService, fileLocationUtil)
     }
 
     private fun register(vararg entry: Any) {
