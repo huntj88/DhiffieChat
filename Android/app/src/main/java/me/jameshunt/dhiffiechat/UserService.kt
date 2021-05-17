@@ -19,6 +19,16 @@ class UserService(
     private val identityManager: IdentityManager
 ) {
 
+    fun getAlias(): Alias? {
+        val userId = identityManager.getIdentity().toUserId()
+        return aliasQueries.getAliases().executeAsList().firstOrNull { it.userId == userId }
+    }
+
+    fun setAlias(alias: String) {
+        val userId = identityManager.getIdentity().toUserId()
+        aliasQueries.addAlias(userId, alias)
+    }
+
     fun getFriends(): Flow<List<Alias>> {
         return aliasQueries.getAliases().asFlow().mapToList().map { aliases ->
             val friends = getRelationships().friends

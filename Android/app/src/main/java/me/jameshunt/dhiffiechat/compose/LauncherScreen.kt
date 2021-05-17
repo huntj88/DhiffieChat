@@ -1,32 +1,43 @@
 package me.jameshunt.dhiffiechat.compose
 
 import androidx.compose.material.Scaffold
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
-import me.jameshunt.dhiffiechat.DhiffieChatApp
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.UserService
 
-@Composable
-fun LauncherScreen(onFinishedLoading: () -> Unit) {
-    val userService by remember { mutableStateOf(getUserService()) }
-    var isLoading by rememberSaveable { mutableStateOf(false) }
-
-    Scaffold {
-        LoadingIndicator()
+class LauncherScreenViewModel(private val service: UserService): ViewModel() {
+    enum class LauncherState {
+        Loading,
+        UserProfile,
+        Home
     }
 
-    LaunchedEffect(key1 = "init") {
-        if (!isLoading) {
-            isLoading = true
-            userService.createIdentity()
-            isLoading = false
-            onFinishedLoading()
+    val state = MutableLiveData(LauncherState.Loading)
+
+    init {
+        viewModelScope.launch {
+            service.createIdentity()
+            state.value = when (service.getAlias() == null) {
+                true -> LauncherState.UserProfile
+                false -> LauncherState.Home
+            }
         }
     }
 }
 
-private fun getUserService(): UserService {
-    // normally `createInjected` is used to inject ViewModels within a ViewModelProvider.Factory
-    data class LauncherDependencies(val userService: UserService)
-    return DhiffieChatApp.di.createInjected(LauncherDependencies::class.java).userService
+@Composable
+fun LauncherScreen(toUserProfile: () -> Unit, toHome: () -> Unit) {
+    val viewModel = injectedViewModel<LauncherScreenViewModel>()
+
+    Scaffold {
+        when (viewModel.state.observeAsState().value!!) {
+            LauncherScreenViewModel.LauncherState.Loading -> LoadingIndicator()
+            LauncherScreenViewModel.LauncherState.UserProfile -> toUserProfile()
+            LauncherScreenViewModel.LauncherState.Home -> toHome()
+        }
+    }
 }

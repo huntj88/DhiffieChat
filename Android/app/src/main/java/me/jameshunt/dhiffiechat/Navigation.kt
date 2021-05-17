@@ -16,7 +16,13 @@ fun Navigation() {
 
     NavHost(navController, startDestination = "launcher") {
         composable("launcher") {
-            LauncherScreen { navController.navigate("home") }
+            LauncherScreen(
+                toUserProfile = { navController.navigate("userProfile") },
+                toHome = { navController.navigate("home") }
+            )
+        }
+        composable("userProfile") {
+            UserProfile()
         }
         composable("home") {
             HomeScreen(
