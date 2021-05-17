@@ -1,0 +1,11 @@
+CREATE TABLE encryption_key (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  public_key TEXT NOT NULL,
+  private_key TEXT NOT NULL
+);
+
+addKey:
+INSERT INTO encryption_key(public_key, private_key) VALUES (:publicKey, :privateKey);
+
+selectIdentity:
+SELECT public_key, private_key FROM encryption_key WHERE id = 1;

@@ -1,12 +1,10 @@
 package me.jameshunt.dhiffiechat
 
-import android.content.SharedPreferences
-import android.util.Log
 import me.jameshunt.dhiffiechat.crypto.*
 import java.security.KeyPair
 
 // TODO: move keypair to db
-class IdentityManager(private val prefs: SharedPreferences) {
+class IdentityManager(private val encryptionKeyQueries: Encryption_keyQueries) {
     private var cached: KeyPair? = null
 
     fun getIdentity(): KeyPair = synchronized(this) {
@@ -16,12 +14,9 @@ class IdentityManager(private val prefs: SharedPreferences) {
     private fun get(): KeyPair? {
         cached?.let { return it }
 
-        val privateBase64 = prefs.getString("private", null) ?: return null
-        val publicBase64 = prefs.getString("public", null) ?: return null
-
-        Log.d("public base64", publicBase64)
-        Log.d("private base64", privateBase64)
-        return KeyPair(publicBase64.toPublicKey(), privateBase64.toPrivateKey())
+        // TODO: is Blocking a problem here?
+        val existing = encryptionKeyQueries.selectIdentity().executeAsOneOrNull() ?: return null
+        return KeyPair(existing.public_key.toPublicKey(), existing.private_key.toPrivateKey())
             .also { cached = it }
     }
 
@@ -30,10 +25,10 @@ class IdentityManager(private val prefs: SharedPreferences) {
     private fun save(keyPair: KeyPair) {
         cached = keyPair
 
-        prefs.edit()
-            .putString("private", keyPair.private.toBase64String())
-            .putString("public", keyPair.public.toBase64String())
-            .apply()
+        encryptionKeyQueries.addKey(
+            publicKey = keyPair.public.toBase64String(),
+            privateKey = keyPair.private.toBase64String()
+        )
     }
 }
 

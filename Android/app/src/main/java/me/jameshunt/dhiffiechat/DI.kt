@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat
 
-import androidx.appcompat.app.AppCompatActivity
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
@@ -25,10 +24,14 @@ import javax.crypto.spec.IvParameterSpec
 
 class DI(application: DhiffieChatApp) {
     private val fileLocationUtil = FileLocationUtil(application)
-    private val sharedPreferences = application.getSharedPreferences(
-        "prefs",
-        AppCompatActivity.MODE_PRIVATE
+    private val driver: SqlDriver = AndroidSqliteDriver(
+        schema = Database.Schema,
+        context = application,
+        name = "dhiffiechat.db",
+        factory = { RequerySQLiteOpenHelperFactory().create(it) }
     )
+
+    private val database = Database(driver)
 
     private val moshi: Moshi = Moshi.Builder()
         .add(object {
@@ -58,7 +61,7 @@ class DI(application: DhiffieChatApp) {
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
-    private val identityManager = IdentityManager(sharedPreferences)
+    private val identityManager = IdentityManager(database.encryption_keyQueries)
     private val authManager = AuthManager(identityManager, moshi)
     private val headerInterceptor = HeaderInterceptor(identityManager, authManager)
 
@@ -77,14 +80,6 @@ class DI(application: DhiffieChatApp) {
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
-    private val driver: SqlDriver = AndroidSqliteDriver(
-        schema = Database.Schema,
-        context = application,
-        name = "dhiffiechat.db",
-        factory = { RequerySQLiteOpenHelperFactory().create(it) }
-    )
-
-    private val database = Database(driver)
     private val api = retrofit.create(LambdaApi::class.java)
     private val userService = UserService(database.aliasQueries, api, authManager, identityManager)
     private val s3Service = S3Service(okhttp, authManager, api, userService, fileLocationUtil)
