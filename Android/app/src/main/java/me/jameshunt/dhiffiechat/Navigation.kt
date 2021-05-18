@@ -23,10 +23,7 @@ fun Navigation() {
         }
         composable("userProfile") {
             UserProfile {
-                // TODO: Jank, should not be dependent on launcher screen jank
-                navController.navigate("launcher") {
-                    popUpTo("launcher") { inclusive = true }
-                }
+                navController.popBackStack()
             }
         }
         composable("home") {

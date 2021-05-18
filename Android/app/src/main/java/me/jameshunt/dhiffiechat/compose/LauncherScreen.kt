@@ -11,14 +11,18 @@ import me.jameshunt.dhiffiechat.UserService
 
 class LauncherScreenViewModel(private val service: UserService): ViewModel() {
     enum class LauncherState {
+        Start,
         Loading,
         UserProfile,
         Home
     }
 
-    val state = MutableLiveData(LauncherState.Loading)
+    val state = MutableLiveData(LauncherState.Start)
 
-    init {
+    fun load() {
+        if (state.value == LauncherState.Loading) return
+        state.value = LauncherState.Loading
+
         viewModelScope.launch {
             service.createIdentity()
             state.value = when (service.getAlias() == null) {
@@ -32,6 +36,7 @@ class LauncherScreenViewModel(private val service: UserService): ViewModel() {
 @Composable
 fun LauncherScreen(toUserProfile: () -> Unit, toHome: () -> Unit) {
     val viewModel = injectedViewModel<LauncherScreenViewModel>()
+    viewModel.load()
 
     Scaffold {
         when (viewModel.state.observeAsState().value!!) {
