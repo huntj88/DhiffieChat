@@ -7,9 +7,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.UserService
+import me.jameshunt.dhiffiechat.LauncherService
 
-class LauncherScreenViewModel(private val service: UserService): ViewModel() {
+class LauncherScreenViewModel(private val service: LauncherService): ViewModel() {
     enum class LauncherState {
         Start,
         Loading,
@@ -24,8 +24,8 @@ class LauncherScreenViewModel(private val service: UserService): ViewModel() {
         state.value = LauncherState.Loading
 
         viewModelScope.launch {
-            service.createIdentity()
-            state.value = when (service.getAlias() == null) {
+            service.init()
+            state.value = when (service.isFirstLaunch()) {
                 true -> LauncherState.UserProfile
                 false -> LauncherState.Home
             }
@@ -40,6 +40,7 @@ fun LauncherScreen(toUserProfile: () -> Unit, toHome: () -> Unit) {
 
     Scaffold {
         when (viewModel.state.observeAsState().value!!) {
+            LauncherScreenViewModel.LauncherState.Start,
             LauncherScreenViewModel.LauncherState.Loading -> LoadingIndicator()
             LauncherScreenViewModel.LauncherState.UserProfile -> toUserProfile()
             LauncherScreenViewModel.LauncherState.Home -> toHome()

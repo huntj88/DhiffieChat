@@ -15,9 +15,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.UserService
 
 class UserProfileViewModel(private val service: UserService) : ViewModel() {
+    init {
+        viewModelScope.launch {
+            service.createIdentity()
+        }
+    }
+
     fun getAlias(): String? = service.getAlias()?.alias
 
     fun setAlias(alias: String) {

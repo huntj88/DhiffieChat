@@ -1,5 +1,6 @@
 package me.jameshunt.dhiffiechat
 
+import android.content.Context
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
@@ -23,6 +24,7 @@ import javax.crypto.spec.IvParameterSpec
 
 
 class DI(application: DhiffieChatApp) {
+    private val prefManager = PrefManager(application)
     private val fileLocationUtil = FileLocationUtil(application)
     private val driver: SqlDriver = AndroidSqliteDriver(
         schema = Database.Schema,
@@ -81,13 +83,14 @@ class DI(application: DhiffieChatApp) {
         .build()
 
     private val api = retrofit.create(LambdaApi::class.java)
+    private val launcherService = LauncherService(api, prefManager)
     private val userService = UserService(database.aliasQueries, api, authManager, identityManager)
     private val s3Service = S3Service(okhttp, authManager, api, userService, fileLocationUtil)
 
     private val injectableComponents = mutableMapOf<String, Any>()
 
     init {
-        register(moshi, s3Service, userService, fileLocationUtil)
+        register(moshi, s3Service, userService, fileLocationUtil, launcherService)
     }
 
     private fun register(vararg entry: Any) {

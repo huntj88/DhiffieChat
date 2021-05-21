@@ -12,9 +12,22 @@ import java.security.PublicKey
 import java.time.Instant
 import javax.crypto.spec.IvParameterSpec
 
+
+class LauncherService(private val api: LambdaApi, private val prefManager: PrefManager) {
+    suspend fun init() {
+        api.initSingleEndpoint()
+    }
+
+    fun isFirstLaunch(): Boolean = prefManager.isFirstLaunch()
+}
+
 data class ResponseMessage(val message: String)
 
 interface LambdaApi {
+
+    @POST("PerformRequest")
+    suspend fun initSingleEndpoint(@Query("type") type: String = "Init"): ResponseMessage
+
     data class GetUserPublicKey(val userId: String)
     data class GetUserPublicKeyResponse(val publicKey: String)
 
