@@ -24,8 +24,10 @@ import javax.crypto.spec.IvParameterSpec
 
 
 class DI(application: DhiffieChatApp) {
-    private val prefManager = PrefManager(application)
     private val fileLocationUtil = FileLocationUtil(application)
+    private val prefManager = PrefManager(
+        prefs = application.getSharedPreferences("dhiffieChat", Context.MODE_PRIVATE)
+    )
     private val driver: SqlDriver = AndroidSqliteDriver(
         schema = Database.Schema,
         context = application,
