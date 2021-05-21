@@ -1,6 +1,7 @@
 package me.jameshunt.dhiffiechat
 
 import android.app.Application
+import android.content.Context
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.Colors
 import androidx.compose.material.darkColors
@@ -27,4 +28,14 @@ object DhiffieTheme {
 fun activeColors(): Colors = when (isSystemInDarkTheme()) {
     true -> DhiffieTheme.DarkColors
     false -> DhiffieTheme.LightColors
+}
+
+class PrefManager(application: DhiffieChatApp) {
+    private val prefs = application.getSharedPreferences("dhiffieChat", Context.MODE_PRIVATE)
+
+    fun isFirstLaunch(): Boolean = prefs.getBoolean("isFirstLaunch", true).also {
+        if (it) {
+            prefs.edit().putBoolean("isFirstLaunch", false).apply()
+        }
+    }
 }
