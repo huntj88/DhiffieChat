@@ -73,7 +73,7 @@ object AESCrypto {
         IllegalBlockSizeException::class
     )
     fun encrypt(input: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
-        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
         cipher.init(Cipher.ENCRYPT_MODE, key, iv)
         return cipher.doFinal(input)
     }
@@ -87,7 +87,7 @@ object AESCrypto {
         IllegalBlockSizeException::class
     )
     fun encrypt(file: File, output: File, key: SecretKey, iv: IvParameterSpec) {
-        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
         cipher.init(Cipher.ENCRYPT_MODE, key, iv)
 
         val cipherStream = CipherOutputStream(output.outputStream(), cipher)
@@ -105,7 +105,7 @@ object AESCrypto {
         IllegalBlockSizeException::class
     )
     fun decrypt(inputStream: InputStream, output: File, key: SecretKey, iv: IvParameterSpec) {
-        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
         cipher.init(Cipher.DECRYPT_MODE, key, iv)
 
         CipherInputStream(inputStream, cipher).use {
@@ -122,7 +122,7 @@ object AESCrypto {
         IllegalBlockSizeException::class
     )
     fun decrypt(cipherInput: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
-        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
         cipher.init(Cipher.DECRYPT_MODE, key, iv)
         return cipher.doFinal(cipherInput)
     }

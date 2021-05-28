@@ -183,9 +183,13 @@ fun RequestList(title: String, requestList: List<String>, ifItemClicked: (userId
 
 @Composable
 fun QRCodeImage(data: String) {
-    val result1 = QRCodeWriter().encode(data, BarcodeFormat.QR_CODE, 400, 400)
+    val bitmap = QRCodeWriter()
+        .encode(data, BarcodeFormat.QR_CODE, 400, 400)
+        .let { MatrixToImageWriter.toBitmap(it) }
+        .asImageBitmap()
+
     Image(
-        bitmap = MatrixToImageWriter.toBitmap(result1).asImageBitmap(),
+        bitmap = bitmap,
         contentDescription = null,
         modifier = Modifier.requiredSize(350.dp)
     )

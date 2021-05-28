@@ -5,9 +5,6 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import com.squareup.sqldelight.android.AndroidSqliteDriver
-import com.squareup.sqldelight.db.SqlDriver
-import io.requery.android.database.sqlite.RequerySQLiteOpenHelperFactory
 import me.jameshunt.dhiffiechat.crypto.toBase64String
 import me.jameshunt.dhiffiechat.crypto.toIv
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
@@ -28,14 +25,8 @@ class DI(application: DhiffieChatApp) {
     private val prefManager = PrefManager(
         prefs = application.getSharedPreferences("dhiffieChat", Context.MODE_PRIVATE)
     )
-    private val driver: SqlDriver = AndroidSqliteDriver(
-        schema = Database.Schema,
-        context = application,
-        name = "dhiffiechat.db",
-        factory = { RequerySQLiteOpenHelperFactory().create(it) }
-    )
 
-    private val database = Database(driver)
+    private val dbQueryManager = DBQueryManager(application, prefManager)
 
     private val moshi: Moshi = Moshi.Builder()
         .add(object {
@@ -65,7 +56,7 @@ class DI(application: DhiffieChatApp) {
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
-    private val identityManager = IdentityManager(database.encryption_keyQueries)
+    private val identityManager = IdentityManager(dbQueryManager.getEncryptionKeyQueries())
     private val authManager = AuthManager(identityManager, moshi)
     private val headerInterceptor = HeaderInterceptor(identityManager, authManager)
 
@@ -86,7 +77,7 @@ class DI(application: DhiffieChatApp) {
 
     private val api = retrofit.create(LambdaApi::class.java)
     private val launcherService = LauncherService(api, prefManager)
-    private val userService = UserService(database.aliasQueries, api, authManager, identityManager)
+    private val userService = UserService(dbQueryManager.getAliasQueries(), api, authManager, identityManager)
     private val s3Service = S3Service(okhttp, authManager, api, userService, fileLocationUtil)
 
     private val injectableComponents = mutableMapOf<String, Any>()
