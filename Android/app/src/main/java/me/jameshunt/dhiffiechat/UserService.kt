@@ -16,7 +16,8 @@ class UserService(
     private val aliasQueries: AliasQueries,
     private val api: LambdaApi,
     private val authManager: AuthManager,
-    private val identityManager: IdentityManager
+    private val identityManager: IdentityManager,
+    private val prefManager: PrefManager
 ) {
 
     fun getAlias(): Alias? {
@@ -27,6 +28,7 @@ class UserService(
     fun setAlias(alias: String) {
         val userId = identityManager.getIdentity().toUserId()
         aliasQueries.addAlias(userId, alias)
+        prefManager.userProfileConfigured()
     }
 
     fun getFriends(): Flow<List<Alias>> {

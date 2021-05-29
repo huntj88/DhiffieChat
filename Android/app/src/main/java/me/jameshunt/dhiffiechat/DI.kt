@@ -77,7 +77,9 @@ class DI(application: DhiffieChatApp) {
 
     private val api = retrofit.create(LambdaApi::class.java)
     private val launcherService = LauncherService(api, prefManager)
-    private val userService = UserService(dbQueryManager.getAliasQueries(), api, authManager, identityManager)
+    private val userService = UserService(
+        dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
+    )
     private val s3Service = S3Service(okhttp, authManager, api, userService, fileLocationUtil)
 
     private val injectableComponents = mutableMapOf<String, Any>()

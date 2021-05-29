@@ -13,10 +13,10 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 
 class PrefManager(private val prefs: SharedPreferences) {
-    fun isFirstLaunch(): Boolean = prefs.getBoolean("isFirstLaunch", true).also {
-        if (it) {
-            prefs.edit().putBoolean("isFirstLaunch", false).apply()
-        }
+    fun isUserProfileSetup(): Boolean = prefs.getBoolean("isUserProfileSetup", false)
+
+    fun userProfileConfigured() {
+        prefs.edit().putBoolean("isUserProfileSetup", true).apply()
     }
 
     fun getDBPassword(): String {

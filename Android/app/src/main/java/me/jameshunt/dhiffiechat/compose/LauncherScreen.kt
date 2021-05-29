@@ -25,9 +25,9 @@ class LauncherScreenViewModel(private val service: LauncherService): ViewModel()
 
         viewModelScope.launch {
             service.init()
-            state.value = when (service.isFirstLaunch()) {
-                true -> LauncherState.UserProfile
-                false -> LauncherState.Home
+            state.value = when (service.isUserProfileSetup()) {
+                true -> LauncherState.Home
+                false -> LauncherState.UserProfile
             }
         }
     }

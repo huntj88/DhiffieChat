@@ -18,7 +18,7 @@ class LauncherService(private val api: LambdaApi, private val prefManager: PrefM
         api.initSingleEndpoint()
     }
 
-    fun isFirstLaunch(): Boolean = prefManager.isFirstLaunch()
+    fun isUserProfileSetup(): Boolean = prefManager.isUserProfileSetup()
 }
 
 data class ResponseMessage(val message: String)
