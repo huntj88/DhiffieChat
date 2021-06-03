@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.launcher
 
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.LauncherService
+import me.jameshunt.dhiffiechat.compose.LoadingIndicator
 
 class LauncherScreenViewModel(private val service: LauncherService): ViewModel() {
     enum class LauncherState {
@@ -34,8 +35,7 @@ class LauncherScreenViewModel(private val service: LauncherService): ViewModel()
 }
 
 @Composable
-fun LauncherScreen(toUserProfile: () -> Unit, toHome: () -> Unit) {
-    val viewModel = injectedViewModel<LauncherScreenViewModel>()
+fun LauncherScreen(viewModel: LauncherScreenViewModel, toUserProfile: () -> Unit, toHome: () -> Unit) {
     viewModel.load()
 
     Scaffold {

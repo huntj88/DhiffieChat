@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import androidx.navigation.NavController
 import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.R
@@ -58,11 +57,11 @@ class HomeViewModel(userService: UserService) : ViewModel() {
 
 @Composable
 fun HomeScreen(
+    viewModel: HomeViewModel,
     toManageFriends: () -> Unit,
     toShowNextMessage: (friendUserId: String) -> Unit,
     toSendMessage: (friendUserId: String) -> Unit
 ) {
-    val viewModel: HomeViewModel = injectedViewModel()
     val fabColor = activeColors().secondary
 
     Scaffold(

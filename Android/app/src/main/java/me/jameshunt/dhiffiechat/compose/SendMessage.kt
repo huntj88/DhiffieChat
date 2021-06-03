@@ -34,15 +34,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.navigate
-import androidx.navigation.compose.navigation
-import androidx.navigation.compose.popUpTo
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.FileLocationUtil
 import me.jameshunt.dhiffiechat.MediaType
 import me.jameshunt.dhiffiechat.S3Service
-import me.jameshunt.dhiffiechat.parentViewModel
+//import me.jameshunt.dhiffiechat.parentViewModel
 import java.io.File
 
 class SendMessageViewModel(
@@ -77,46 +73,46 @@ class SendMessageViewModel(
 }
 
 fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
-    navigation("", "sendMessage/{toUserId}") {
-        composable("") {
-            val recipientUserId = it.arguments
-                ?.getString("toUserId")
-                ?: throw IllegalArgumentException("Missing toUserId")
-
-            val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
-            sharedViewModel.recipientUserId = recipientUserId
-
-            navController.navigate("selectMedia") {
-                popUpTo("sendMessage/{toUserId}") { inclusive = false }
-            }
-        }
-        composable(
-            route = "selectMedia",
-            content = {
-                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
-                SelectMedia(
-                    sharedViewModel = sharedViewModel,
-                    onMediaSelected = { navController.navigate("confirmMessage") }
-                )
-            }
-        )
-        composable(
-            route = "confirmMessage",
-            content = {
-                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
-
-                when (sharedViewModel.sendState.observeAsState().value!!) {
-                    SendMessageViewModel.SendState.CollectMessageText -> TextConfirmation { msg ->
-                        sharedViewModel.sendMessage(msg)
-                    }
-                    SendMessageViewModel.SendState.Loading -> LoadingIndicator()
-                    SendMessageViewModel.SendState.Finish -> navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                }
-            }
-        )
-    }
+//    navigation("", "sendMessage/{toUserId}") {
+//        composable("") {
+//            val recipientUserId = it.arguments
+//                ?.getString("toUserId")
+//                ?: throw IllegalArgumentException("Missing toUserId")
+//
+//            val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
+//            sharedViewModel.recipientUserId = recipientUserId
+//
+//            navController.navigate("selectMedia") {
+//                popUpTo("sendMessage/{toUserId}") { inclusive = false }
+//            }
+//        }
+//        composable(
+//            route = "selectMedia",
+//            content = {
+//                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
+//                SelectMedia(
+//                    sharedViewModel = sharedViewModel,
+//                    onMediaSelected = { navController.navigate("confirmMessage") }
+//                )
+//            }
+//        )
+//        composable(
+//            route = "confirmMessage",
+//            content = {
+//                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
+//
+//                when (sharedViewModel.sendState.observeAsState().value!!) {
+//                    SendMessageViewModel.SendState.CollectMessageText -> TextConfirmation { msg ->
+//                        sharedViewModel.sendMessage(msg)
+//                    }
+//                    SendMessageViewModel.SendState.Loading -> LoadingIndicator()
+//                    SendMessageViewModel.SendState.Finish -> navController.navigate("home") {
+//                        popUpTo("home") { inclusive = true }
+//                    }
+//                }
+//            }
+//        )
+//    }
 }
 
 class TakeVideo : ActivityResultContract<Uri, Boolean>() {
