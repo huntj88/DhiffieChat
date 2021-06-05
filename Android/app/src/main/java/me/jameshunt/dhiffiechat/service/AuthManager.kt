@@ -6,7 +6,6 @@ import java.security.PublicKey
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import javax.crypto.SecretKey
-import javax.crypto.spec.IvParameterSpec
 
 class AuthManager(
     private val identityManager: IdentityManager,
@@ -53,10 +52,10 @@ class AuthManager(
         )
     }
 
-    fun userToUserMessage(serverPublicKey: PublicKey): MessageCredentials {
+    fun userToUserMessage(otherUser: PublicKey): MessageCredentials {
         val sharedSecretKey = DHCrypto.agreeSecretKey(
             prkSelf = identityManager.getIdentity().private,
-            pbkPeer = serverPublicKey
+            pbkPeer = otherUser
         )
 
         return MessageCredentials(

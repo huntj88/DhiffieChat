@@ -95,6 +95,7 @@ interface LambdaApi {
 
     data class SendMessage(
         val recipientUserId: String,
+        val text: String?,
         val s3Key: String,
         val mediaType: MediaType
     )

@@ -21,7 +21,7 @@ class S3Service(
 ) {
 
     suspend fun getDecryptedFile(message: LambdaApi.Message): File {
-        val otherUserPublicKey = getUserPublicKey(message.from)
+        val otherUserPublicKey = userService.getUserPublicKey(message.from)
         val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
 
         val body = LambdaApi.ConsumeMessage(message.fileKey, message.messageCreatedAt)
@@ -38,9 +38,9 @@ class S3Service(
         return fileLocationUtil.incomingDecryptedFile()
     }
 
-    suspend fun sendFile(recipientUserId: String, file: File, mediaType: MediaType) {
+    suspend fun sendMessage(recipientUserId: String, text: String?, file: File, mediaType: MediaType) {
         // TODO: Remove metadata from files
-        val recipientPublicKey = getUserPublicKey(recipientUserId)
+        val recipientPublicKey = userService.getUserPublicKey(recipientUserId)
         val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
 
         val output = fileLocationUtil.outgoingEncryptedFile()
@@ -53,8 +53,13 @@ class S3Service(
             )
         }
 
+        val encryptedText = text
+            ?.let { AESCrypto.encrypt(text.toByteArray(), userToUserCredentials.sharedSecret) }
+            ?.toBase64String()
+
         val body = LambdaApi.SendMessage(
             recipientUserId = recipientUserId,
+            text = encryptedText,
             s3Key = output.toS3Key(),
             mediaType = mediaType
         )
@@ -63,26 +68,6 @@ class S3Service(
         upload(response.uploadUrl, output)
         file.delete()
         output.delete()
-    }
-
-    private suspend fun getUserPublicKey(userId: String): PublicKey {
-        return api
-            .getUserPublicKey(body = LambdaApi.GetUserPublicKey(userId = userId))
-            .publicKey
-            .toPublicKey()
-            .also { publicKey ->
-                val userIdFromPublic = publicKey.toUserId()
-
-                // maintain a list of your friends locally to validate against (MiTM), if not in list then abort.
-                val friends = userService.getFriends().firstOrNull()?.map { it.userId }
-                val isLocalFriend = friends?.contains(userIdFromPublic) ?: false
-
-                // verify that public key given matches whats expected
-                val isValid = isLocalFriend && userId == userIdFromPublic
-                if (!isValid) {
-                    throw IllegalStateException("Incorrect public key given for user: $userId")
-                }
-            }
     }
 
     private suspend fun upload(url: URL, file: File) {

@@ -6,10 +6,16 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.Alias
 import me.jameshunt.dhiffiechat.AliasQueries
+import me.jameshunt.dhiffiechat.crypto.AESCrypto
+import me.jameshunt.dhiffiechat.crypto.base64ToByteArray
+import me.jameshunt.dhiffiechat.crypto.toPublicKey
+import me.jameshunt.dhiffiechat.crypto.toUserId
 import me.jameshunt.dhiffiechat.service.LambdaApi.*
+import java.security.PublicKey
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
@@ -53,6 +59,18 @@ class UserService(
         return api.getMessageSummaries()
     }
 
+    suspend fun decryptMessageText(message: Message): Message {
+        val otherUserPublicKey = getUserPublicKey(userId = message.from)
+        val sharedSecret = authManager.userToUserMessage(otherUserPublicKey).sharedSecret
+
+        val decryptedText = message.text
+            ?.base64ToByteArray()
+            ?.let { AESCrypto.decrypt(it, sharedSecret) }
+            ?.toString(Charsets.UTF_8)
+
+        return message.copy(text = decryptedText)
+    }
+
     suspend fun createIdentity() {
         val userToServerCredentials = authManager.userToServerAuth()
 
@@ -77,6 +95,26 @@ class UserService(
             val token = task.result
             cont.resume(token)
         })
+    }
+
+    suspend fun getUserPublicKey(userId: String): PublicKey {
+        return api
+            .getUserPublicKey(body = LambdaApi.GetUserPublicKey(userId = userId))
+            .publicKey
+            .toPublicKey()
+            .also { publicKey ->
+                val userIdFromPublic = publicKey.toUserId()
+
+                // maintain a list of your friends locally to validate against (MiTM), if not in list then abort.
+                val friends = getFriends().firstOrNull()?.map { it.userId }
+                val isLocalFriend = friends?.contains(userIdFromPublic) ?: false
+
+                // verify that public key given matches whats expected
+                val isValid = isLocalFriend && userId == userIdFromPublic
+                if (!isValid) {
+                    throw IllegalStateException("Incorrect public key given for user: $userId")
+                }
+            }
     }
 
     fun isUserProfileSetup(): Boolean {

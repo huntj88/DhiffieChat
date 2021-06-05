@@ -4,14 +4,20 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.*
 import com.google.android.exoplayer2.MediaItem
@@ -20,10 +26,10 @@ import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.service.LambdaApi.*
-import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.MediaType
 import me.jameshunt.dhiffiechat.service.S3Service
 import me.jameshunt.dhiffiechat.service.UserService
+import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import java.io.File
 
 class ShowNextMessageViewModel(
@@ -46,7 +52,10 @@ class ShowNextMessageViewModel(
                 .first { it.from == fromUserId }
                 .next!!
 
-            _media.value = MediaMessage(message, s3Service.getDecryptedFile(message))
+            _media.value = MediaMessage(
+                message = userService.decryptMessageText(message),
+                file = s3Service.getDecryptedFile(message)
+            )
         }
     }
 }
@@ -56,24 +65,30 @@ fun ShowNextMessageScreen(viewModel: ShowNextMessageViewModel, fromUserId: Strin
     viewModel.media.observeAsState().value
         ?.let { media ->
             when (media.message.mediaType) {
-                MediaType.Image -> ImageMessage(file = media.file)
-                MediaType.Video -> VideoMessage(file = media.file)
+                MediaType.Image -> ImageMessage(text = media.message.text, file = media.file)
+                MediaType.Video -> VideoMessage(text = media.message.text, file = media.file)
             }
         }
         ?: LoadingIndicator().also { viewModel.loadFile(fromUserId = fromUserId) }
 }
 
 @Composable
-fun ImageMessage(file: File) {
+fun ImageMessage(text: String?, file: File) {
     val image = file.inputStream().readBytes().toBitmap().asImageBitmap()
-    Image(bitmap = image, contentDescription = "", modifier = Modifier.fillMaxSize())
+    Box {
+        Image(bitmap = image, contentDescription = "", modifier = Modifier.fillMaxSize())
+        text?.let { TextWithScrim(text = it) }
+    }
 }
 
 fun ByteArray.toBitmap(): Bitmap = BitmapFactory.decodeByteArray(this, 0, this.size)
 
 @Composable
-fun VideoMessage(file: File) {
-    Player(file = file)
+fun VideoMessage(text: String?, file: File) {
+    Box {
+        Player(file = file)
+        text?.let { TextWithScrim(text = it) }
+    }
 }
 
 @Composable
@@ -112,5 +127,19 @@ fun Player(file: File) {
             }
         },
         modifier = Modifier.fillMaxSize()
+    )
+}
+
+@Composable
+fun BoxScope.TextWithScrim(text: String) {
+    Text(
+        text = text,
+        color = Color.White,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0x80000000))
+            .padding(vertical = 20.dp)
+            .align(Alignment.Center)
     )
 }

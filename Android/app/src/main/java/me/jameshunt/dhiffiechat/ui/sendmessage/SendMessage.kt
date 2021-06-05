@@ -39,7 +39,7 @@ import java.io.File
 
 class SendMessageViewModel(
     private val s3Service: S3Service,
-    private val fileLocationUtil: FileLocationUtil
+    private val fileUtil: FileLocationUtil
 ) : ViewModel() {
     lateinit var recipientUserId: String
     var mediaType: MediaType? = null
@@ -55,17 +55,19 @@ class SendMessageViewModel(
     val sendState: LiveData<SendState> = _sendState
 
     fun sendMessage(text: String) {
-        // TODO: use text
         _sendState.value = SendState.Loading
         viewModelScope.launch {
-            s3Service.sendFile(recipientUserId, fileLocationUtil.getInputFile(), mediaType!!)
+            s3Service.sendMessage(
+                recipientUserId = recipientUserId,
+                text = text.ifEmpty { null },
+                file = fileUtil.getInputFile(),
+                mediaType = mediaType!!
+            )
             _sendState.value = SendState.Finish
         }
     }
 
-    fun getInputFile(): File {
-        return fileLocationUtil.getInputFile()
-    }
+    fun getInputFile(): File = fileUtil.getInputFile()
 }
 
 class TakeVideo : ActivityResultContract<Uri, Boolean>() {

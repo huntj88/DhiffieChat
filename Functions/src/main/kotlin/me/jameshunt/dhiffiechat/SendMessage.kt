@@ -28,7 +28,7 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 to = body.recipientUserId,
                 from = identity.userId,
                 messageCreatedAt = Instant.now(),
-                text = null, // TODO
+                text = body.text,
                 fileKey = body.s3Key,
                 mediaType = body.mediaType,
                 uploadFinished = false,
@@ -45,6 +45,7 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
 
 data class SendMessageRequest(
     val recipientUserId: String,
+    val text: String?,
     val s3Key: String,
     val mediaType: String
 )
