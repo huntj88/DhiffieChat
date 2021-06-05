@@ -64,7 +64,7 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
     private fun Message.sendNotification() {
         val fcmToken = Singletons.dynamoDB
             .getTable("User")
-            .getItem("userId", this.to)["fcmToken"] as String
+            .getItem("userId", this.to)["fcmToken"] as? String ?: throw Exception("fcmToken is null")
         Singletons.firebase.sendMessage(
             token = fcmToken,
             title = "New Message",
