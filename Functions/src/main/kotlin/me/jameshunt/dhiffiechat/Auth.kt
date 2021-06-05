@@ -4,11 +4,10 @@ import com.amazonaws.services.dynamodbv2.document.PrimaryKey
 import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.dhiffiechat.crypto.*
 import java.security.GeneralSecurityException
-import java.security.KeyPair
 import java.security.PublicKey
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import javax.crypto.spec.IvParameterSpec
+
 
 private data class Token(
     val type: String = "Authentication",
@@ -25,7 +24,7 @@ data class Identity(val publicKey: PublicKey) {
 
 fun doesUserHavePrivateKey(publicKey: PublicKey, encryptedToken: String): Boolean {
     val token = try {
-        val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
+        val sharedSecretKey = DHCrypto.agreeSecretKey(Credentials.getServerKeyPair().private, publicKey)
         val tokenString = AESCrypto.decrypt(encryptedToken.base64ToByteArray(), sharedSecretKey)
         Singletons.objectMapper.readValue<Token>(tokenString)
     } catch (e: GeneralSecurityException) {
@@ -51,8 +50,4 @@ fun getUserPublicKey(userId: String): PublicKey {
         .asMap()
         .let { it["publicKey"] as String }
         .toPublicKey()
-}
-
-fun getServerKeyPair(): KeyPair {
-    return KeyPair(serverPublic.toPublicKey(), serverPrivate.toPrivateKey())
 }

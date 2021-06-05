@@ -65,6 +65,6 @@ class AuthManager(
     }
 
     private fun getServerPublicKey(): PublicKey {
-        return serverPublic.toPublicKey()
+        return "MIIBpzCCARsGCSqGSIb3DQEDATCCAQwCgYEA/X9TgR11EilS30qcLuzk5/YRt1I870QAwx4/gLZRJmlFXUAiUftZPY1Y+r/F9bow9subVWzXgTuAHTRv8mZgt2uZUKWkn5/oBHsQIsJPu6nX/rfGG/g7V+fGqKYVDwT7g/bTxR7DAjVUE1oWkTL2dfOuK2HXKu/yIgMZndFIAccCgYEA9+GghdabPd7LvKtcNrhXuXmUr7v6OuqC+VdMCz0HgmdRWVeOutRZT+ZxBxCBgLRJFnEj6EwoFhO3zwkyjMim4TwWeotUfI0o4KOuHiuzpnWRbqN/C/ohNWLx+2J6ASQ7zKTxvqhRkImog9/hWuWfBpKLZl6Ae1UlZAFMO/7PSSoCAgIAA4GFAAKBgQDJLVn3e5VaJQkr728oJWpPPHJijsLA7sqw5hkBlobp1LnklJ/Y3VjeaYGXx58KCx8vrfM4FbTpIayLEAobAE7ZhIvsOSArVm+92LA7KdKMXIgakmqkj4HSV3P+ptcwi4eWfhhGiAV5Uz0wN2RoDyqA89oD2GHSSSqqvNZZFQCWzQ==".toPublicKey()
     }
 }
