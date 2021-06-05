@@ -21,7 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
@@ -40,24 +40,26 @@ class HomeViewModel(private val userService: UserService) : ViewModel() {
         val mostRecentAt: Instant?
     )
 
+    private val emitOnRefresh = MutableLiveData(Unit)
+    val friendMessageData: LiveData<List<FriendMessageData>> by lazy {
+        emitOnRefresh.asFlow().combine(userService.getFriends()) { _, friends ->
+            val summaries = userService.getMessageSummaries().associateBy { it.from }
+            friends.map { friend ->
+                val messageFromUserSummary = summaries[friend.userId]
+                FriendMessageData(
+                    friendUserId = friend.userId,
+                    alias = friend.alias,
+                    count = messageFromUserSummary?.count ?: 0,
+                    mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
+                )
+            }.sortedByDescending { it.mostRecentAt }
+        }.asLiveData()
+    }
+
     fun isUserProfileSetup(): Boolean = userService.isUserProfileSetup()
 
-    val friendMessageData: LiveData<List<FriendMessageData>> by lazy {
-        userService
-            .getFriends()
-            .map { friends ->
-                val summaries = userService.getMessageSummaries().associateBy { it.from }
-                friends.map { friend ->
-                    val messageFromUserSummary = summaries[friend.userId]
-                    FriendMessageData(
-                        friendUserId = friend.userId,
-                        alias = friend.alias,
-                        count = messageFromUserSummary?.count ?: 0,
-                        mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
-                    )
-                }.sortedByDescending { it.mostRecentAt }
-            }
-            .asLiveData()
+    fun onRefreshData() {
+        emitOnRefresh.value = Unit
     }
 }
 
@@ -72,10 +74,11 @@ fun HomeScreen(
     val fabColor = activeColors().secondary
     var isProfileSetup by remember { mutableStateOf(viewModel.isUserProfileSetup()) }
 
-    LocalLifecycleOwner.current.lifecycle.addObserver(object: LifecycleEventObserver {
+    LocalLifecycleOwner.current.lifecycle.addObserver(object : LifecycleEventObserver {
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
             if (event == Lifecycle.Event.ON_RESUME) {
                 isProfileSetup = viewModel.isUserProfileSetup()
+                viewModel.onRefreshData()
             }
         }
     })
