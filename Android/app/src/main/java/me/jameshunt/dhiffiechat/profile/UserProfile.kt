@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.profile
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth

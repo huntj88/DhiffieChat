@@ -13,7 +13,7 @@ class HomeFragment: ComposeFragment() {
     override fun ScreenComposable() {
         HomeScreen(
             viewModel = viewModel,
-            toManageFriends = { findNavController().navigate(R.id.profileFragment) },
+            toManageFriends = { findNavController().navigate(R.id.manageFriendsFragment) },
             toShowNextMessage = { TODO() },
             toSendMessage = { TODO() },
         )

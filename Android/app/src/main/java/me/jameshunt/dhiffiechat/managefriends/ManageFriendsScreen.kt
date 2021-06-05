@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.managefriends
 
 import android.Manifest
 import android.util.Log
@@ -30,6 +30,8 @@ import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.LambdaApi.UserRelationships
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.UserService
+import me.jameshunt.dhiffiechat.compose.CallToAction
+import me.jameshunt.dhiffiechat.compose.LoadingIndicator
 import net.glxn.qrgen.android.MatrixToImageWriter
 
 class ManageFriendsViewModel(private val userService: UserService, moshi: Moshi) : ViewModel() {
@@ -66,8 +68,7 @@ data class QRData(
 )
 
 @Composable
-fun ManageFriendsScreen(onFriendAdded: () -> Unit) {
-    val viewModel: ManageFriendsViewModel = injectedViewModel()
+fun ManageFriendsScreen(viewModel: ManageFriendsViewModel, onFriendAdded: () -> Unit) {
     var isShareOpen by rememberSaveable { mutableStateOf(false) }
     var isScanOpen by rememberSaveable { mutableStateOf(false) }
     var isLoadingAddFriend: Boolean by rememberSaveable { mutableStateOf(false) }

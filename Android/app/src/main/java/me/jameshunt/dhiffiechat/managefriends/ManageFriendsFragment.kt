@@ -1,18 +1,20 @@
-package me.jameshunt.dhiffiechat.profile
+package me.jameshunt.dhiffiechat.managefriends
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.fragment.NavHostFragment.findNavController
 import me.jameshunt.dhiffiechat.compose.ComposeFragment
 import me.jameshunt.dhiffiechat.compose.injectedViewModel
 
-class ProfileFragment : ComposeFragment() {
-    private val viewModel: UserProfileViewModel by injectedViewModel()
+class ManageFriendsFragment : ComposeFragment() {
+    private val viewModel: ManageFriendsViewModel by injectedViewModel()
 
     @Composable
     override fun ScreenComposable() {
-        UserProfile(
+        ManageFriendsScreen(
             viewModel = viewModel,
-            onAliasSet = { findNavController(this).popBackStack() }
+            onFriendAdded = {
+//                findNavController(this).popBackStack()
+            }
         )
     }
 }
