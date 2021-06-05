@@ -1,9 +1,9 @@
 package me.jameshunt.dhiffiechat.home
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.fragment.findNavController
+import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.compose.ComposeFragment
-import me.jameshunt.dhiffiechat.compose.HomeScreen
-import me.jameshunt.dhiffiechat.compose.HomeViewModel
 import me.jameshunt.dhiffiechat.compose.injectedViewModel
 
 class HomeFragment: ComposeFragment() {
@@ -11,10 +11,9 @@ class HomeFragment: ComposeFragment() {
 
     @Composable
     override fun ScreenComposable() {
-
         HomeScreen(
             viewModel = viewModel,
-            toManageFriends = { TODO() },
+            toManageFriends = { findNavController().navigate(R.id.profileFragment) },
             toShowNextMessage = { TODO() },
             toSendMessage = { TODO() },
         )

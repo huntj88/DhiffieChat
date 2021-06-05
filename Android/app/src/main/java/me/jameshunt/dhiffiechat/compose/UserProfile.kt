@@ -35,8 +35,7 @@ class UserProfileViewModel(private val service: UserService) : ViewModel() {
 
 
 @Composable
-fun UserProfile(onAliasSet: () -> Unit) {
-    val viewModel = injectedViewModel<UserProfileViewModel>()
+fun UserProfile(viewModel: UserProfileViewModel, onAliasSet: () -> Unit) {
     var alias by rememberSaveable { mutableStateOf(viewModel.getAlias() ?: "") }
     Scaffold {
         Column {

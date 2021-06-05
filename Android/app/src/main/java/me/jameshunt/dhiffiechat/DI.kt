@@ -76,7 +76,7 @@ class DI(application: DhiffieChatApp) {
         .build()
 
     private val api = retrofit.create(LambdaApi::class.java)
-    private val launcherService = LauncherService(api, prefManager)
+    private val launcherService = LauncherService(api)
     private val userService = UserService(
         dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
     )

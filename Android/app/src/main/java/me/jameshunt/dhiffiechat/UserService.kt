@@ -77,4 +77,8 @@ class UserService(
             cont.resume(token)
         })
     }
+
+    fun isUserProfileSetup(): Boolean {
+        return prefManager.isUserProfileSetup()
+    }
 }

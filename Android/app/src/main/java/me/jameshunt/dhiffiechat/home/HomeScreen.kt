@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.home
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,21 +16,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
+import androidx.lifecycle.*
 import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.R
+import me.jameshunt.dhiffiechat.compose.LoadingIndicator
 import java.math.BigInteger
 import java.time.Duration
 import java.time.Instant
 import java.util.*
 
-class HomeViewModel(userService: UserService) : ViewModel() {
+class HomeViewModel(private val userService: UserService) : ViewModel() {
 
     data class FriendMessageData(
         val friendUserId: String,
@@ -39,20 +39,25 @@ class HomeViewModel(userService: UserService) : ViewModel() {
         val mostRecentAt: Instant?
     )
 
-    val friendMessageData: LiveData<List<FriendMessageData>> = userService
-        .getFriends()
-        .map { friends ->
-            val summaries = userService.getMessageSummaries().associateBy { it.from }
-            friends.map { friend ->
-                val messageFromUserSummary = summaries[friend.userId]
-                FriendMessageData(
-                    friendUserId = friend.userId,
-                    alias = friend.alias,
-                    count = messageFromUserSummary?.count ?: 0,
-                    mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
-                )
-            }.sortedByDescending { it.mostRecentAt }
-        }.asLiveData()
+    fun isUserProfileSetup(): Boolean = userService.isUserProfileSetup()
+
+    val friendMessageData: LiveData<List<FriendMessageData>> by lazy {
+        userService
+            .getFriends()
+            .map { friends ->
+                val summaries = userService.getMessageSummaries().associateBy { it.from }
+                friends.map { friend ->
+                    val messageFromUserSummary = summaries[friend.userId]
+                    FriendMessageData(
+                        friendUserId = friend.userId,
+                        alias = friend.alias,
+                        count = messageFromUserSummary?.count ?: 0,
+                        mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
+                    )
+                }.sortedByDescending { it.mostRecentAt }
+            }
+            .asLiveData()
+    }
 }
 
 @Composable
@@ -63,6 +68,20 @@ fun HomeScreen(
     toSendMessage: (friendUserId: String) -> Unit
 ) {
     val fabColor = activeColors().secondary
+    var isProfileSetup by remember { mutableStateOf(viewModel.isUserProfileSetup()) }
+
+    LocalLifecycleOwner.current.lifecycle.addObserver(object: LifecycleEventObserver {
+        override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isProfileSetup = viewModel.isUserProfileSetup()
+            }
+        }
+    })
+
+    if (!isProfileSetup) {
+        toManageFriends()
+        return
+    }
 
     Scaffold(
         floatingActionButton = {
