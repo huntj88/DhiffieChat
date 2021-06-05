@@ -63,6 +63,7 @@ class HomeViewModel(private val userService: UserService) : ViewModel() {
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
+    toUserProfile: () -> Unit,
     toManageFriends: () -> Unit,
     toShowNextMessage: (friendUserId: String) -> Unit,
     toSendMessage: (friendUserId: String) -> Unit
@@ -79,7 +80,7 @@ fun HomeScreen(
     })
 
     if (!isProfileSetup) {
-        toManageFriends()
+        toUserProfile()
         return
     }
 

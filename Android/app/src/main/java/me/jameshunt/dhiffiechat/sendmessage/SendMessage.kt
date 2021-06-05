@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.sendmessage
 
 import android.app.Activity
 import android.content.Context
@@ -19,7 +19,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -70,49 +69,6 @@ class SendMessageViewModel(
     fun getInputFile(): File {
         return fileLocationUtil.getInputFile()
     }
-}
-
-fun NavGraphBuilder.sendMessageSubGraph(navController: NavController) {
-//    navigation("", "sendMessage/{toUserId}") {
-//        composable("") {
-//            val recipientUserId = it.arguments
-//                ?.getString("toUserId")
-//                ?: throw IllegalArgumentException("Missing toUserId")
-//
-//            val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
-//            sharedViewModel.recipientUserId = recipientUserId
-//
-//            navController.navigate("selectMedia") {
-//                popUpTo("sendMessage/{toUserId}") { inclusive = false }
-//            }
-//        }
-//        composable(
-//            route = "selectMedia",
-//            content = {
-//                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
-//                SelectMedia(
-//                    sharedViewModel = sharedViewModel,
-//                    onMediaSelected = { navController.navigate("confirmMessage") }
-//                )
-//            }
-//        )
-//        composable(
-//            route = "confirmMessage",
-//            content = {
-//                val sharedViewModel = it.parentViewModel<SendMessageViewModel>(navController)
-//
-//                when (sharedViewModel.sendState.observeAsState().value!!) {
-//                    SendMessageViewModel.SendState.CollectMessageText -> TextConfirmation { msg ->
-//                        sharedViewModel.sendMessage(msg)
-//                    }
-//                    SendMessageViewModel.SendState.Loading -> LoadingIndicator()
-//                    SendMessageViewModel.SendState.Finish -> navController.navigate("home") {
-//                        popUpTo("home") { inclusive = true }
-//                    }
-//                }
-//            }
-//        )
-//    }
 }
 
 class TakeVideo : ActivityResultContract<Uri, Boolean>() {
