@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="me.jameshunt.dhiffiechat.home.HomeFragment"
+        android:label="HomeFragment" >
+        <action
+            android:id="@+id/action_homeFragment_to_profileFragment"
+            app:destination="@id/profileFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_manageFriendsFragment"
+            app:destination="@id/manageFriendsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_send_message"
+            app:destination="@id/send_message" />
+        <action
+            android:id="@+id/action_homeFragment_to_showNextMessageFragment"
+            app:destination="@id/showNextMessageFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="me.jameshunt.dhiffiechat.profile.ProfileFragment"
+        android:label="ProfileFragment" />
+    <fragment
+        android:id="@+id/manageFriendsFragment"
+        android:name="me.jameshunt.dhiffiechat.managefriends.ManageFriendsFragment"
+        android:label="ManageFriendsFragment" />
+    <include app:graph="@navigation/send_message" />
+    <fragment
+        android:id="@+id/showNextMessageFragment"
+        android:name="me.jameshunt.dhiffiechat.nextmessage.ShowNextMessageFragment"
+        android:label="ShowNextMessageFragment" >
+        <argument
+            android:name="fromUserId"
+            app:argType="string" />
+    </fragment>
+</navigation>

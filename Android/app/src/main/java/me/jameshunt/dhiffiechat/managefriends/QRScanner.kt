@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.managefriends
 
 import android.annotation.SuppressLint
 import android.util.Log

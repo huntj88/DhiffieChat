@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.nextmessage
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -20,6 +20,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.LambdaApi.*
+import me.jameshunt.dhiffiechat.compose.LoadingIndicator
 import java.io.File
 
 class ShowNextMessageViewModel(
@@ -48,9 +49,7 @@ class ShowNextMessageViewModel(
 }
 
 @Composable
-fun ShowNextMessageScreen(fromUserId: String) {
-    val viewModel: ShowNextMessageViewModel = injectedViewModel()
-
+fun ShowNextMessageScreen(viewModel: ShowNextMessageViewModel, fromUserId: String) {
     viewModel.media.observeAsState().value
         ?.let { media ->
             when (media.message.mediaType) {

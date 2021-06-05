@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.profile
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,8 +35,7 @@ class UserProfileViewModel(private val service: UserService) : ViewModel() {
 
 
 @Composable
-fun UserProfile(onAliasSet: () -> Unit) {
-    val viewModel = injectedViewModel<UserProfileViewModel>()
+fun UserProfile(viewModel: UserProfileViewModel, onAliasSet: () -> Unit) {
     var alias by rememberSaveable { mutableStateOf(viewModel.getAlias() ?: "") }
     Scaffold {
         Column {

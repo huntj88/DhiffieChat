@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/send_message"
+    app:startDestination="@id/selectMediaFragment">
+
+    <fragment
+        android:id="@+id/selectMediaFragment"
+        android:name="me.jameshunt.dhiffiechat.sendmessage.SelectMediaFragment"
+        android:label="SelectMediaFragment" >
+        <argument
+            android:name="toUserId"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_selectMediaFragment_to_textConfirmationFragment"
+            app:destination="@id/textConfirmationFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/textConfirmationFragment"
+        android:name="me.jameshunt.dhiffiechat.sendmessage.TextConfirmationFragment"
+        android:label="TextConfirmationFragment" />
+</navigation>

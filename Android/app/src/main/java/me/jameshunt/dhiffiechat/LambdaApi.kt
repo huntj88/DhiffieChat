@@ -13,12 +13,10 @@ import java.time.Instant
 import javax.crypto.spec.IvParameterSpec
 
 
-class LauncherService(private val api: LambdaApi, private val prefManager: PrefManager) {
+class LauncherService(private val api: LambdaApi) {
     suspend fun init() {
         api.initSingleEndpoint()
     }
-
-    fun isUserProfileSetup(): Boolean = prefManager.isUserProfileSetup()
 }
 
 data class ResponseMessage(val message: String)
