@@ -2,6 +2,7 @@ package me.jameshunt.dhiffiechat.managefriends
 
 import android.Manifest
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -15,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,7 +70,7 @@ data class QRData(
 )
 
 @Composable
-fun ManageFriendsScreen(viewModel: ManageFriendsViewModel, onFriendAdded: () -> Unit) {
+fun ManageFriendsScreen(viewModel: ManageFriendsViewModel) {
     var isShareOpen by rememberSaveable { mutableStateOf(false) }
     var isScanOpen by rememberSaveable { mutableStateOf(false) }
     var isLoadingAddFriend: Boolean by rememberSaveable { mutableStateOf(false) }
@@ -137,15 +139,16 @@ fun ManageFriendsScreen(viewModel: ManageFriendsViewModel, onFriendAdded: () -> 
     if (isScanOpen) {
         Dialog(onDismissRequest = { isScanOpen = false }) {
             Card {
+                val context = LocalContext.current
                 QRScanner { qrData ->
                     isScanOpen = false
-
                     isLoadingAddFriend = true
+
                     viewModel.addFriend(
                         qrJson = qrData,
                         onFinish = {
                             isLoadingAddFriend = false
-                            onFriendAdded()
+                            Toast.makeText(context, "Other User Scanned", Toast.LENGTH_SHORT).show()
                         }
                     )
                 }
