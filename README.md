@@ -32,5 +32,5 @@ DynamoDB after 14 days
 Ephemeral keys: Right now a user has one main private/public 
 Diffie-Hellman key pair which is used for encrypting the data. In the
 future, each message should be encrypted using a different set of
-credentials, and no key pair should be used more for more than one 
+credentials, and no key pair should be used for more than one 
 message
