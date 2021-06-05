@@ -16,6 +16,15 @@ resource "aws_s3_bucket" "bucket" {
   bucket = "encrypted-file-bucket-z00001"
   acl    = "private"
 
+  lifecycle_rule {
+    id      = "clear_all_after_two_weeks"
+    enabled = true
+
+    expiration {
+      days = 14
+    }
+  }
+
   tags = {
     Name        = "Encrypted file bucket"
     Environment = "Dev"
@@ -42,6 +51,11 @@ resource "aws_dynamodb_table" "message-dynamodb-table" {
   write_capacity = 1
   hash_key       = "to"
   range_key      = "messageCreatedAt"
+
+  ttl {
+    attribute_name = "expiresAt"
+    enabled        = true
+  }
 
   attribute {
     name = "to"

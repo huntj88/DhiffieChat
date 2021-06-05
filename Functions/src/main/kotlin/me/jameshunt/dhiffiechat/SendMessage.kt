@@ -15,10 +15,11 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransformAuthed<SendMessageRequest, SendMessageResponse>(request, context) { body, identity ->
             // TODO: check if friends
+            val messageCreatedAt = Instant.now()
 
             val signedUrlRequest = GeneratePresignedUrlRequest(Singletons.encryptedFileBucket, body.s3Key)
                 .withMethod(HttpMethod.PUT)
-                .withExpiration(Date.from(Instant.now().plus(5, ChronoUnit.MINUTES))).apply {
+                .withExpiration(Date.from(messageCreatedAt.plus(5, ChronoUnit.MINUTES))).apply {
                     addRequestParameter(Headers.S3_USER_METADATA_PREFIX + "recipient-id", body.recipientUserId)
                 }
 
@@ -27,13 +28,14 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
             val message = Message(
                 to = body.recipientUserId,
                 from = identity.userId,
-                messageCreatedAt = Instant.now(),
+                messageCreatedAt = messageCreatedAt,
                 text = body.text,
                 fileKey = body.s3Key,
                 mediaType = body.mediaType,
                 uploadFinished = false,
                 signedS3Url = null,
-                signedS3UrlExpiration = null
+                signedS3UrlExpiration = null,
+                expiresAt = messageCreatedAt.plus(14, ChronoUnit.DAYS)
             )
 
             Singletons.dynamoDB.getTable("Message").putItem(message.toItem())

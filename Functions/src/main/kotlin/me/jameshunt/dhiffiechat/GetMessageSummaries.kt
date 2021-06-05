@@ -5,6 +5,7 @@ import com.amazonaws.services.dynamodbv2.document.QueryFilter
 import com.amazonaws.services.dynamodbv2.document.RangeKeyCondition
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import com.fasterxml.jackson.annotation.JsonIgnore
 import java.net.URL
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -55,7 +56,9 @@ data class Message(
     val mediaType: String,
     val uploadFinished: Boolean,
     val signedS3Url: URL?,
-    val signedS3UrlExpiration: Instant?
+    val signedS3UrlExpiration: Instant?,
+    @JsonIgnore
+    val expiresAt: Instant // used for amazon dynamoDB automatic item expiration
 )
 
 fun Item.toMessage(): Message {
@@ -69,6 +72,7 @@ fun Item.toMessage(): Message {
         uploadFinished = this.getBoolean("uploadFinished"),
         signedS3Url = this.getString("signedS3Url")?.let { URL(it) },
         signedS3UrlExpiration = this.getString("signedS3UrlExpiration")?.let { Instant.parse(it) },
+        expiresAt = Instant.ofEpochSecond(this.getLong("expiresAt"))
     )
 }
 
@@ -82,7 +86,8 @@ fun Message.toItem(): Item {
         "mediaType" to mediaType,
         "uploadFinished" to uploadFinished,
         "signedS3Url" to signedS3Url?.toString(),
-        "signedS3UrlExpiration" to signedS3UrlExpiration?.format()
+        "signedS3UrlExpiration" to signedS3UrlExpiration?.format(),
+        "expiresAt" to expiresAt.epochSecond
     )
 
     return Item.fromMap(map)
