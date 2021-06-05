@@ -23,10 +23,10 @@ data class Identity(val publicKey: PublicKey) {
         get() = publicKey.toUserId()
 }
 
-fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedToken: String): Boolean {
+fun doesUserHavePrivateKey(publicKey: PublicKey, encryptedToken: String): Boolean {
     val token = try {
         val sharedSecretKey = DHCrypto.agreeSecretKey(getServerKeyPair().private, publicKey)
-        val tokenString = AESCrypto.decrypt(encryptedToken.base64ToByteArray(), sharedSecretKey, iv)
+        val tokenString = AESCrypto.decrypt(encryptedToken.base64ToByteArray(), sharedSecretKey)
         Singletons.objectMapper.readValue<Token>(tokenString)
     } catch (e: GeneralSecurityException) {
         e.printStackTrace()
@@ -36,9 +36,9 @@ fun doesUserHavePrivateKey(publicKey: PublicKey, iv: IvParameterSpec, encryptedT
     return token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
 }
 
-fun validateAndGetIdentity(userId: String, iv: IvParameterSpec, encryptedToken: String): Identity {
+fun validateAndGetIdentity(userId: String, encryptedToken: String): Identity {
     val publicKey = getUserPublicKey(userId)
-    return when (doesUserHavePrivateKey(publicKey, iv, encryptedToken)) {
+    return when (doesUserHavePrivateKey(publicKey, encryptedToken)) {
         true -> Identity(publicKey = publicKey)
         false -> throw Unauthorized()
     }

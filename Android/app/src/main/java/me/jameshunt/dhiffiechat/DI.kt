@@ -6,7 +6,6 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import me.jameshunt.dhiffiechat.crypto.toBase64String
-import me.jameshunt.dhiffiechat.crypto.toIv
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
 import me.jameshunt.dhiffiechat.service.*
 import okhttp3.OkHttpClient
@@ -18,8 +17,6 @@ import java.security.PublicKey
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
-import javax.crypto.spec.IvParameterSpec
-
 
 class DI(application: DhiffieChatApp) {
     private val fileLocationUtil = FileLocationUtil(application)
@@ -41,12 +38,6 @@ class DI(application: DhiffieChatApp) {
             fun toJson(url: URL): String = url.toString()
             @FromJson
             fun fromJson(string: String): URL = URL(string)
-        })
-        .add(object {
-            @ToJson
-            fun toJson(iv: IvParameterSpec): String = iv.toBase64String()
-            @FromJson
-            fun fromJson(base64: String): IvParameterSpec = base64.toIv()
         })
         .add(object {
             @ToJson

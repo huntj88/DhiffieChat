@@ -59,7 +59,6 @@ class UserService(
         api.createIdentity(
             body = CreateIdentity(
                 publicKey = identityManager.getIdentity().public,
-                iv = userToServerCredentials.iv,
                 encryptedToken = userToServerCredentials.encryptedToken,
                 fcmToken = getFcmToken()
             )

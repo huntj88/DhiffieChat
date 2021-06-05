@@ -66,14 +66,14 @@ private class AndroidCrypto(private val keyName: String) {
             cipher.doFinal(toEncrypt.toByteArray(StandardCharsets.UTF_8)),
             Base64.NO_WRAP
         )
-        return encrypted + SEPARATOR + iv
+        return iv + SEPARATOR + encrypted
     }
 
     fun decrypt(toDecrypt: String): String {
         val parts = toDecrypt.split(SEPARATOR).toTypedArray()
         if (parts.size != 2) throw AssertionError("String to decrypt must be of the form: 'BASE64_DATA" + SEPARATOR + "BASE64_IV'")
-        val encrypted = Base64.decode(parts[0], Base64.DEFAULT)
-        val iv = Base64.decode(parts[1], Base64.DEFAULT)
+        val iv = Base64.decode(parts[0], Base64.DEFAULT)
+        val encrypted = Base64.decode(parts[1], Base64.DEFAULT)
         val cipher = Cipher.getInstance(TRANSFORMATION)
         val spec = IvParameterSpec(iv)
         cipher.init(Cipher.DECRYPT_MODE, secretKey, spec)

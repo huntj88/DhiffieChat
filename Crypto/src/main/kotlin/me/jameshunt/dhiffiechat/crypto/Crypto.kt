@@ -58,7 +58,9 @@ object DHCrypto {
 }
 
 object AESCrypto {
-    fun generateIv(): IvParameterSpec {
+    private const val SEPARATOR = ","
+
+    private fun generateIv(): IvParameterSpec {
         val iv = ByteArray(16)
         SecureRandom().nextBytes(iv)
         return IvParameterSpec(iv)
@@ -72,10 +74,13 @@ object AESCrypto {
         BadPaddingException::class,
         IllegalBlockSizeException::class
     )
-    fun encrypt(input: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
-        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-        cipher.init(Cipher.ENCRYPT_MODE, key, iv)
-        return cipher.doFinal(input)
+    fun encrypt(input: ByteArray, key: SecretKey): ByteArray {
+        val ivParameterSpec = generateIv()
+        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec)
+
+        val iv = Base64.getEncoder().encode(cipher.iv)
+        return iv + SEPARATOR.byteInputStream().readBytes() + cipher.doFinal(input)
     }
 
     @Throws(
@@ -86,11 +91,17 @@ object AESCrypto {
         BadPaddingException::class,
         IllegalBlockSizeException::class
     )
-    fun encrypt(file: File, output: File, key: SecretKey, iv: IvParameterSpec) {
-        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
-        cipher.init(Cipher.ENCRYPT_MODE, key, iv)
+    fun encrypt(file: File, output: File, key: SecretKey) {
+        val ivParameterSpec = generateIv()
+        val cipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, ivParameterSpec)
 
-        val cipherStream = CipherOutputStream(output.outputStream(), cipher)
+        val iv = Base64.getEncoder().encode(cipher.iv)
+        val outputStream = output.outputStream()
+        outputStream.write(iv)
+        outputStream.write(SEPARATOR.toByteArray())
+
+        val cipherStream = CipherOutputStream(outputStream, cipher)
         file.inputStream().use { inStream ->
             cipherStream.use { outStream -> inStream.copyTo(outStream) }
         }
@@ -104,9 +115,16 @@ object AESCrypto {
         BadPaddingException::class,
         IllegalBlockSizeException::class
     )
-    fun decrypt(inputStream: InputStream, output: File, key: SecretKey, iv: IvParameterSpec) {
-        val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
+    fun decrypt(inputStream: InputStream, output: File, key: SecretKey) {
+        val size = Base64.getEncoder().encode(generateIv().iv).size
+        val ivBytes = ByteArray(size)
+        inputStream.read(ivBytes)
+        val iv = IvParameterSpec(Base64.getDecoder().decode(ivBytes))
+
+        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+
         cipher.init(Cipher.DECRYPT_MODE, key, iv)
+        inputStream.read(ByteArray(SEPARATOR.byteInputStream().readBytes().size))
 
         CipherInputStream(inputStream, cipher).use {
             it.copyTo(output.outputStream())
@@ -121,10 +139,19 @@ object AESCrypto {
         BadPaddingException::class,
         IllegalBlockSizeException::class
     )
-    fun decrypt(cipherInput: ByteArray, key: SecretKey, iv: IvParameterSpec): ByteArray {
-        val cipher = Cipher.getInstance("AES/CBC/PKCS7Padding")
+    fun decrypt(cipherInput: ByteArray, key: SecretKey): ByteArray {
+        val size = Base64.getEncoder().encode(generateIv().iv).size
+
+        val ivBytes = cipherInput.slice(0 until size).toByteArray()
+        val encrypted = cipherInput.slice(
+            size + SEPARATOR.byteInputStream().readBytes().size until cipherInput.size
+        ).toByteArray()
+
+        val iv = IvParameterSpec(Base64.getDecoder().decode(ivBytes))
+
+        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
         cipher.init(Cipher.DECRYPT_MODE, key, iv)
-        return cipher.doFinal(cipherInput)
+        return cipher.doFinal(encrypted)
     }
 }
 
@@ -138,9 +165,6 @@ fun String.toPrivateKey(): PrivateKey {
     return KeyFactory.getInstance("DH").generatePrivate(PKCS8EncodedKeySpec(bytes))
 }
 
-fun String.toIv(): IvParameterSpec = IvParameterSpec(this.base64ToByteArray())
-
-fun IvParameterSpec.toBase64String(): String = iv.toBase64String()
 fun PublicKey.toBase64String(): String = encoded.toBase64String()
 fun PrivateKey.toBase64String(): String = encoded.toBase64String()
 

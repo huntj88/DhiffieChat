@@ -19,7 +19,6 @@ class AuthManager(
 
     data class ServerCredentials(
         val userId: String,
-        val iv: IvParameterSpec,
         val encryptedToken: String,
         @Transient
         val sharedSecret: SecretKey
@@ -27,7 +26,6 @@ class AuthManager(
 
     data class MessageCredentials(
         val userId: String,
-        val iv: IvParameterSpec,
         @Transient
         val sharedSecret: SecretKey
     )
@@ -42,16 +40,14 @@ class AuthManager(
             prkSelf = identityManager.getIdentity().private,
             pbkPeer = getServerPublicKey()
         )
-        val iv = AESCrypto.generateIv()
         val token = Token(expires = Instant.now().plus(1L, ChronoUnit.MINUTES))
 
         val encryptedToken = AESCrypto
-            .encrypt(input = token.toSerialized(), sharedSecretKey, iv)
+            .encrypt(input = token.toSerialized(), sharedSecretKey)
             .toBase64String()
 
         return ServerCredentials(
             userId = identityManager.getIdentity().toUserId(),
-            iv = iv,
             encryptedToken = encryptedToken,
             sharedSecret = sharedSecretKey
         )
@@ -65,7 +61,6 @@ class AuthManager(
 
         return MessageCredentials(
             userId = identityManager.getIdentity().toUserId(),
-            iv = AESCrypto.generateIv(),
             sharedSecret = sharedSecretKey
         )
     }

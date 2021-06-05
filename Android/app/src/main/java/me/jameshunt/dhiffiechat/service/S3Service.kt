@@ -31,8 +31,7 @@ class S3Service(
             AESCrypto.decrypt(
                 inputStream = download(s3Url),
                 output = fileLocationUtil.incomingDecryptedFile(),
-                key = userToUserCredentials.sharedSecret,
-                iv = message.iv
+                key = userToUserCredentials.sharedSecret
             )
         }
 
@@ -50,15 +49,13 @@ class S3Service(
             AESCrypto.encrypt(
                 file = file,
                 output = output,
-                key = userToUserCredentials.sharedSecret,
-                iv = userToUserCredentials.iv
+                key = userToUserCredentials.sharedSecret
             )
         }
 
         val body = LambdaApi.SendMessage(
             recipientUserId = recipientUserId,
             s3Key = output.toS3Key(),
-            userUserIv = userToUserCredentials.iv,
             mediaType = mediaType
         )
         val response = api.sendMessage(body = body)

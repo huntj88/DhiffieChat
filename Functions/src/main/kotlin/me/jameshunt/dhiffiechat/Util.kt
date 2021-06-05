@@ -4,8 +4,6 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.module.kotlin.readValue
-import me.jameshunt.dhiffiechat.crypto.toIv
-import java.security.MessageDigest
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -123,12 +121,10 @@ inline fun <reified Params> getQueryParams(request: Map<String, Any?>, logger: L
 fun validateAndGetIdentity(request: Map<String, Any?>): Identity {
     val headers = request["headers"]!!.let { it as Map<String, String> }
     val userId = headers["userid"]!!
-    val userServerIv = headers["userserveriv"]!!.toIv()
     val userServerEncryptedToken = headers["userserverencryptedtoken"]!!
 
     return validateAndGetIdentity(
         userId = userId,
-        iv = userServerIv,
         encryptedToken = userServerEncryptedToken
     )
 }

@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat.service
 
-import me.jameshunt.dhiffiechat.crypto.toBase64String
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -10,7 +9,6 @@ import retrofit2.http.Query
 import java.net.URL
 import java.security.PublicKey
 import java.time.Instant
-import javax.crypto.spec.IvParameterSpec
 
 
 class LauncherService(private val api: LambdaApi) {
@@ -48,7 +46,6 @@ interface LambdaApi {
         val messageCreatedAt: Instant,
         val text: String?,
         val fileKey: String,
-        val iv: IvParameterSpec,
         val mediaType: MediaType,
         val signedS3Url: URL?
     )
@@ -77,7 +74,6 @@ interface LambdaApi {
      */
     data class CreateIdentity(
         val publicKey: PublicKey,
-        val iv: IvParameterSpec,
         val encryptedToken: String,
         val fcmToken: String
     )
@@ -100,7 +96,6 @@ interface LambdaApi {
     data class SendMessage(
         val recipientUserId: String,
         val s3Key: String,
-        val userUserIv: IvParameterSpec,
         val mediaType: MediaType
     )
     data class SendMessageResponse(val uploadUrl: URL)
@@ -158,7 +153,6 @@ class HeaderInterceptor(
     private fun userToServerHeaders(): Map<String, String> {
         val userToServerCredentials = authManager.userToServerAuth()
         return mapOf(
-            "userServerIv" to userToServerCredentials.iv.toBase64String(),
             "userServerEncryptedToken" to userToServerCredentials.encryptedToken
         )
     }
