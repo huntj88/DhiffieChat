@@ -70,7 +70,7 @@ data class QRData(
 )
 
 @Composable
-fun ManageFriendsScreen(viewModel: ManageFriendsViewModel) {
+fun ManageFriendsScreen(viewModel: ManageFriendsViewModel, toUserProfile: () -> Unit) {
     var isShareOpen by rememberSaveable { mutableStateOf(false) }
     var isScanOpen by rememberSaveable { mutableStateOf(false) }
     var isLoadingAddFriend: Boolean by rememberSaveable { mutableStateOf(false) }
@@ -96,20 +96,28 @@ fun ManageFriendsScreen(viewModel: ManageFriendsViewModel) {
                     .padding(8.dp)
             ) {
                 CallToAction(
-                    text = "Share QR",
-                    drawableId = R.drawable.ic_baseline_qr_code_scanner_24
-                ) {
-                    isShareOpen = true
-                    Log.d("clicked", "click")
-                }
+                    text = "Change Shared Profile",
+                    drawableId = R.drawable.exo_ic_settings,
+                    onClick = { toUserProfile() }
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 CallToAction(
-                    text = "Scan QR",
-                    drawableId = R.drawable.ic_baseline_qr_code_scanner_24
-                ) {
-                    cameraPermissionContract.launch(Manifest.permission.CAMERA)
-                    Log.d("clicked", "click")
-                }
+                    text = "Share QR Profile",
+                    drawableId = R.drawable.ic_baseline_qr_code_scanner_24,
+                    onClick = {
+                        isShareOpen = true
+                        Log.d("clicked", "click")
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                CallToAction(
+                    text = "Scan QR Profile",
+                    drawableId = R.drawable.ic_baseline_person_add_24,
+                    onClick = {
+                        cameraPermissionContract.launch(Manifest.permission.CAMERA)
+                        Log.d("clicked", "click")
+                    }
+                )
 
                 val relationships = viewModel.relationships.observeAsState().value
 

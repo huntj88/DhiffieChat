@@ -7,7 +7,7 @@
     <fragment
         android:id="@+id/homeFragment"
         android:name="me.jameshunt.dhiffiechat.ui.home.HomeFragment"
-        android:label="HomeFragment" >
+        android:label="HomeFragment">
         <action
             android:id="@+id/action_homeFragment_to_profileFragment"
             app:destination="@id/profileFragment" />
@@ -28,7 +28,11 @@
     <fragment
         android:id="@+id/manageFriendsFragment"
         android:name="me.jameshunt.dhiffiechat.ui.managefriends.ManageFriendsFragment"
-        android:label="ManageFriendsFragment" />
+        android:label="ManageFriendsFragment" >
+        <action
+            android:id="@+id/action_manageFriendsFragment_to_profileFragment"
+            app:destination="@id/profileFragment" />
+    </fragment>
     <include app:graph="@navigation/send_message" />
     <fragment
         android:id="@+id/showNextMessageFragment"
