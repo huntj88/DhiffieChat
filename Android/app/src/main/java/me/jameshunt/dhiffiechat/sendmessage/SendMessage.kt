@@ -31,13 +31,10 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
-import androidx.navigation.NavGraphBuilder
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.FileLocationUtil
 import me.jameshunt.dhiffiechat.MediaType
 import me.jameshunt.dhiffiechat.S3Service
-//import me.jameshunt.dhiffiechat.parentViewModel
 import java.io.File
 
 class SendMessageViewModel(

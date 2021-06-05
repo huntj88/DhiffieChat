@@ -28,4 +28,3 @@ fun activeColors(): Colors = when (isSystemInDarkTheme()) {
     true -> DhiffieTheme.DarkColors
     false -> DhiffieTheme.LightColors
 }
-
