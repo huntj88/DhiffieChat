@@ -1,11 +1,11 @@
-package me.jameshunt.dhiffiechat.sendmessage
+package me.jameshunt.dhiffiechat.ui.sendmessage
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import me.jameshunt.dhiffiechat.R
-import me.jameshunt.dhiffiechat.compose.*
+import me.jameshunt.dhiffiechat.ui.compose.*
 
 class TextConfirmationFragment : ComposeFragment() {
 

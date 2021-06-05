@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.service
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull

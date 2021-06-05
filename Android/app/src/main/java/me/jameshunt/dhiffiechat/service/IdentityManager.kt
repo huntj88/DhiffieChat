@@ -1,9 +1,9 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.service
 
+import me.jameshunt.dhiffiechat.Encryption_keyQueries
 import me.jameshunt.dhiffiechat.crypto.*
 import java.security.KeyPair
 
-// TODO: move keypair to db
 class IdentityManager(private val encryptionKeyQueries: Encryption_keyQueries) {
     private var cached: KeyPair? = null
 

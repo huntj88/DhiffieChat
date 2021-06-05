@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.service
 
 import android.content.SharedPreferences
 import android.security.keystore.KeyGenParameterSpec

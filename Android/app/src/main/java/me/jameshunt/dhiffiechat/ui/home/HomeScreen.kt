@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.home
+package me.jameshunt.dhiffiechat.ui.home
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -24,7 +24,8 @@ import androidx.lifecycle.*
 import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.R
-import me.jameshunt.dhiffiechat.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.service.UserService
 import java.math.BigInteger
 import java.time.Duration
 import java.time.Instant

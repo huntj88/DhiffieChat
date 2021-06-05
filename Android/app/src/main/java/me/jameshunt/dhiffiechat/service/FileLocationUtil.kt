@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.service
 
 import android.content.Context
 import android.os.Environment

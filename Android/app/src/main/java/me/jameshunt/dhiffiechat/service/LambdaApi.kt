@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.service
 
 import me.jameshunt.dhiffiechat.crypto.toBase64String
 import okhttp3.Headers

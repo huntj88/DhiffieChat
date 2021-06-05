@@ -6,7 +6,7 @@
 
     <fragment
         android:id="@+id/selectMediaFragment"
-        android:name="me.jameshunt.dhiffiechat.sendmessage.SelectMediaFragment"
+        android:name="me.jameshunt.dhiffiechat.ui.sendmessage.SelectMediaFragment"
         android:label="SelectMediaFragment" >
         <argument
             android:name="toUserId"
@@ -17,6 +17,6 @@
     </fragment>
     <fragment
         android:id="@+id/textConfirmationFragment"
-        android:name="me.jameshunt.dhiffiechat.sendmessage.TextConfirmationFragment"
+        android:name="me.jameshunt.dhiffiechat.ui.sendmessage.TextConfirmationFragment"
         android:label="TextConfirmationFragment" />
 </navigation>

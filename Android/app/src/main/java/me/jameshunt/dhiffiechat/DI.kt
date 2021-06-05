@@ -8,6 +8,7 @@ import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import me.jameshunt.dhiffiechat.crypto.toBase64String
 import me.jameshunt.dhiffiechat.crypto.toIv
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
+import me.jameshunt.dhiffiechat.service.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

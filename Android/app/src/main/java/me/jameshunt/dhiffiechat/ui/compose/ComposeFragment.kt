@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.ui.compose
 
 import android.os.Bundle
 import android.view.LayoutInflater

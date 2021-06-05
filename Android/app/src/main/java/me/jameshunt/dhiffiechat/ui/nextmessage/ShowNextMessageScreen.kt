@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.nextmessage
+package me.jameshunt.dhiffiechat.ui.nextmessage
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -19,8 +19,11 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.*
-import me.jameshunt.dhiffiechat.LambdaApi.*
-import me.jameshunt.dhiffiechat.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.service.LambdaApi.*
+import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.service.MediaType
+import me.jameshunt.dhiffiechat.service.S3Service
+import me.jameshunt.dhiffiechat.service.UserService
 import java.io.File
 
 class ShowNextMessageViewModel(

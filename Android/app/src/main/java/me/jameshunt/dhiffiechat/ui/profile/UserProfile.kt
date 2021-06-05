@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.profile
+package me.jameshunt.dhiffiechat.ui.profile
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.UserService
+import me.jameshunt.dhiffiechat.service.UserService
 
 class UserProfileViewModel(private val service: UserService) : ViewModel() {
     init {

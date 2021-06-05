@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.managefriends
+package me.jameshunt.dhiffiechat.ui.managefriends
 
 import android.Manifest
 import android.util.Log
@@ -29,11 +29,11 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.LambdaApi.UserRelationships
+import me.jameshunt.dhiffiechat.service.LambdaApi.UserRelationships
 import me.jameshunt.dhiffiechat.R
-import me.jameshunt.dhiffiechat.UserService
-import me.jameshunt.dhiffiechat.compose.CallToAction
-import me.jameshunt.dhiffiechat.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.service.UserService
+import me.jameshunt.dhiffiechat.ui.compose.CallToAction
+import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import net.glxn.qrgen.android.MatrixToImageWriter
 
 class ManageFriendsViewModel(private val userService: UserService, moshi: Moshi) : ViewModel() {

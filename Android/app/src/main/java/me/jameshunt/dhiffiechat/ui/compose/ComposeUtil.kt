@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.compose
+package me.jameshunt.dhiffiechat.ui.compose
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size

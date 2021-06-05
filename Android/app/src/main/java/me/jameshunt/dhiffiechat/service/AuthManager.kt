@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.service
 
 import com.squareup.moshi.Moshi
 import me.jameshunt.dhiffiechat.crypto.*

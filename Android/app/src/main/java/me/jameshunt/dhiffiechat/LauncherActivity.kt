@@ -8,7 +8,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.compose.InjectableViewModelFactory
+import me.jameshunt.dhiffiechat.ui.compose.InjectableViewModelFactory
+import me.jameshunt.dhiffiechat.service.LauncherService
 
 class LauncherActivity: FragmentActivity() {
     private val viewModel: LauncherScreenViewModel by viewModels { InjectableViewModelFactory() }

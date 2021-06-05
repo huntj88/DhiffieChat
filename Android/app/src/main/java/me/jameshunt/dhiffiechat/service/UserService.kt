@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.service
 
 import android.util.Log
 import com.google.android.gms.tasks.OnCompleteListener
@@ -7,7 +7,9 @@ import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import me.jameshunt.dhiffiechat.LambdaApi.*
+import me.jameshunt.dhiffiechat.Alias
+import me.jameshunt.dhiffiechat.AliasQueries
+import me.jameshunt.dhiffiechat.service.LambdaApi.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine

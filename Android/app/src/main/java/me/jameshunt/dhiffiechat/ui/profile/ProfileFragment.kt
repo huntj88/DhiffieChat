@@ -1,11 +1,11 @@
-package me.jameshunt.dhiffiechat.profile
+package me.jameshunt.dhiffiechat.ui.profile
 
 import androidx.compose.runtime.Composable
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.fragment.NavHostFragment.findNavController
-import me.jameshunt.dhiffiechat.compose.ComposeFragment
-import me.jameshunt.dhiffiechat.compose.injectedViewModel
+import me.jameshunt.dhiffiechat.ui.compose.ComposeFragment
+import me.jameshunt.dhiffiechat.ui.compose.injectedViewModel
 
 class ProfileFragment : ComposeFragment() {
     private val viewModel: UserProfileViewModel by injectedViewModel()

@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.sendmessage
+package me.jameshunt.dhiffiechat.ui.sendmessage
 
 import android.app.Activity
 import android.content.Context
@@ -32,9 +32,9 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.FileLocationUtil
-import me.jameshunt.dhiffiechat.MediaType
-import me.jameshunt.dhiffiechat.S3Service
+import me.jameshunt.dhiffiechat.service.FileLocationUtil
+import me.jameshunt.dhiffiechat.service.MediaType
+import me.jameshunt.dhiffiechat.service.S3Service
 import java.io.File
 
 class SendMessageViewModel(
