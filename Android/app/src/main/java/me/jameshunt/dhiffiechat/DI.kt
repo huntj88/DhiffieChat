@@ -106,6 +106,8 @@ class DI(application: DhiffieChatApp) {
                 """.trimIndent()
             )
         }
+
+        @Suppress("UNCHECKED_CAST")
         return constructor.newInstance(*args.toTypedArray()) as T
     }
 }

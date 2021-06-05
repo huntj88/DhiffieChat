@@ -33,7 +33,7 @@ abstract class ComposeFragment: Fragment() {
     abstract fun ScreenComposable()
 }
 
-inline fun <reified T : ViewModel> Fragment.injectedViewModel(key: String? = null): Lazy<T> {
+inline fun <reified T : ViewModel> Fragment.injectedViewModel(): Lazy<T> {
     return viewModels { InjectableViewModelFactory() }
 }
 
