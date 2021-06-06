@@ -7,9 +7,9 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.Message
 import com.google.firebase.messaging.Notification
 
-class FirebaseManager {
+class FirebaseManager(credentials: Credentials) {
 
-    private val serviceAccount = Credentials.firebaseJson.byteInputStream()
+    private val serviceAccount = credentials.firebaseJson.byteInputStream()
     private val options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
         .build()

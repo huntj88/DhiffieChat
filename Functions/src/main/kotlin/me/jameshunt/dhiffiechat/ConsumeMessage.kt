@@ -46,7 +46,7 @@ class ConsumeMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     }
 
     private fun generateS3Url(fileKey: String, expiration: Instant): URL {
-        val signedUrlRequest = GeneratePresignedUrlRequest(Singletons.encryptedFileBucket, fileKey)
+        val signedUrlRequest = GeneratePresignedUrlRequest(encryptedFileBucket, fileKey)
             .withMethod(HttpMethod.GET)
             .withExpiration(Date.from(expiration))
 

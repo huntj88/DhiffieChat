@@ -17,7 +17,7 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
             // TODO: check if friends
             val messageCreatedAt = Instant.now()
 
-            val signedUrlRequest = GeneratePresignedUrlRequest(Singletons.encryptedFileBucket, body.s3Key)
+            val signedUrlRequest = GeneratePresignedUrlRequest(encryptedFileBucket, body.s3Key)
                 .withMethod(HttpMethod.PUT)
                 .withExpiration(Date.from(messageCreatedAt.plus(5, ChronoUnit.MINUTES))).apply {
                     addRequestParameter(Headers.S3_USER_METADATA_PREFIX + "recipient-id", body.recipientUserId)

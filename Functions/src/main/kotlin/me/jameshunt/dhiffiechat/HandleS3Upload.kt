@@ -20,7 +20,7 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
 
         val s3Key = getS3Key(request)
         val userId = Singletons.s3
-            .getObject(Singletons.encryptedFileBucket, s3Key)
+            .getObject(encryptedFileBucket, s3Key)
             .objectMetadata
             .userMetadata["recipient-id"]
 
