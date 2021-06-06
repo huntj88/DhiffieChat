@@ -27,7 +27,8 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 true -> {
                     val user = mapOf(
                         "userId" to userId,
-                        "publicKey" to body.publicKey
+                        "publicKey" to body.publicKey,
+                        "fcmToken" to body.fcmToken
                     )
                     userTable.putItem(Item.fromMap(user))
                 }

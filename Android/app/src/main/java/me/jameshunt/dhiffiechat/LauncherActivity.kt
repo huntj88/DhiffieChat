@@ -6,7 +6,7 @@ import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.ui.compose.InjectableViewModelFactory
 import me.jameshunt.dhiffiechat.service.LauncherService
@@ -25,7 +25,10 @@ class LauncherActivity: FragmentActivity() {
     }
 }
 
-class LauncherScreenViewModel(private val service: LauncherService): ViewModel() {
+class LauncherScreenViewModel(
+    private val service: LauncherService,
+    private val applicationScope: CoroutineScope
+): ViewModel() {
     enum class LauncherState {
         Loading,
         Done
@@ -34,7 +37,7 @@ class LauncherScreenViewModel(private val service: LauncherService): ViewModel()
     val state = MutableLiveData(LauncherState.Loading)
 
     fun load() {
-        viewModelScope.launch {
+        applicationScope.launch {
             service.init()
             state.value = LauncherState.Done
         }

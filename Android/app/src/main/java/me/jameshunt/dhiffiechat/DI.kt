@@ -5,6 +5,9 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import me.jameshunt.dhiffiechat.crypto.toBase64String
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
 import me.jameshunt.dhiffiechat.service.*
@@ -19,6 +22,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 class DI(application: DhiffieChatApp) {
+    private val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val fileLocationUtil = FileLocationUtil(application)
     private val prefManager = PrefManager(
         prefs = application.getSharedPreferences("dhiffieChat", Context.MODE_PRIVATE)
@@ -78,6 +82,9 @@ class DI(application: DhiffieChatApp) {
 
     init {
         register(moshi, s3Service, userService, fileLocationUtil, launcherService)
+
+        // TODO: need to register interface canonical name and not underlying class
+        injectableComponents[CoroutineScope::class.java.canonicalName!!] = applicationScope
     }
 
     private fun register(vararg entry: Any) {

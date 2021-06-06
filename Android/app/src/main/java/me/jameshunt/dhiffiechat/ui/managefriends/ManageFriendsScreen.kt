@@ -28,6 +28,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.service.LambdaApi.UserRelationships
 import me.jameshunt.dhiffiechat.R
@@ -36,7 +37,11 @@ import me.jameshunt.dhiffiechat.ui.compose.CallToAction
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import net.glxn.qrgen.android.MatrixToImageWriter
 
-class ManageFriendsViewModel(private val userService: UserService, moshi: Moshi) : ViewModel() {
+class ManageFriendsViewModel(
+    private val userService: UserService,
+    private val applicationScope: CoroutineScope,
+    moshi: Moshi
+) : ViewModel() {
     private val qrAdapter = moshi.adapter(QRData::class.java)
     private val _relationships: MutableLiveData<UserRelationships?> = MutableLiveData(null)
 
@@ -53,7 +58,7 @@ class ManageFriendsViewModel(private val userService: UserService, moshi: Moshi)
 
     fun addFriend(qrJson: String, onFinish: () -> Unit) {
         val (userId, alias) = qrAdapter.fromJson(qrJson)!!
-        viewModelScope.launch {
+        applicationScope.launch {
             userService.addFriend(userId, alias)
             onFinish()
         }

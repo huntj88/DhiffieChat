@@ -16,12 +16,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.service.UserService
 
-class UserProfileViewModel(private val service: UserService) : ViewModel() {
+class UserProfileViewModel(
+    private val service: UserService,
+    applicationScope: CoroutineScope
+) : ViewModel() {
     init {
-        viewModelScope.launch {
+        applicationScope.launch {
             service.createIdentity()
         }
     }

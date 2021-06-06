@@ -31,6 +31,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.service.FileLocationUtil
 import me.jameshunt.dhiffiechat.service.MediaType
@@ -39,7 +40,8 @@ import java.io.File
 
 class SendMessageViewModel(
     private val s3Service: S3Service,
-    private val fileUtil: FileLocationUtil
+    private val fileUtil: FileLocationUtil,
+    private val applicationScope: CoroutineScope
 ) : ViewModel() {
     lateinit var recipientUserId: String
     var mediaType: MediaType? = null
@@ -56,7 +58,7 @@ class SendMessageViewModel(
 
     fun sendMessage(text: String) {
         _sendState.value = SendState.Loading
-        viewModelScope.launch {
+        applicationScope.launch {
             s3Service.sendMessage(
                 recipientUserId = recipientUserId,
                 text = text.ifEmpty { null },
