@@ -9,7 +9,7 @@ import com.google.firebase.messaging.Notification
 
 class FirebaseManager {
 
-    private val serviceAccount = Credentials.getFirebaseJson().byteInputStream()
+    private val serviceAccount = Credentials.firebaseJson.byteInputStream()
     private val options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
         .build()

@@ -1,4 +1,3 @@
 build
 .gradle
 .idea
-/src/main/kotlin/me/jameshunt/dhiffiechat/Credentials.kt
