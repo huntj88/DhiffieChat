@@ -16,7 +16,7 @@ object Singletons {
 
     val dynamoDB = DynamoDB(AmazonDynamoDBClientBuilder.defaultClient())
 
-    val encryptedFileBucket = "encrypted-file-bucket-z00001"
+    val encryptedFileBucket = "dhiffiechat-encrypted-file-bucket"
     val s3 = AmazonS3ClientBuilder.standard().build()
 
     val firebase by lazy { FirebaseManager() }

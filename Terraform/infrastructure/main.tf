@@ -13,7 +13,7 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "encrypted_media_bucket" {
-  bucket = "encrypted-file-bucket-z00001"
+  bucket = "dhiffiechat-encrypted-file-bucket"
   acl    = "private"
 
   lifecycle_rule {
@@ -31,7 +31,7 @@ resource "aws_s3_bucket" "encrypted_media_bucket" {
 }
 
 resource "aws_s3_bucket" "config_bucket" {
-  bucket = "config-bucket-z00001"
+  bucket = "dhiffiechat-config-bucket"
   acl    = "private"
 
   tags = {

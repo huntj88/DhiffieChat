@@ -11,11 +11,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-inline fun <reified T : ViewModel> injectedViewModel(key: String? = null): T {
-    return viewModel(key = key, factory = InjectableViewModelFactory())
-}
-
-@Composable
 fun LoadingIndicator() {
     CircularProgressIndicator(
         modifier = Modifier
