@@ -18,10 +18,18 @@ class MainActivity : FragmentActivity() {
         val navController = navHostFragment.navController
         findViewById<NavigationView>(R.id.nav_view).setupWithNavController(navController)
     }
+
+    override fun onBackPressed() {
+        val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        when (drawerLayout.isOpen) {
+            true -> drawerLayout.close()
+            false -> super.onBackPressed()
+        }
+    }
 }
 
 fun Fragment.openNavDrawer() {
     activity
         ?.findViewById<DrawerLayout>(R.id.drawer_layout)
-        ?.openDrawer(GravityCompat.START);
+        ?.openDrawer(GravityCompat.START)
 }

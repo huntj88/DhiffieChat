@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group>
+        <item android:id="@+id/manageFriendsFragment"
+            android:icon="@drawable/ic_baseline_person_add_24"
+            android:title="Manage Friends" />
+        <item android:id="@+id/profileFragment"
+            android:icon="@drawable/ic_baseline_qr_code_scanner_24"
+            android:title="Shared Profile" />
+    </group>
+</menu>
