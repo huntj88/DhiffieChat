@@ -38,7 +38,6 @@ class HomeFragment: ComposeFragment() {
             HomeScreen(
                 viewModel = viewModel,
                 toUserProfile = { findNavController().navigate(R.id.profileFragment) },
-                toManageFriends = { findNavController().navigate(R.id.manageFriendsFragment) },
                 toShowNextMessage = { fromUserId ->
                     val args = bundleOf("fromUserId" to fromUserId)
                     findNavController().navigate(R.id.showNextMessageFragment, args)
