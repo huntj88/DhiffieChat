@@ -21,7 +21,7 @@ import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
-class DI(application: DhiffieChatApp) {
+class DI(val application: DhiffieChatApp) {
     private val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val fileLocationUtil = FileLocationUtil(application)
     private val prefManager = PrefManager(
@@ -67,7 +67,7 @@ class DI(application: DhiffieChatApp) {
 
     private val retrofit = Retrofit.Builder()
         .client(okhttp)
-        .baseUrl("https://nfg3h6fz41.execute-api.us-east-1.amazonaws.com/stage/")
+        .baseUrl("https://kub8546jj5.execute-api.us-east-1.amazonaws.com/stage/")
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 

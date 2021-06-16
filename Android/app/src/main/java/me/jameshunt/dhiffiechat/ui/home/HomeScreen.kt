@@ -1,6 +1,5 @@
 package me.jameshunt.dhiffiechat.ui.home
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.*
 import kotlinx.coroutines.flow.*
-import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
@@ -67,11 +65,9 @@ class HomeViewModel(private val userService: UserService) : ViewModel() {
 fun HomeScreen(
     viewModel: HomeViewModel,
     toUserProfile: () -> Unit,
-    toManageFriends: () -> Unit,
     toShowNextMessage: (friendUserId: String) -> Unit,
     toSendMessage: (friendUserId: String) -> Unit
 ) {
-    val fabColor = activeColors().secondary
     var isProfileSetup by remember { mutableStateOf(viewModel.isUserProfileSetup()) }
 
     LocalLifecycleOwner.current.lifecycle.addObserver(object : LifecycleEventObserver {
@@ -89,29 +85,6 @@ fun HomeScreen(
     }
 
     Scaffold(
-        floatingActionButton = {
-            Box(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .clickable { toManageFriends() }
-            ) {
-                Canvas(
-                    modifier = Modifier
-                        .wrapContentSize(align = Alignment.Center)
-                        .padding(32.dp)
-                ) {
-                    drawCircle(fabColor, 80f)
-                }
-                Image(
-                    painter = painterResource(id = R.drawable.ic_baseline_qr_code_scanner_24),
-                    contentDescription = "Manage Friends",
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(36.dp),
-                    colorFilter = ColorFilter.tint(activeColors().onSecondary)
-                )
-            }
-        },
         content = {
             Column(
                 Modifier
@@ -137,7 +110,8 @@ fun HomeScreen(
                     }
                 }
             }
-        })
+        }
+    )
 }
 
 @Composable
