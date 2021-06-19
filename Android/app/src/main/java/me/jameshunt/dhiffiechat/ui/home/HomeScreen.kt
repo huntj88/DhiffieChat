@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -27,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.*
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -35,14 +38,32 @@ import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.activeColors
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
-import me.jameshunt.dhiffiechat.ui.home.HomeViewModel.*
-import me.jameshunt.dhiffiechat.ui.managefriends.QRCodeImage
-import me.jameshunt.dhiffiechat.ui.managefriends.QRData
-import me.jameshunt.dhiffiechat.ui.managefriends.QRScanner
+import net.glxn.qrgen.android.MatrixToImageWriter
 import java.math.BigInteger
 import java.time.Duration
 import java.time.Instant
 import java.util.*
+
+data class QRData(
+    val userId: String,
+    val alias: String
+)
+
+data class FriendMessageData(
+    val friendUserId: String,
+    val alias: String,
+    val count: Int,
+    val mostRecentAt: Instant?
+)
+
+enum class DialogState {
+    CameraPermission,
+    Scan,
+    ScanSuccess,
+    Share,
+    Loading,
+    None
+}
 
 class HomeViewModel(
     private val applicationScope: CoroutineScope,
@@ -51,15 +72,9 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val qrAdapter = moshi.adapter(QRData::class.java)
-    val qrDataShare: String = qrAdapter
-        .toJson(userService.getAlias()!!.let { QRData(it.userId, it.alias) })
+    val qrDataShare: String = qrAdapter.toJson(userService.getAlias()!!.let { QRData(it.userId, it.alias) })
 
-    data class FriendMessageData(
-        val friendUserId: String,
-        val alias: String,
-        val count: Int,
-        val mostRecentAt: Instant?
-    )
+    val dialogState = MutableLiveData(DialogState.None)
 
     private val emitOnRefresh = MutableLiveData(Unit)
     val friendMessageData: LiveData<List<FriendMessageData>> by lazy {
@@ -83,19 +98,12 @@ class HomeViewModel(
         emitOnRefresh.value = Unit
     }
 
-    val dialogState = MutableLiveData(DialogState.None)
-
-    enum class DialogState {
-        CameraPermission,
-        Scan,
-        ScanSuccess,
-        Share,
-        Loading,
-        None
-    }
-
     fun scanSelected() {
         dialogState.value = DialogState.CameraPermission
+    }
+
+    fun shareSelected() {
+        dialogState.value = DialogState.Share
     }
 
     fun addFriend(qrJson: String) {
@@ -105,10 +113,6 @@ class HomeViewModel(
             userService.addFriend(userId, alias)
             dialogState.value = DialogState.ScanSuccess
         }
-    }
-
-    fun shareSelected() {
-        dialogState.value = DialogState.Share
     }
 }
 
@@ -129,18 +133,6 @@ fun HomeScreen(
             }
         }
     })
-
-    val cameraPermissionContract = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { permissionGranted ->
-            if (permissionGranted) {
-                viewModel.dialogState.value = DialogState.Scan
-            } else {
-                Log.e("Camera", "camera permission denied")
-                viewModel.dialogState.value = DialogState.None
-            }
-        }
-    )
 
     if (!isProfileSetup) {
         toUserProfile()
@@ -176,54 +168,7 @@ fun HomeScreen(
         }
     )
 
-    when (viewModel.dialogState.observeAsState().value!!) {
-        DialogState.CameraPermission -> cameraPermissionContract.launch(Manifest.permission.CAMERA)
-        DialogState.Scan -> Dialog(
-            onDismissRequest = {
-                if (viewModel.dialogState.value == DialogState.Scan) {
-                    viewModel.dialogState.value = DialogState.None
-                }
-            },
-            content = {
-                Card {
-                    QRScanner { qrData ->
-                        viewModel.addFriend(qrJson = qrData)
-                    }
-                }
-            }
-        )
-        DialogState.ScanSuccess -> {
-            Dialog(
-                onDismissRequest = { viewModel.dialogState.value = DialogState.None },
-                content = {
-                    Box(
-                        modifier = Modifier.size(150.dp).background(activeColors().secondary),
-                        contentAlignment = Alignment.Center,
-                        content = { Text(text = "woooow") }
-                    )
-                }
-            )
-        }
-        DialogState.Share -> Dialog(
-            onDismissRequest = { viewModel.dialogState.value = DialogState.None },
-            content = {
-                Card {
-                    QRCodeImage(viewModel.qrDataShare)
-                }
-            }
-        )
-        DialogState.Loading -> Dialog(
-            onDismissRequest = { /*TODO*/ },
-            content = {
-                Box(
-                    modifier = Modifier.size(150.dp).background(activeColors().secondary),
-                    contentAlignment = Alignment.Center,
-                    content = { LoadingIndicator() }
-                )
-            }
-        )
-        DialogState.None -> Unit
-    }
+    DialogStates(viewModel = viewModel)
 }
 
 @Composable
@@ -308,6 +253,88 @@ fun FriendCard(friendData: FriendMessageData, onClick: () -> Unit) {
             )
         }
     }
+}
+
+@Composable
+private fun DialogStates(viewModel: HomeViewModel) {
+    val cameraPermissionContract = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { permissionGranted ->
+            if (permissionGranted) {
+                viewModel.dialogState.value = DialogState.Scan
+            } else {
+                Log.e("Camera", "camera permission denied")
+                viewModel.dialogState.value = DialogState.None
+            }
+        }
+    )
+
+    when (viewModel.dialogState.observeAsState().value!!) {
+        DialogState.CameraPermission -> cameraPermissionContract.launch(Manifest.permission.CAMERA)
+        DialogState.Scan -> Dialog(
+            onDismissRequest = {
+                if (viewModel.dialogState.value == DialogState.Scan) {
+                    viewModel.dialogState.value = DialogState.None
+                }
+            },
+            content = {
+                Card {
+                    QRScanner { qrData ->
+                        viewModel.addFriend(qrJson = qrData)
+                    }
+                }
+            }
+        )
+        DialogState.ScanSuccess -> {
+            Dialog(
+                onDismissRequest = { viewModel.dialogState.value = DialogState.None },
+                content = {
+                    Box(
+                        modifier = Modifier
+                            .size(150.dp)
+                            .background(activeColors().secondary),
+                        contentAlignment = Alignment.Center,
+                        content = { Text(text = "woooow") }
+                    )
+                }
+            )
+        }
+        DialogState.Share -> Dialog(
+            onDismissRequest = { viewModel.dialogState.value = DialogState.None },
+            content = {
+                Card {
+                    QRCodeImage(viewModel.qrDataShare)
+                }
+            }
+        )
+        DialogState.Loading -> Dialog(
+            onDismissRequest = { /*TODO*/ },
+            content = {
+                Box(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .background(activeColors().secondary),
+                    contentAlignment = Alignment.Center,
+                    content = { LoadingIndicator() }
+                )
+            }
+        )
+        DialogState.None -> Unit
+    }
+}
+
+@Composable
+private fun QRCodeImage(data: String) {
+    val bitmap = QRCodeWriter()
+        .encode(data, BarcodeFormat.QR_CODE, 400, 400)
+        .let { MatrixToImageWriter.toBitmap(it) }
+        .asImageBitmap()
+
+    Image(
+        bitmap = bitmap,
+        contentDescription = null,
+        modifier = Modifier.requiredSize(350.dp)
+    )
 }
 
 private fun userIdToColor(userId: String): Color {
