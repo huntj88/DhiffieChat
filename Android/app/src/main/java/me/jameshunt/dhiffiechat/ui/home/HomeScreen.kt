@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -72,7 +73,9 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val qrAdapter = moshi.adapter(QRData::class.java)
-    val qrDataShare: String = qrAdapter.toJson(userService.getAlias()!!.let { QRData(it.userId, it.alias) })
+    val qrDataShare: String = userService.getAlias()!!
+        .let { QRData(it.userId, it.alias) }
+        .let { qrAdapter.toJson(it) }
 
     val dialogState = MutableLiveData(DialogState.None)
 
@@ -294,7 +297,12 @@ private fun DialogStates(viewModel: HomeViewModel) {
                             .size(150.dp)
                             .background(activeColors().secondary),
                         contentAlignment = Alignment.Center,
-                        content = { Text(text = "woooow") }
+                        content = {
+                            Text(
+                                text = "Successfully Scanned other user's QR. Please make sure they scan yours",
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     )
                 }
             )
