@@ -13,7 +13,8 @@ import com.google.android.material.navigation.NavigationView
 import java.lang.ref.WeakReference
 
 /**
- * taken from the compose lib, but modified actions in the navigation bar that don't open a new screen
+ * Taken from the compose lib, but modified so that some buttons in the navigation UI start a custom task.
+ * Duplicated because you can only have one NavigationItemSelectedListener, and existing one isn't exposed in any way
  */
 
 class NavDrawerHandler {
@@ -24,6 +25,8 @@ class NavDrawerHandler {
         onShareSelected: () -> Unit
     ) {
         navigationView.setNavigationItemSelectedListener { item ->
+
+            /** custom part starts **/
             if (item.itemId == R.id.scanQR) {
                 onScanSelected()
                 return@setNavigationItemSelectedListener true
@@ -33,6 +36,7 @@ class NavDrawerHandler {
                 onShareSelected()
                 return@setNavigationItemSelectedListener true
             }
+            /** custom part ends **/
 
             val handled = NavigationUI.onNavDestinationSelected(item, navController)
             if (handled) {

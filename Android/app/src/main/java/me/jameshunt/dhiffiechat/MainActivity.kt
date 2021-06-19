@@ -12,6 +12,7 @@ import me.jameshunt.dhiffiechat.ui.compose.injectedViewModel
 import me.jameshunt.dhiffiechat.ui.home.HomeViewModel
 
 class MainActivity : FragmentActivity() {
+    private val navDrawerHandler = NavDrawerHandler()
     private val viewModel: HomeViewModel by injectedViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,7 +34,6 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    private val navDrawerHandler = NavDrawerHandler()
     private fun NavigationView.setupWithNavController(navController: NavController) {
         navDrawerHandler.setupWithNavController(
             navigationView = this,
