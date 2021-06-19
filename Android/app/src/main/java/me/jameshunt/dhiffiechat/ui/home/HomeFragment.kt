@@ -24,7 +24,7 @@ class HomeFragment: ComposeFragment() {
     override fun ScreenComposable() {
         Column {
             TopAppBar(
-                title = { Text(text = "wow") },
+                title = { Text(text = "Home") },
                 navigationIcon = {
                     Image(
                         painter = painterResource(id = R.drawable.ic_baseline_menu_24),

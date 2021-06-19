@@ -152,6 +152,10 @@ fun HomeScreen(
                 val messageSummaries = viewModel.friendMessageData.observeAsState().value
 
                 messageSummaries?.let { summaries ->
+                    if (summaries.isEmpty()) {
+                        Text(text = "No Friends added yet, please exchange QR codes")
+                    }
+
                     summaries.filter { it.count > 0 }.ShowList(
                         title = "Messages",
                         onItemClick = { toShowNextMessage(it.friendUserId) }

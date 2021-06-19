@@ -17,7 +17,9 @@ class DhiffieChatApp : Application() {
                 primary = Color(di.application.getColor(R.color.colorPrimary)),
                 primaryVariant = Color(di.application.getColor(R.color.colorPrimaryVariant)),
                 onPrimary = Color(di.application.getColor(R.color.colorOnPrimary)),
-                secondary = Color(di.application.getColor(R.color.colorSecondary))
+                secondary = Color(di.application.getColor(R.color.colorSecondary)),
+                secondaryVariant = Color(di.application.getColor(R.color.colorSecondaryVariant)),
+                onSecondary = Color(di.application.getColor(R.color.colorOnSecondary))
             )
         }
         val DarkColors by lazy { darkColors() }
