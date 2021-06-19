@@ -1,6 +1,7 @@
 package me.jameshunt.dhiffiechat
 
 import android.os.Bundle
+import android.widget.TextView
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
@@ -24,6 +25,10 @@ class MainActivity : FragmentActivity() {
 
         val navController = navHostFragment.navController
         findViewById<NavigationView>(R.id.nav_view).setupWithNavController(navController)
+
+        viewModel.alias.observe(this) {
+            findViewById<TextView>(R.id.navigationAliasText)?.text = it?.alias
+        }
     }
 
     override fun onBackPressed() {
@@ -45,7 +50,12 @@ class MainActivity : FragmentActivity() {
 }
 
 fun Fragment.openNavDrawer() {
-    activity
-        ?.findViewById<DrawerLayout>(R.id.drawer_layout)
+    (activity as? MainActivity)?.let {
+        val viewModel: HomeViewModel by it.injectedViewModel()
+        it.findViewById<DrawerLayout>(R.id.drawer_layout)
         ?.openDrawer(GravityCompat.START)
+        .also {
+            activity?.findViewById<TextView>(R.id.navigationAliasText)?.text = viewModel.alias.value?.alias
+        }
+    }
 }

@@ -73,9 +73,13 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val qrAdapter = moshi.adapter(QRData::class.java)
-    val qrDataShare: String = userService.getAlias()!!
-        .let { QRData(it.userId, it.alias) }
-        .let { qrAdapter.toJson(it) }
+
+    val alias = userService.getAlias().asLiveData()
+    val qrDataShare: LiveData<String?> = alias.map { alias ->
+        alias
+            ?.let { QRData(it.userId, it.alias) }
+            ?.let { qrAdapter.toJson(it) }
+    }
 
     val dialogState = MutableLiveData(DialogState.None)
 
@@ -314,8 +318,10 @@ private fun DialogStates(viewModel: HomeViewModel) {
         DialogState.Share -> Dialog(
             onDismissRequest = { viewModel.dialogState.value = DialogState.None },
             content = {
-                Card {
-                    QRCodeImage(viewModel.qrDataShare)
+                viewModel.qrDataShare.observeAsState().value?.let {
+                    Card {
+                        QRCodeImage(it)
+                    }
                 }
             }
         )
