@@ -1,10 +1,16 @@
 package me.jameshunt.dhiffiechat.ui.home
 
+import android.Manifest
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Card
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -19,17 +25,34 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.*
+import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.R
+import me.jameshunt.dhiffiechat.activeColors
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
+import me.jameshunt.dhiffiechat.ui.home.HomeViewModel.*
+import me.jameshunt.dhiffiechat.ui.managefriends.QRCodeImage
+import me.jameshunt.dhiffiechat.ui.managefriends.QRData
+import me.jameshunt.dhiffiechat.ui.managefriends.QRScanner
 import java.math.BigInteger
 import java.time.Duration
 import java.time.Instant
 import java.util.*
 
-class HomeViewModel(private val userService: UserService) : ViewModel() {
+class HomeViewModel(
+    private val applicationScope: CoroutineScope,
+    private val userService: UserService,
+    moshi: Moshi
+) : ViewModel() {
+
+    private val qrAdapter = moshi.adapter(QRData::class.java)
+    val qrDataShare: String = qrAdapter
+        .toJson(userService.getAlias()!!.let { QRData(it.userId, it.alias) })
 
     data class FriendMessageData(
         val friendUserId: String,
@@ -59,6 +82,34 @@ class HomeViewModel(private val userService: UserService) : ViewModel() {
     fun onRefreshData() {
         emitOnRefresh.value = Unit
     }
+
+    val dialogState = MutableLiveData(DialogState.None)
+
+    enum class DialogState {
+        CameraPermission,
+        Scan,
+        ScanSuccess,
+        Share,
+        Loading,
+        None
+    }
+
+    fun scanSelected() {
+        dialogState.value = DialogState.CameraPermission
+    }
+
+    fun addFriend(qrJson: String) {
+        dialogState.value = DialogState.Loading
+        val (userId, alias) = qrAdapter.fromJson(qrJson)!!
+        applicationScope.launch {
+            userService.addFriend(userId, alias)
+            dialogState.value = DialogState.ScanSuccess
+        }
+    }
+
+    fun shareSelected() {
+        dialogState.value = DialogState.Share
+    }
 }
 
 @Composable
@@ -78,6 +129,18 @@ fun HomeScreen(
             }
         }
     })
+
+    val cameraPermissionContract = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { permissionGranted ->
+            if (permissionGranted) {
+                viewModel.dialogState.value = DialogState.Scan
+            } else {
+                Log.e("Camera", "camera permission denied")
+                viewModel.dialogState.value = DialogState.None
+            }
+        }
+    )
 
     if (!isProfileSetup) {
         toUserProfile()
@@ -112,12 +175,61 @@ fun HomeScreen(
             }
         }
     )
+
+    when (viewModel.dialogState.observeAsState().value!!) {
+        DialogState.CameraPermission -> cameraPermissionContract.launch(Manifest.permission.CAMERA)
+        DialogState.Scan -> Dialog(
+            onDismissRequest = {
+                if (viewModel.dialogState.value == DialogState.Scan) {
+                    viewModel.dialogState.value = DialogState.None
+                }
+            },
+            content = {
+                Card {
+                    QRScanner { qrData ->
+                        viewModel.addFriend(qrJson = qrData)
+                    }
+                }
+            }
+        )
+        DialogState.ScanSuccess -> {
+            Dialog(
+                onDismissRequest = { viewModel.dialogState.value = DialogState.None },
+                content = {
+                    Box(
+                        modifier = Modifier.size(150.dp).background(activeColors().secondary),
+                        contentAlignment = Alignment.Center,
+                        content = { Text(text = "woooow") }
+                    )
+                }
+            )
+        }
+        DialogState.Share -> Dialog(
+            onDismissRequest = { viewModel.dialogState.value = DialogState.None },
+            content = {
+                Card {
+                    QRCodeImage(viewModel.qrDataShare)
+                }
+            }
+        )
+        DialogState.Loading -> Dialog(
+            onDismissRequest = { /*TODO*/ },
+            content = {
+                Box(
+                    modifier = Modifier.size(150.dp).background(activeColors().secondary),
+                    contentAlignment = Alignment.Center,
+                    content = { LoadingIndicator() }
+                )
+            }
+        )
+        DialogState.None -> Unit
+    }
 }
 
 @Composable
-fun List<HomeViewModel.FriendMessageData>.ShowList(
+fun List<FriendMessageData>.ShowList(
     title: String,
-    onItemClick: (HomeViewModel.FriendMessageData) -> Unit
+    onItemClick: (FriendMessageData) -> Unit
 ) {
     if (this.isNotEmpty()) {
         Text(text = title, modifier = Modifier.padding(start = 12.dp, top = 24.dp))
@@ -130,7 +242,7 @@ fun List<HomeViewModel.FriendMessageData>.ShowList(
 }
 
 @Composable
-fun FriendCard(friendData: HomeViewModel.FriendMessageData, onClick: () -> Unit) {
+fun FriendCard(friendData: FriendMessageData, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .padding(12.dp)
