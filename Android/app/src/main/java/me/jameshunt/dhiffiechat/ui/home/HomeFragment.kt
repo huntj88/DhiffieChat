@@ -18,7 +18,7 @@ import me.jameshunt.dhiffiechat.ui.compose.ComposeFragment
 import me.jameshunt.dhiffiechat.ui.compose.injectedViewModel
 
 class HomeFragment: ComposeFragment() {
-    private val viewModel: HomeViewModel by injectedViewModel()
+    private val viewModel: HomeViewModel by injectedViewModel(ownerProducer = { requireActivity() })
 
     @Composable
     override fun ScreenComposable() {
