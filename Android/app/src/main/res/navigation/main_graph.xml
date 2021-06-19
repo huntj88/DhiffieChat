@@ -12,9 +12,6 @@
             android:id="@+id/action_homeFragment_to_profileFragment"
             app:destination="@id/profileFragment" />
         <action
-            android:id="@+id/action_homeFragment_to_manageFriendsFragment"
-            app:destination="@id/manageFriendsFragment" />
-        <action
             android:id="@+id/action_homeFragment_to_send_message"
             app:destination="@id/send_message" />
         <action
@@ -25,14 +22,6 @@
         android:id="@+id/profileFragment"
         android:name="me.jameshunt.dhiffiechat.ui.profile.ProfileFragment"
         android:label="ProfileFragment" />
-    <fragment
-        android:id="@+id/manageFriendsFragment"
-        android:name="me.jameshunt.dhiffiechat.ui.managefriends.ManageFriendsFragment"
-        android:label="ManageFriendsFragment" >
-        <action
-            android:id="@+id/action_manageFriendsFragment_to_profileFragment"
-            app:destination="@id/profileFragment" />
-    </fragment>
     <include app:graph="@navigation/send_message" />
     <fragment
         android:id="@+id/showNextMessageFragment"
