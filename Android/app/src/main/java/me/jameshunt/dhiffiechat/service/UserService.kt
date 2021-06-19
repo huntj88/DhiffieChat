@@ -28,9 +28,11 @@ class UserService(
     private val prefManager: PrefManager
 ) {
 
-    fun getAlias(): Alias? {
+    fun getAlias(): Flow<Alias?> {
         val userId = identityManager.getIdentity().toUserId()
-        return aliasQueries.getAliases().executeAsList().firstOrNull { it.userId == userId }
+        return aliasQueries.getAliases().asFlow().mapToList().map { aliases ->
+            aliases.firstOrNull { it.userId == userId }
+        }
     }
 
     fun setAlias(alias: String) {
