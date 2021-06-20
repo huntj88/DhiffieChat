@@ -8,6 +8,12 @@ resource "aws_lambda_function" "lambda_func" {
   runtime = "java8"
   timeout = 30
   memory_size = 1024
+
+  environment {
+    variables = {
+      DHIFFIE_ENVIRONMENT = terraform.workspace
+    }
+  }
 }
 
 resource "aws_api_gateway_resource" "gateway_resource" {

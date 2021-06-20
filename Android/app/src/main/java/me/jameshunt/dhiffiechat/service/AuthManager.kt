@@ -68,8 +68,11 @@ class AuthManager(
     private fun getServerPublicKey(): PublicKey = when(BuildConfig.SERVER_PUBLIC_KEY.isEmpty()) {
         false -> BuildConfig.SERVER_PUBLIC_KEY.toPublicKey()
         true -> {
-            // FAKE one to init if first launch of server ever
+            // FAKE one to init if first launch of server ever (good one is then setup in the config file)
+
             // TODO: running performRequest (Init) could happen as a last step to terraform
+            // which could then set server public key as a github action secret
+            // which then could get set as a BuildConfig var, coming full circle
             DHCrypto.genDHKeyPair().public
         }
     }
