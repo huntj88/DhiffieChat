@@ -6,10 +6,18 @@ plugins {
     id 'com.google.firebase.crashlytics'
 }
 
-def configPropertiesFile = rootProject.file("dhiffie.properties")
-def configProperties = new Properties()
-configProperties.load(new FileInputStream(configPropertiesFile))
+def keystoreProperties = getPropertiesOrNull("release.properties")
+def configProperties = getPropertiesOrNull("dhiffie.properties")
 
+def getPropertiesOrNull(String name) {
+    def propertiesFile = rootProject.file(name)
+    def properties = new Properties()
+
+    if (propertiesFile.exists()) {
+        properties.load(new FileInputStream(propertiesFile))
+    }
+    return properties
+}
 
 android {
     compileSdkVersion 30
@@ -30,10 +38,6 @@ android {
             storeFile file("../debug.jks")
         }
         release {
-            def keystorePropertiesFile = rootProject.file("release.properties")
-            def keystoreProperties = new Properties()
-            keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-
             storeFile file(keystoreProperties['storeFile'])
             storePassword keystoreProperties['storePassword']
             keyAlias keystoreProperties['keyAlias']
