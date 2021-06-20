@@ -6,13 +6,18 @@ plugins {
     id 'com.google.firebase.crashlytics'
 }
 
-def configProperties = loadProperties("dhiffie.properties")
+def releaseProperties = getPropertiesOrNull("release.properties")
+def configProperties = getPropertiesOrNull("dhiffie.properties")
 
-def Properties loadProperties(String name) {
+def Properties getPropertiesOrNull(String name) {
     def propertiesFile = rootProject.file(name)
-    def properties = new Properties()
-    properties.load(new FileInputStream(propertiesFile))
-    return properties
+
+    if (propertiesFile.exists()) {
+        def properties = new Properties()
+        properties.load(new FileInputStream(propertiesFile))
+        return properties
+    }
+    return null
 }
 
 android {
@@ -32,6 +37,16 @@ android {
     signingConfigs {
         debug {
             storeFile file("../debug.jks")
+        }
+
+        // allow debug builds to build if release.properties is not present
+        if (releaseProperties != null) {
+            releaseLocal {
+                storeFile file(releaseProperties['storeFile'])
+                storePassword releaseProperties['storePassword']
+                keyAlias releaseProperties['keyAlias']
+                keyPassword releaseProperties['keyPassword']
+            }
         }
     }
 
@@ -60,6 +75,9 @@ android {
         }
 
         release {
+            if (releaseProperties != null) {
+                signingConfig signingConfigs.releaseLocal
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "BASE_URL", "\"${configProperties['PROD_BASE_URL']}\""
