@@ -1,6 +1,7 @@
 package me.jameshunt.dhiffiechat.service
 
 import com.squareup.moshi.Moshi
+import me.jameshunt.dhiffiechat.BuildConfig
 import me.jameshunt.dhiffiechat.crypto.*
 import java.security.PublicKey
 import java.time.Instant
@@ -64,8 +65,5 @@ class AuthManager(
         )
     }
 
-    private fun getServerPublicKey(): PublicKey {
-        // TODO: public key is generated and stored in s3 private bucket. provision this value from CI
-        return "MIIBpjCCARsGCSqGSIb3DQEDATCCAQwCgYEA/X9TgR11EilS30qcLuzk5/YRt1I870QAwx4/gLZRJmlFXUAiUftZPY1Y+r/F9bow9subVWzXgTuAHTRv8mZgt2uZUKWkn5/oBHsQIsJPu6nX/rfGG/g7V+fGqKYVDwT7g/bTxR7DAjVUE1oWkTL2dfOuK2HXKu/yIgMZndFIAccCgYEA9+GghdabPd7LvKtcNrhXuXmUr7v6OuqC+VdMCz0HgmdRWVeOutRZT+ZxBxCBgLRJFnEj6EwoFhO3zwkyjMim4TwWeotUfI0o4KOuHiuzpnWRbqN/C/ohNWLx+2J6ASQ7zKTxvqhRkImog9/hWuWfBpKLZl6Ae1UlZAFMO/7PSSoCAgIAA4GEAAKBgF7MsxRkNYr+N8oQEB0qCATd1iZqeRRFkJ5j5jEGysYwZ3WXTUNSBVDCySwHny0egoMZX92tIbOf0y3T10vB+8dG+E7QZ5jbN/UBjJPvrsztxit8Qu9ZP0TBTRU53uwPL5nhYu2dX62V4T2rTPhG1iOF50hNktKLyrhDDckzq3X/".toPublicKey()
-    }
+    private fun getServerPublicKey(): PublicKey = BuildConfig.SERVER_PUBLIC_KEY.toPublicKey()
 }

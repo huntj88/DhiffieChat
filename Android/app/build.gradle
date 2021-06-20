@@ -10,6 +10,11 @@ def keystorePropertiesFile = rootProject.file("release.properties");
 def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
+def configPropertiesFile = rootProject.file("dhiffie.properties")
+def configProperties = new Properties()
+configProperties.load(new FileInputStream(configPropertiesFile))
+
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
@@ -56,12 +61,16 @@ android {
             applicationIdSuffix ".debug"
             minifyEnabled false
             signingConfig signingConfigs.debug
+            buildConfigField "String", "BASE_URL", "\"${configProperties['STAGE_BASE_URL']}\""
+            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['STAGE_SERVER_PUBLIC_KEY']}\""
         }
 
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            buildConfigField "String", "BASE_URL", "\"${configProperties['PROD_BASE_URL']}\""
+            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['PROD_SERVER_PUBLIC_KEY']}\""
         }
     }
     compileOptions {
