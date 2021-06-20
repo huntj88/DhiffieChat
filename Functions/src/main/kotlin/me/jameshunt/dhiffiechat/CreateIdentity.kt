@@ -20,7 +20,7 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
             if (!doesUserHavePrivateKey(body.publicKey.toPublicKey(), body.encryptedToken)) {
                 throw Unauthorized()
             }
-            val userTable = Singletons.dynamoDB.getTable("User")
+            val userTable = Singletons.dynamoDB.userTable()
             val userId = body.publicKey.toPublicKey().toUserId()
 
             when (userTable.getItem("userId", userId) == null) {

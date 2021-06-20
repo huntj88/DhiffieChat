@@ -38,7 +38,7 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 expiresAt = messageCreatedAt.plus(14, ChronoUnit.DAYS)
             )
 
-            Singletons.dynamoDB.getTable("Message").putItem(message.toItem())
+            Singletons.dynamoDB.messageTable().putItem(message.toItem())
 
             SendMessageResponse(signedUrl)
         }

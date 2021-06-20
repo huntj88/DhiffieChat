@@ -14,7 +14,7 @@ class ConsumeMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransformAuthed<ConsumeMessageRequest, ConsumeMessageResponse>(request, context) { body, identity ->
             context.logger.log("body: $body")
-            val messageTable = Singletons.dynamoDB.getTable("Message")
+            val messageTable = Singletons.dynamoDB.messageTable()
 
             val message = messageTable.getItem(
                 "to", identity.userId,
@@ -32,7 +32,7 @@ class ConsumeMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     }
 
     private fun generateAndSaveS3Url(message: Message): URL {
-        val messageTable = Singletons.dynamoDB.getTable("Message")
+        val messageTable = Singletons.dynamoDB.messageTable()
         val expiration = Instant.now().plus(5, ChronoUnit.MINUTES)
 
         return generateS3Url(message.fileKey, expiration).also { newUrl ->

@@ -27,7 +27,7 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
         val startRange = Instant.now().minus(30, ChronoUnit.MINUTES).format()
         val endRange = Instant.now().format()
 
-        val messages = Singletons.dynamoDB.getTable("Message").query(
+        val messages = Singletons.dynamoDB.messageTable().query(
             "to", userId,
             RangeKeyCondition("messageCreatedAt").between(startRange, endRange),
             QueryFilter("signedS3Url").eq(null)
@@ -54,7 +54,7 @@ class HandleS3Upload : RequestHandler<Map<String, Any?>, Unit> {
     }
 
     private fun Message.setUploadFinished() {
-        Singletons.dynamoDB.getTable("Message").updateItem(
+        Singletons.dynamoDB.messageTable().updateItem(
             "to", this.to,
             "messageCreatedAt", this.messageCreatedAt.format(),
             AttributeUpdate("uploadFinished").put(true)

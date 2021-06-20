@@ -12,7 +12,7 @@ data class QR(val scannedUserId: String)
 class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransformAuthed<QR, Unit>(request, context) { body, identity ->
-            val table = Singletons.dynamoDB.getTable("User")
+            val table = Singletons.dynamoDB.userTable()
             val item = table.getItem("userId", identity.userId)
 
             context.logger.log("checking if already friends")

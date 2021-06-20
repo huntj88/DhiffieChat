@@ -45,7 +45,7 @@ fun validateAndGetIdentity(userId: String, encryptedToken: String): Identity {
 
 fun getUserPublicKey(userId: String): PublicKey {
     return Singletons.dynamoDB
-        .getTable("User")
+        .userTable()
         .getItem(PrimaryKey("userId", userId))
         .asMap()
         .let { it["publicKey"] as String }

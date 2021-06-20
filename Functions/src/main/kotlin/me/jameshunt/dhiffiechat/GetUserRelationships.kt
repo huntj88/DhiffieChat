@@ -7,7 +7,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 class GetUserRelationships : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransformAuthed<Unit, UserRelationships>(request, context) { _, identity ->
-            val user = Singletons.dynamoDB.getTable("User").getItem("userId", identity.userId)
+            val user = Singletons.dynamoDB.userTable().getItem("userId", identity.userId)
 
             UserRelationships(
                 sentRequests = user.getList("sentRequests") ?: emptyList(),

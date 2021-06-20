@@ -13,7 +13,7 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "encrypted_media_bucket" {
-  bucket = "dhiffiechat-encrypted-file-bucket"
+  bucket = "${terraform.workspace}-dhiffiechat-encrypted-file-bucket"
   acl    = "private"
 
   lifecycle_rule {
@@ -31,7 +31,7 @@ resource "aws_s3_bucket" "encrypted_media_bucket" {
 }
 
 resource "aws_s3_bucket" "config_bucket" {
-  bucket = "dhiffiechat-config-bucket"
+  bucket = "${terraform.workspace}-dhiffiechat-config-bucket"
   acl    = "private"
 
   tags = {
@@ -40,7 +40,7 @@ resource "aws_s3_bucket" "config_bucket" {
 }
 
 resource "aws_dynamodb_table" "user-dynamodb-table" {
-  name           = "User"
+  name           = "${terraform.workspace}.User"
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
@@ -53,7 +53,7 @@ resource "aws_dynamodb_table" "user-dynamodb-table" {
 }
 
 resource "aws_dynamodb_table" "message-dynamodb-table" {
-  name           = "Message"
+  name           = "${terraform.workspace}.Message"
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
@@ -77,7 +77,7 @@ resource "aws_dynamodb_table" "message-dynamodb-table" {
 }
 
 resource "aws_iam_role" "function_role" {
-  name = "function_role"
+  name = "${terraform.workspace}_function_role"
 
   # Terraform's "jsonencode" function converts a
   # Terraform expression result to valid JSON syntax.
@@ -114,7 +114,7 @@ resource "aws_iam_role" "function_role" {
 
 
 resource "aws_iam_policy" "function_policy" {
-  name        = "s3_bucket_policy"
+  name        = "${terraform.workspace}_s3_bucket_policy"
   path        = "/"
   description = "s3 bucket policy"
 
@@ -181,7 +181,7 @@ resource "aws_iam_role_policy_attachment" "function-attach" {
 }
 
 resource "aws_api_gateway_rest_api" "chat_gateway" {
-  name        = "chat_gateway"
+  name        = "${terraform.workspace}_chat_gateway"
   description = "Chat Gateway"
 }
 
@@ -205,7 +205,7 @@ resource "aws_lambda_permission" "allow_bucket_event" {
 
 resource "aws_lambda_function" "handle_s3_upload" {
   description      = "handle s3 upload"
-  function_name    = "HandleS3Upload"
+  function_name    = "${terraform.workspace}_HandleS3Upload"
   filename         = "../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
   source_code_hash = filebase64sha256("../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
   handler          = "me.jameshunt.dhiffiechat.HandleS3Upload::handleRequest"
@@ -234,7 +234,7 @@ resource "aws_api_gateway_deployment" "chat_deployment" {
     ]))
   }
 
-  stage_name  = "stage"
+  stage_name  = terraform.workspace
   rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
 }
 

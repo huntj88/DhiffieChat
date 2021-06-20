@@ -2,6 +2,7 @@ package me.jameshunt.dhiffiechat
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.dynamodbv2.document.DynamoDB
+import com.amazonaws.services.dynamodbv2.document.Table
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -9,8 +10,12 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
-const val configBucketName = "dhiffiechat-config-bucket"
-const val encryptedFileBucket = "dhiffiechat-encrypted-file-bucket"
+const val environment = "stage" // TODO
+const val configBucketSuffix = "dhiffiechat-config-bucket"
+const val encryptedFileBucketSuffix = "dhiffiechat-encrypted-file-bucket"
+
+val configBucket = "${environment}-$configBucketSuffix"
+val encryptedFileBucket = "${environment}-$encryptedFileBucketSuffix"
 
 object Singletons {
     val objectMapper: ObjectMapper = ObjectMapper()
@@ -20,6 +25,9 @@ object Singletons {
 
     val dynamoDB: DynamoDB = DynamoDB(AmazonDynamoDBClientBuilder.defaultClient())
     val s3: AmazonS3 = AmazonS3ClientBuilder.standard().build()
-    val credentials: Credentials = Credentials()
+    val credentials: Credentials = Credentials(s3)
     val firebase: FirebaseManager by lazy { FirebaseManager(credentials) }
 }
+
+fun DynamoDB.messageTable(): Table = this.getTable("${environment}.Message")
+fun DynamoDB.userTable(): Table = this.getTable("${environment}.User")
