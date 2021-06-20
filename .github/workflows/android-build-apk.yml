@@ -31,6 +31,12 @@ jobs:
         working-directory: ../
         run: .github/workflows/build-apk-input-validate.sh ${{ github.event.inputs.part }}
 
+      - name: Set Version Tag
+        run: echo "VERSION_TAG=$(appVersion.sh ${{ github.event.inputs.dhiffieEnv }})" >> $GITHUB_ENV
+
+      - name: Display Version
+        run: echo $VERSION_TAG
+
       - name: Set up JDK 11
         uses: actions/setup-java@v1
         with:
@@ -44,5 +50,4 @@ jobs:
         uses: mathieudutour/github-tag-action@v5.5
         env:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          default_bump: ${{ github.event.inputs.part }}
-          tag_prefix: '${{ github.event.inputs.dhiffieEnv }}_'
+          custom_tag: ${{ env.VERSION_TAG }}
