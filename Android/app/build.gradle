@@ -9,14 +9,15 @@ plugins {
 def keystoreProperties = getPropertiesOrNull("release.properties")
 def configProperties = getPropertiesOrNull("dhiffie.properties")
 
-def getPropertiesOrNull(String name) {
+def Properties getPropertiesOrNull(String name) {
     def propertiesFile = rootProject.file(name)
-    def properties = new Properties()
 
     if (propertiesFile.exists()) {
+        def properties = new Properties()
         properties.load(new FileInputStream(propertiesFile))
+        return properties
     }
-    return properties
+    return null
 }
 
 android {
@@ -38,10 +39,13 @@ android {
             storeFile file("../debug.jks")
         }
         release {
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
+            // allow debug builds to build if release.properties is not present
+            if (keystoreProperties != null) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
         }
     }
 
