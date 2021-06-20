@@ -28,8 +28,7 @@ jobs:
           fetch-depth: '0'
 
       - name: Validate input
-        working-directory: ../
-        run: .github/workflows/build-apk-input-validate.sh ${{ github.event.inputs.part }}
+        run: ./../.github/workflows/build-apk-input-validate.sh ${{ github.event.inputs.part }}
 
       - name: Set Version Tag
         run: echo "VERSION_TAG=$(appVersion.sh ${{ github.event.inputs.dhiffieEnv }})" >> $GITHUB_ENV
