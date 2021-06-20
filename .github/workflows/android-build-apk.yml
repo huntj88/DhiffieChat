@@ -31,7 +31,7 @@ jobs:
         run: ./../.github/workflows/build-apk-input-validate.sh ${{ github.event.inputs.part }}
 
       - name: Set Version Tag
-        run: echo "VERSION_TAG=$(appVersion.sh ${{ github.event.inputs.dhiffieEnv }})" >> $GITHUB_ENV
+        run: echo "VERSION_TAG=$(./appVersion.sh ${{ github.event.inputs.dhiffieEnv }})" >> $GITHUB_ENV
 
       - name: Display Version
         run: echo $VERSION_TAG
