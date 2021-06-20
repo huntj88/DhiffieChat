@@ -6,9 +6,6 @@ plugins {
     id 'com.google.firebase.crashlytics'
 }
 
-def releaseProperties = getPropertiesOrNull("release.properties")
-def configProperties = getPropertiesOrNull("dhiffie.properties")
-
 def Properties getPropertiesOrNull(String name) {
     def propertiesFile = rootProject.file(name)
 
@@ -19,6 +16,8 @@ def Properties getPropertiesOrNull(String name) {
     }
     return null
 }
+
+def releaseProperties = getPropertiesOrNull("release.properties")
 
 android {
     compileSdkVersion 30
@@ -70,8 +69,9 @@ android {
             applicationIdSuffix ".debug"
             minifyEnabled false
             signingConfig signingConfigs.debug
-            buildConfigField "String", "BASE_URL", "\"${configProperties['STAGE_BASE_URL']}\""
-            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['STAGE_SERVER_PUBLIC_KEY']}\""
+            def configProperties = getPropertiesOrNull("stageDhiffie.properties")
+            buildConfigField "String", "BASE_URL", "\"${configProperties['BASE_URL']}\""
+            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['SERVER_PUBLIC_KEY']}\""
         }
 
         release {
@@ -80,8 +80,9 @@ android {
             }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            buildConfigField "String", "BASE_URL", "\"${configProperties['PROD_BASE_URL']}\""
-            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['PROD_SERVER_PUBLIC_KEY']}\""
+            def configProperties = getPropertiesOrNull("prodDhiffie.properties")
+            buildConfigField "String", "BASE_URL", "\"${configProperties['BASE_URL']}\""
+            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['SERVER_PUBLIC_KEY']}\""
         }
     }
     compileOptions {
