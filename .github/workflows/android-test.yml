@@ -1,4 +1,4 @@
-name: Test
+name: Android Test
 
 on:
   pull_request:
@@ -23,3 +23,17 @@ jobs:
 
       - name: Build and Test
         run: ./gradlew test
+
+      - name: Generate Release APK
+        run: ./gradlew assembleRelease
+
+      - uses: r0adkll/sign-android-release@v1
+        name: Sign app APK
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.RELEASE_JKS_FILE }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "30.0.2"
