@@ -16,6 +16,9 @@ on:
 jobs:
   bump_version:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./Android
     outputs:
       release_tag: ${{ steps.bump.outputs.new_tag }}
     steps:
