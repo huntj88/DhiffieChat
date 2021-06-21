@@ -47,6 +47,12 @@ jobs:
           path: ~/Android/.gradle/wrapper
           key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
 
+      - name: Setup Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/Android/app/build
+          key: ${{ runner.os }}-app-build-${{ hashFiles('**/*.gradle', '**/*.gradle.kts') }}
+
       - name: Build and Test
         run: ./gradlew test
 
@@ -87,6 +93,12 @@ jobs:
         with:
           path: ~/Android/.gradle/wrapper
           key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Setup Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/Android/app/build
+          key: ${{ runner.os }}-app-build-${{ hashFiles('**/*.gradle', '**/*.gradle.kts') }}
 
       - name: Generate Debug APK
         run: ./gradlew assembleDebug
@@ -130,6 +142,12 @@ jobs:
         with:
           path: ~/Android/.gradle/wrapper
           key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Setup Build Cache
+        uses: actions/cache@v2
+        with:
+          path: ~/Android/app/build
+          key: ${{ runner.os }}-app-build-${{ hashFiles('**/*.gradle', '**/*.gradle.kts') }}
 
       - name: Generate Release APK
         run: ./gradlew assembleRelease
