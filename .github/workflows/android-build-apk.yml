@@ -11,7 +11,7 @@ on:
         required: true
 
 jobs:
-  test_bump_version:
+  bump_version:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -47,7 +47,7 @@ jobs:
 
   build_debug_apk:
     if: github.event.inputs.dhiffieEnv != 'prod'
-    needs: test_bump_version
+    needs: bump_version
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -78,7 +78,7 @@ jobs:
 
   build_release_apk:
     if: github.event.inputs.dhiffieEnv == 'prod'
-    needs: test_bump_version
+    needs: bump_version
     runs-on: ubuntu-latest
     defaults:
       run:
