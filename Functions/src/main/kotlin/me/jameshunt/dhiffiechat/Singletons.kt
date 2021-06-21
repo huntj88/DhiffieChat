@@ -10,10 +10,9 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
-const val environment = "stage" // TODO
 const val configBucketSuffix = "dhiffiechat-config-bucket"
 const val encryptedFileBucketSuffix = "dhiffiechat-encrypted-file-bucket"
-
+val environment = System.getenv("DHIFFIE_ENVIRONMENT")
 val configBucket = "${environment}-$configBucketSuffix"
 val encryptedFileBucket = "${environment}-$encryptedFileBucketSuffix"
 

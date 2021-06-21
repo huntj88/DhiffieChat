@@ -6,14 +6,38 @@ plugins {
     id 'com.google.firebase.crashlytics'
 }
 
-def keystorePropertiesFile = rootProject.file("release.properties");
-def keystoreProperties = new Properties()
-keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+def Properties getPropertiesOrNull(String name) {
+    def propertiesFile = rootProject.file(name)
 
-def configPropertiesFile = rootProject.file("dhiffie.properties")
-def configProperties = new Properties()
-configProperties.load(new FileInputStream(configPropertiesFile))
+    if (propertiesFile.exists()) {
+        def properties = new Properties()
+        properties.load(new FileInputStream(propertiesFile))
+        return properties
+    }
+    return null
+}
 
+def getVersionCode = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-list', '--first-parent', '--count', 'origin/master'
+        standardOutput = stdout
+    }
+    println "version code: ${Integer.parseInt(stdout.toString().trim())}"
+    return Integer.parseInt(stdout.toString().trim())
+}
+
+def getVersionName= { dhiffieEnv ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'bash', '../appVersion.sh', dhiffieEnv
+        standardOutput = stdout
+    }
+    println "version name: ${stdout.toString().trim()}"
+    return stdout.toString().trim()
+}
+
+def releaseProperties = getPropertiesOrNull("release.properties")
 
 android {
     compileSdkVersion 30
@@ -23,8 +47,7 @@ android {
         applicationId "me.jameshunt.dhiffiechat"
         minSdkVersion 26
         targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        versionCode getVersionCode()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,11 +56,15 @@ android {
         debug {
             storeFile file("../debug.jks")
         }
-        release {
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
+
+        // allow debug builds to build if release.properties is not present
+        if (releaseProperties != null) {
+            releaseLocal {
+                storeFile file(releaseProperties['storeFile'])
+                storePassword releaseProperties['storePassword']
+                keyAlias releaseProperties['keyAlias']
+                keyPassword releaseProperties['keyPassword']
+            }
         }
     }
 
@@ -58,19 +85,25 @@ android {
 
     buildTypes {
         debug {
+            defaultConfig.versionName getVersionName("stage")
             applicationIdSuffix ".debug"
             minifyEnabled false
             signingConfig signingConfigs.debug
-            buildConfigField "String", "BASE_URL", "\"${configProperties['STAGE_BASE_URL']}\""
-            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['STAGE_SERVER_PUBLIC_KEY']}\""
+            def configProperties = getPropertiesOrNull("stageDhiffie.properties")
+            buildConfigField "String", "BASE_URL", "\"${configProperties['BASE_URL']}\""
+            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['SERVER_PUBLIC_KEY']}\""
         }
 
         release {
+            if (releaseProperties != null) {
+                signingConfig signingConfigs.releaseLocal
+            }
+            defaultConfig.versionName getVersionName("prod")
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
-            buildConfigField "String", "BASE_URL", "\"${configProperties['PROD_BASE_URL']}\""
-            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['PROD_SERVER_PUBLIC_KEY']}\""
+            def configProperties = getPropertiesOrNull("prodDhiffie.properties")
+            buildConfigField "String", "BASE_URL", "\"${configProperties['BASE_URL']}\""
+            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['SERVER_PUBLIC_KEY']}\""
         }
     }
     compileOptions {
