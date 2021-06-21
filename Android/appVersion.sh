@@ -1,5 +1,6 @@
 DHIFFIE_ENV=$1
-MASTER_COUNT=$(git rev-list --first-parent --count origin/master)
+NEAREST_COMMON_ANCESTOR=$(git merge-base origin/master HEAD)
+MASTER_COUNT=$(git rev-list --first-parent --count "$NEAREST_COMMON_ANCESTOR")
 HEAD_COUNT=$(git rev-list --first-parent --count HEAD)
 COUNT_DIFF=$((HEAD_COUNT-MASTER_COUNT))
 BRANCH_NAME=$(git branch --show-current)
