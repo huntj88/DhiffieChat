@@ -67,12 +67,13 @@ jobs:
         run: ./gradlew assembleDebug
 
       - run: |
-          mkdir debug
-          mv Android/app/build/outputs/apk/debug "debug/app-${{ github.event.inputs.dhiffieEnv }}.apk"
+          ls
+          mkdir debugArtifact
+          mv Android/app/build/outputs/apk/debug/app-debug.apk "debugArtifact/app-${{ github.event.inputs.dhiffieEnv }}.apk"
       - uses: actions/upload-artifact@v2
         with:
-          name: "${{ github.event.inputs.dhiffieEnv }}-apk"
-          path: debug
+          name: "debug-${{ github.event.inputs.dhiffieEnv }}-apk"
+          path: debugArtifact
 
   build_release_apk:
     if: github.event.inputs.dhiffieEnv == 'prod'
@@ -106,14 +107,14 @@ jobs:
         env:
           BUILD_TOOLS_VERSION: "30.0.2"
 
-#      - run: |
-#          mkdir release
-#          mv ${{ env.SIGNED_RELEASE_FILE }} release/app-release-signed.apk
-#          cp app/build/outputs/mapping/release/mapping.txt release
-#      - uses: actions/upload-artifact@v2
-#        with:
-#          name: release-apk
-#          path: release
+      - run: |
+          mkdir releaseArtifact
+          mv ${{ env.SIGNED_RELEASE_FILE }} releaseArtifact/app-release-signed.apk
+          cp Android/app/build/outputs/mapping/release/mapping.txt releaseArtifact
+      - uses: actions/upload-artifact@v2
+        with:
+          name: release-apk
+          path: releaseArtifact
 
 #  create_github_release:
 #    needs: [build_release_apk]
