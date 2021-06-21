@@ -131,11 +131,6 @@ jobs:
           name: release-apk
           path: githubOutput
 
-      - uses: actions/download-artifact@v2
-        with:
-          name: release-bundle
-          path: githubOutput
-
       - run: ls githubOutput
 
       - name: Upload to GitHub Release
