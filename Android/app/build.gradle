@@ -17,6 +17,26 @@ def Properties getPropertiesOrNull(String name) {
     return null
 }
 
+def getVersionCode = { ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'git', 'rev-list', '--first-parent', '--count', 'origin/master'
+        standardOutput = stdout
+    }
+    println "version code: ${Integer.parseInt(stdout.toString().trim())}"
+    return Integer.parseInt(stdout.toString().trim())
+}
+
+def getVersionName= { dhiffieEnv ->
+    def stdout = new ByteArrayOutputStream()
+    exec {
+        commandLine 'bash', '../appVersion.sh', dhiffieEnv
+        standardOutput = stdout
+    }
+    println "version name: ${stdout.toString().trim()}"
+    return stdout.toString().trim()
+}
+
 def releaseProperties = getPropertiesOrNull("release.properties")
 
 android {
@@ -27,8 +47,7 @@ android {
         applicationId "me.jameshunt.dhiffiechat"
         minSdkVersion 26
         targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        versionCode getVersionCode()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -66,6 +85,7 @@ android {
 
     buildTypes {
         debug {
+            defaultConfig.versionName getVersionName("stage")
             applicationIdSuffix ".debug"
             minifyEnabled false
             signingConfig signingConfigs.debug
@@ -78,6 +98,7 @@ android {
             if (releaseProperties != null) {
                 signingConfig signingConfigs.releaseLocal
             }
+            defaultConfig.versionName getVersionName("prod")
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             def configProperties = getPropertiesOrNull("prodDhiffie.properties")

@@ -1,3 +1,4 @@
+#!/bin/bash
 DHIFFIE_ENV=$1
 NEAREST_COMMON_ANCESTOR=$(git merge-base origin/master HEAD)
 MASTER_COUNT=$(git rev-list --first-parent --count "$NEAREST_COMMON_ANCESTOR")
