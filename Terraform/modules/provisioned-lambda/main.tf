@@ -1,8 +1,8 @@
 resource "aws_lambda_function" "lambda_func" {
   description = var.function_name
   function_name = "${terraform.workspace}_${var.function_name}"
-  filename = "../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
-  source_code_hash = filebase64sha256("../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
+  filename = "../../Lambda/build/distributions/Lambda-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../../Lambda/build/distributions/Lambda-1.0-SNAPSHOT.zip")
   handler = "me.jameshunt.dhiffiechat.${var.function_name}::handleRequest"
   role = var.role
   runtime = "java8"

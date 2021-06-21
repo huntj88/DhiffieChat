@@ -1,4 +1,4 @@
-rootProject.name = 'Functions'
+rootProject.name = 'Lambda'
 include ':Crypto'
 project(':Crypto').projectDir = new File(settingsDir, '../Crypto')
 

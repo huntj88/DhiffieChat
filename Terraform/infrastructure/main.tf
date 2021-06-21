@@ -206,8 +206,8 @@ resource "aws_lambda_permission" "allow_bucket_event" {
 resource "aws_lambda_function" "handle_s3_upload" {
   description      = "handle s3 upload"
   function_name    = "${terraform.workspace}_HandleS3Upload"
-  filename         = "../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip"
-  source_code_hash = filebase64sha256("../../Functions/build/distributions/Functions-1.0-SNAPSHOT.zip")
+  filename         = "../../Lambda/build/distributions/Lambda-1.0-SNAPSHOT.zip"
+  source_code_hash = filebase64sha256("../../Lambda/build/distributions/Lambda-1.0-SNAPSHOT.zip")
   handler          = "me.jameshunt.dhiffiechat.HandleS3Upload::handleRequest"
   role             = aws_iam_role.function_role.arn
   runtime          = "java8"
