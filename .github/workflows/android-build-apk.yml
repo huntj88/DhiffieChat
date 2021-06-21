@@ -111,7 +111,7 @@ jobs:
       - name: Prepare for apk upload
         run: |
           mkdir releaseArtifact
-          mv ${{ env.SIGNED_RELEASE_FILE }} releaseArtifact/app-release-signed.apk
+          mv app/build/outputs/apk/release/app-release-unsigned-signed.apk releaseArtifact/app-release-signed.apk
           cp app/build/outputs/mapping/release/mapping.txt releaseArtifact
 
       - uses: actions/upload-artifact@v2
