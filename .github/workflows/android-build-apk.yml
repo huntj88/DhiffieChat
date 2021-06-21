@@ -112,7 +112,8 @@ jobs:
         run: |
           mkdir releaseArtifact
           mv app/build/outputs/apk/release/app-release-unsigned-signed.apk releaseArtifact/app-release-signed.apk
-          cp app/build/outputs/mapping/release/mapping.txt releaseArtifact
+#          have not enabled proguard yet
+#          cp app/build/outputs/mapping/release/mapping.txt releaseArtifact
 
       - uses: actions/upload-artifact@v2
         with:
