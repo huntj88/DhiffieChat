@@ -69,7 +69,7 @@ jobs:
       - run: |
           ls
           mkdir debugArtifact
-          mv Android/app/build/outputs/apk/debug/app-debug.apk "debugArtifact/app-${{ github.event.inputs.dhiffieEnv }}.apk"
+          mv app/build/outputs/apk/debug/app-debug.apk "debugArtifact/app-${{ github.event.inputs.dhiffieEnv }}.apk"
       - uses: actions/upload-artifact@v2
         with:
           name: "debug-${{ github.event.inputs.dhiffieEnv }}-apk"
@@ -110,7 +110,7 @@ jobs:
       - run: |
           mkdir releaseArtifact
           mv ${{ env.SIGNED_RELEASE_FILE }} releaseArtifact/app-release-signed.apk
-          cp Android/app/build/outputs/mapping/release/mapping.txt releaseArtifact
+          cp app/build/outputs/mapping/release/mapping.txt releaseArtifact
       - uses: actions/upload-artifact@v2
         with:
           name: release-apk
