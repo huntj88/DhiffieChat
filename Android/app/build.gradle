@@ -52,6 +52,20 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    applicationVariants.all { variant ->
+        if (variant.name == 'debug') {
+            variant.outputs.each { output ->
+                output.versionNameOverride = getVersionName("stage")
+            }
+        }
+
+        if (variant.name == 'release') {
+            variant.outputs.each { output ->
+                output.versionNameOverride = getVersionName("prod")
+            }
+        }
+    }
+
     signingConfigs {
         debug {
             storeFile file("../debug.jks")
@@ -85,7 +99,6 @@ android {
 
     buildTypes {
         debug {
-            defaultConfig.versionName getVersionName("stage")
             applicationIdSuffix ".debug"
             minifyEnabled false
             signingConfig signingConfigs.debug
@@ -98,7 +111,6 @@ android {
             if (releaseProperties != null) {
                 signingConfig signingConfigs.releaseLocal
             }
-            defaultConfig.versionName getVersionName("prod")
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             def configProperties = getPropertiesOrNull("prodDhiffie.properties")
