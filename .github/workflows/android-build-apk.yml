@@ -121,7 +121,7 @@ jobs:
           path: Android/releaseArtifact
 
   create_github_release:
-    needs: [build_release_apk]
+    needs: [bump_version, build_release_apk]
     runs-on: ubuntu-latest
     steps:
       - run: mkdir githubOutput
