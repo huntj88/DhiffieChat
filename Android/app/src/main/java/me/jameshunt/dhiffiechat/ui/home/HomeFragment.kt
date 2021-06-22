@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
@@ -17,7 +18,7 @@ import me.jameshunt.dhiffiechat.openNavDrawer
 import me.jameshunt.dhiffiechat.ui.compose.ComposeFragment
 import me.jameshunt.dhiffiechat.ui.compose.injectedViewModel
 
-class HomeFragment: ComposeFragment() {
+class HomeFragment : ComposeFragment() {
     private val viewModel: HomeViewModel by injectedViewModel(ownerProducer = { requireActivity() })
 
     @Composable
@@ -25,6 +26,7 @@ class HomeFragment: ComposeFragment() {
         Column {
             TopAppBar(
                 title = { Text(text = "Home") },
+                backgroundColor = MaterialTheme.colors.primary,
                 navigationIcon = {
                     Image(
                         painter = painterResource(id = R.drawable.ic_baseline_menu_24),

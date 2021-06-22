@@ -22,17 +22,20 @@ class DhiffieChatApp : Application() {
                 onSecondary = Color(di.application.getColor(R.color.colorOnSecondary))
             )
         }
-        val DarkColors by lazy { darkColors() }
+        val DarkColors by lazy {
+            darkColors(
+                primary = Color(di.application.getColor(R.color.colorPrimary)),
+                primaryVariant = Color(di.application.getColor(R.color.colorPrimaryVariant)),
+                onPrimary = Color(di.application.getColor(R.color.colorOnPrimary)),
+                secondary = Color(di.application.getColor(R.color.colorSecondary)),
+                secondaryVariant = Color(di.application.getColor(R.color.colorSecondaryVariant)),
+                onSecondary = Color(di.application.getColor(R.color.colorOnSecondary))
+            )
+        }
     }
 
     override fun onCreate() {
         super.onCreate()
         di = DI(this)
     }
-}
-
-@Composable
-fun activeColors(): Colors = when (isSystemInDarkTheme()) {
-    true -> DhiffieChatApp.DarkColors
-    false -> DhiffieChatApp.LightColors
 }

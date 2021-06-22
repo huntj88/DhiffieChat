@@ -11,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -36,7 +37,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.R
-import me.jameshunt.dhiffiechat.activeColors
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
 import net.glxn.qrgen.android.MatrixToImageWriter
@@ -147,6 +147,7 @@ fun HomeScreen(
     }
 
     Scaffold(
+        backgroundColor = MaterialTheme.colors.primaryVariant,
         content = {
             Column(
                 Modifier
@@ -303,7 +304,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
                     Box(
                         modifier = Modifier
                             .size(150.dp)
-                            .background(activeColors().secondary),
+                            .background(MaterialTheme.colors.secondary),
                         contentAlignment = Alignment.Center,
                         content = {
                             Text(
@@ -331,7 +332,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
                 Box(
                     modifier = Modifier
                         .size(150.dp)
-                        .background(activeColors().secondary),
+                        .background(MaterialTheme.colors.secondary),
                     contentAlignment = Alignment.Center,
                     content = { LoadingIndicator() }
                 )

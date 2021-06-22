@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.viewModels
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.ComposeView
@@ -15,9 +16,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import me.jameshunt.dhiffiechat.DhiffieChatApp
-import me.jameshunt.dhiffiechat.activeColors
 
-abstract class ComposeFragment: Fragment() {
+abstract class ComposeFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -25,7 +25,11 @@ abstract class ComposeFragment: Fragment() {
     ): View? {
         return ComposeView(requireContext()).apply {
             setContent {
-                MaterialTheme(colors = activeColors()) {
+                val colors = when (isSystemInDarkTheme()) {
+                    true -> DhiffieChatApp.DarkColors
+                    false -> DhiffieChatApp.LightColors
+                }
+                MaterialTheme(colors = colors) {
                     ScreenComposable()
                 }
             }
@@ -48,7 +52,7 @@ inline fun <reified T : ViewModel> FragmentActivity.injectedViewModel(): Lazy<T>
     return viewModels(factoryProducer = { InjectableViewModelFactory() })
 }
 
-class InjectableViewModelFactory: ViewModelProvider.Factory {
+class InjectableViewModelFactory : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return DhiffieChatApp.di.createInjected(modelClass)
     }
