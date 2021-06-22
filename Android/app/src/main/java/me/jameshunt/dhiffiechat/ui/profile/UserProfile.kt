@@ -3,10 +3,7 @@ package me.jameshunt.dhiffiechat.ui.profile
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -45,10 +42,12 @@ class UserProfileViewModel(
 fun UserProfile(viewModel: UserProfileViewModel, onAliasSet: () -> Unit) {
     var aliasSave: String? by rememberSaveable { mutableStateOf(null) }
     val alias = aliasSave ?: viewModel.alias.observeAsState().value ?: ""
-    Scaffold {
+    Scaffold(backgroundColor = MaterialTheme.colors.primaryVariant) {
         Column {
-            TextField(
+            OutlinedTextField(
                 value = alias,
+                label = { Text("Alias") },
+                colors = TextFieldDefaults.outlinedTextFieldColors(),
                 placeholder = { Text("Alias") },
                 modifier = Modifier
                     .padding(16.dp)

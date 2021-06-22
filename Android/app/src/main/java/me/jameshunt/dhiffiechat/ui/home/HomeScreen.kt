@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,6 +37,7 @@ import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
@@ -147,7 +149,7 @@ fun HomeScreen(
     }
 
     Scaffold(
-        backgroundColor = MaterialTheme.colors.primaryVariant,
+        backgroundColor = MaterialTheme.colors.secondary,
         content = {
             Column(
                 Modifier
@@ -189,7 +191,12 @@ fun List<FriendMessageData>.ShowList(
     onItemClick: (FriendMessageData) -> Unit
 ) {
     if (this.isNotEmpty()) {
-        Text(text = title, modifier = Modifier.padding(start = 12.dp, top = 24.dp))
+        Text(
+            text = title,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            modifier = Modifier.padding(start = 12.dp, top = 24.dp)
+        )
         this.forEach { data ->
             FriendCard(data) {
                 onItemClick(data)
@@ -208,7 +215,7 @@ fun FriendCard(friendData: FriendMessageData, onClick: () -> Unit) {
         Box(
             Modifier
                 .clip(CircleShape)
-                .border(1.5.dp, Color.Green, CircleShape)
+                .border(1.5.dp, DhiffieChatApp.accent, CircleShape)
                 .padding(4.dp)
         ) {
             Image(

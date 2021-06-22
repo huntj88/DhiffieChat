@@ -18,7 +18,7 @@ class DhiffieChatApp : Application() {
                 primaryVariant = Color(di.application.getColor(R.color.colorPrimaryVariant)),
                 onPrimary = Color(di.application.getColor(R.color.colorOnPrimary)),
                 secondary = Color(di.application.getColor(R.color.colorSecondary)),
-                secondaryVariant = Color(di.application.getColor(R.color.colorSecondaryVariant)),
+//                secondaryVariant = Color(di.application.getColor(R.color.colorSecondaryVariant)),
                 onSecondary = Color(di.application.getColor(R.color.colorOnSecondary))
             )
         }
@@ -28,10 +28,12 @@ class DhiffieChatApp : Application() {
                 primaryVariant = Color(di.application.getColor(R.color.colorPrimaryVariant)),
                 onPrimary = Color(di.application.getColor(R.color.colorOnPrimary)),
                 secondary = Color(di.application.getColor(R.color.colorSecondary)),
-                secondaryVariant = Color(di.application.getColor(R.color.colorSecondaryVariant)),
-                onSecondary = Color(di.application.getColor(R.color.colorOnSecondary))
+//                secondaryVariant = Color(di.application.getColor(R.color.colorSecondaryVariant)),
+                onSecondary = Color(di.application.getColor(R.color.colorOnSecondary)),
             )
         }
+
+        val accent by lazy { Color(di.application.getColor(R.color.accent)) }
     }
 
     override fun onCreate() {
