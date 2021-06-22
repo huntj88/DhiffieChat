@@ -238,6 +238,32 @@ resource "aws_api_gateway_deployment" "chat_deployment" {
   rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
 }
 
+resource "null_resource" "upload_firebase_config" {
+  triggers = {
+    // currently safe to run every deploy, not just first time
+    run_always = timestamp()
+    // make sure this happens after stack has been deployed
+    deployed_dependency = aws_api_gateway_deployment.chat_deployment.invoke_url
+  }
+
+  provisioner local-exec {
+    interpreter = ["/bin/bash" ,"-c"]
+    command = "./../../scripts/uploadFirebaseConfig.sh ${terraform.workspace}"
+  }
+}
+
+resource "null_resource" "generate_app_properties" {
+  triggers = {
+    // currently safe to run every deploy, not just first time
+    run_always = timestamp()
+  }
+
+  provisioner local-exec {
+    interpreter = ["/bin/bash" ,"-c"]
+    command = "./../../scripts/generateAppProperties.sh ${terraform.workspace} ${aws_api_gateway_deployment.chat_deployment.invoke_url}/"
+  }
+}
+
 output "base_url" {
   value = aws_api_gateway_deployment.chat_deployment.invoke_url
 }
