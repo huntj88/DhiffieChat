@@ -76,6 +76,7 @@ fun Fragment.BackAppBar(title: String, content: @Composable ColumnScope.() -> Un
     Column {
         TopAppBar(
             title = { Text(text = title) },
+            elevation = 8.dp,
             backgroundColor = MaterialTheme.colors.primaryVariant,
             navigationIcon = {
                 Image(
