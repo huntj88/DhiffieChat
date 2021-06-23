@@ -149,7 +149,6 @@ fun HomeScreen(
     }
 
     Scaffold(
-        backgroundColor = MaterialTheme.colors.secondary,
         content = {
             Column(
                 Modifier
@@ -215,7 +214,7 @@ fun FriendCard(friendData: FriendMessageData, onClick: () -> Unit) {
         Box(
             Modifier
                 .clip(CircleShape)
-                .border(1.5.dp, DhiffieChatApp.accent, CircleShape)
+                .border(1.5.dp, MaterialTheme.colors.secondary, CircleShape)
                 .padding(4.dp)
         ) {
             Image(

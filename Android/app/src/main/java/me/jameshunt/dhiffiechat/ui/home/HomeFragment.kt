@@ -26,13 +26,13 @@ class HomeFragment : ComposeFragment() {
         Column {
             TopAppBar(
                 title = { Text(text = "Home") },
-                backgroundColor = MaterialTheme.colors.primary,
+                backgroundColor = MaterialTheme.colors.primaryVariant,
                 navigationIcon = {
                     Image(
                         painter = painterResource(id = R.drawable.ic_baseline_menu_24),
                         contentDescription = "Navigation",
                         modifier = Modifier
-                            .padding(all = 8.dp)
+                            .padding(start = 8.dp)
                             .clickable { openNavDrawer() }
                     )
                 }

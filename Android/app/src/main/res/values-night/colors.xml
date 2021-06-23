@@ -2,8 +2,5 @@
 <resources>
     <color name="colorPrimary">#243447</color>
     <color name="colorPrimaryVariant">#223038</color>
-    <color name="colorOnPrimary">@color/white</color>
-
-    <color name="colorSecondary">#243038</color>
-    <color name="colorOnSecondary">@color/white</color>
+    <color name="colorOnPrimary">#F5F5F5</color>
 </resources>
