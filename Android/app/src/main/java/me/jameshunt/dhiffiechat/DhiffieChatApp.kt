@@ -32,7 +32,7 @@ class DhiffieChatApp : Application() {
                 onSecondary = Color(di.application.getColor(R.color.colorOnSecondary)),
                 surface = Color(di.application.getColor(R.color.colorPrimary)),
                 onSurface = Color(di.application.getColor(R.color.colorOnPrimary)),
-                background = Color(di.application.getColor(R.color.colorPrimary)),
+                background = Color(di.application.getColor(R.color.colorBackground)),
             )
         }
     }

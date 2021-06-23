@@ -2,5 +2,8 @@
 <resources>
     <color name="colorPrimary">#243447</color>
     <color name="colorPrimaryVariant">#223038</color>
-    <color name="colorOnPrimary">#F5F5F5</color>
+    <color name="colorOnPrimary">#F2F2F2</color>
+    <color name="colorBackground">@color/colorPrimary</color>
+
+    <color name="colorNavText">@color/colorOnPrimary</color>
 </resources>

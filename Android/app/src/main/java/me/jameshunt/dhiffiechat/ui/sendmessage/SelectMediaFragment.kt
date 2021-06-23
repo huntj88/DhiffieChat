@@ -19,9 +19,11 @@ class SelectMediaFragment: ComposeFragment() {
 
     @Composable
     override fun ScreenComposable() {
-        SelectMedia(
-            sharedViewModel = viewModel,
-            onMediaSelected = { findNavController().navigate(R.id.textConfirmationFragment) }
-        )
+        BackAppBar("Send Message") {
+            SelectMedia(
+                sharedViewModel = viewModel,
+                onMediaSelected = { findNavController().navigate(R.id.textConfirmationFragment) }
+            )
+        }
     }
 }

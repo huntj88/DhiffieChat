@@ -192,8 +192,7 @@ fun List<FriendMessageData>.ShowList(
     if (this.isNotEmpty()) {
         Text(
             text = title,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
+            fontSize = 22.sp,
             modifier = Modifier.padding(start = 12.dp, top = 24.dp)
         )
         this.forEach { data ->

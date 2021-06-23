@@ -213,6 +213,12 @@ resource "aws_lambda_function" "handle_s3_upload" {
   runtime          = "java8"
   timeout          = 30
   memory_size      = 1024
+
+  environment {
+    variables = {
+      DHIFFIE_ENVIRONMENT = terraform.workspace
+    }
+  }
 }
 
 resource "aws_s3_bucket_notification" "bucket_notification" {

@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.service.FileLocationUtil
 import me.jameshunt.dhiffiechat.service.MediaType
 import me.jameshunt.dhiffiechat.service.S3Service
+import me.jameshunt.dhiffiechat.ui.compose.StyledTextField
 import java.io.File
 
 class SendMessageViewModel(
@@ -154,20 +155,14 @@ fun TextConfirmation(onConfirm: (String) -> Unit) {
 
     Scaffold {
         Column {
-            TextField(
+            StyledTextField(
                 value = providedText,
-                onValueChange = { providedText = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                placeholder = {
-                    Text(text = "Message")
-                }
+                labelString = "Message Text",
+                onValueChange = { providedText = it }
             )
             Button(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .requiredHeight(100.dp)
                     .padding(16.dp),
                 onClick = {
                     onConfirm(providedText)

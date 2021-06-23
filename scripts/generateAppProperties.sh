@@ -11,7 +11,7 @@ cd "$parent_path" || exit 1
 curl --retry 8 --retry-connrefused --retry-delay 5 -X POST "$BASE_URL/PerformRequest?type=Init" &&
 
 # copy public key back for provisioning app
-aws s3 cp "s3://$DHIFFIE_ENV-dhiffiechat-config-bucket/serverKeyPair.public" serverKeyPair.public
+aws s3 cp "s3://$DHIFFIE_ENV-dhiffiechat-config-bucket/serverKeyPair.public" serverKeyPair.public &&
 
 echo "# GENERATED FILE (scripts/generateAppProperties.sh)
 BASE_URL=$BASE_URL
