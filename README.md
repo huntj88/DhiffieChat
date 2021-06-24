@@ -47,6 +47,48 @@ End-To-End Encrypted Private Chat
 
 ---
 
+### Architecture, Automation, and Deploying Environments
+
+One of the main goals of this project was to have as much of the project fully automated as possible.
+
+Another goal of this project was to leave it running as cheaply as possible, so no managed relational databases, or
+provisioned server instances.
+
+Currently, only a single CLI command is required to create a new environment, and AWS costs are about $0.06/month during
+development. I'm optimizing costs for lower numbers of users (expected), but it will scale to more users just fine.
+
+The "Server" is actually AWS lambda + dynamoDB + s3.
+
+Entire server environments can be created/updated with `terraform apply`, or removed entirely with `terraform destroy`
+
+Terraform helps automate creation, configuration, or execution of the following resources and tasks
+
+* AWS Gateway
+* AWS lambda functions
+* DynamoDB Tables
+* S3 Buckets
+* Generating Credentials
+* Configuring Access and Permissions
+* Generating Config files for the app to connect to new environments
+
+To Create a new environment, use Terraform workspaces and apply it.
+
+---
+
+### Android Automation
+
+* The Config files to connect to the server are automatically generated when a new environment is created
+
+
+* CI workflow to make builds for any specified environment, with easy to access to download for QA. Prod builds also
+  generate a GitHub release.
+
+
+* All CI builds are automatically tagged with a generated version name that makes it easy to see how the build was
+  generated, and where in the history of repository.
+
+---
+
 ### Coming soon
 
 * Ephemeral keys: Right now a user has one main private/public Diffie-Hellman key pair which is used for encrypting the
