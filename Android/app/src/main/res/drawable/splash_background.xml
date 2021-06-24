@@ -3,16 +3,16 @@
     android:opacity="opaque"> <!-- android:opacity="opaque" should be here -->
     <item>
         <shape>
-              <gradient
-                   android:angle="315"
-                   android:endColor="#1a82ff"
-                   android:startColor="#2100d3"
-                   android:type="linear"/>
+            <gradient
+                android:angle="315"
+                android:endColor="@color/colorPrimaryVariant"
+                android:startColor="@color/colorPrimary"
+                android:type="linear" />
         </shape>
     </item>
     <item
-        android:drawable="@drawable/ic_baseline_qr_code_scanner_24"
-        android:gravity="center"
+        android:width="150dp"
         android:height="150dp"
-        android:width="150dp"/>
+        android:drawable="@drawable/ic_baseline_qr_code_scanner_24"
+        android:gravity="center" />
 </layer-list>

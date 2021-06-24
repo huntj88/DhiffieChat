@@ -213,6 +213,12 @@ resource "aws_lambda_function" "handle_s3_upload" {
   runtime          = "java8"
   timeout          = 30
   memory_size      = 1024
+
+  environment {
+    variables = {
+      DHIFFIE_ENVIRONMENT = terraform.workspace
+    }
+  }
 }
 
 resource "aws_s3_bucket_notification" "bucket_notification" {
@@ -236,6 +242,32 @@ resource "aws_api_gateway_deployment" "chat_deployment" {
 
   stage_name  = terraform.workspace
   rest_api_id = aws_api_gateway_rest_api.chat_gateway.id
+}
+
+resource "null_resource" "upload_firebase_config" {
+  triggers = {
+    // currently safe to run every deploy, not just first time
+    run_always = timestamp()
+    // make sure this happens after stack has been deployed
+    deployed_dependency = aws_api_gateway_deployment.chat_deployment.invoke_url
+  }
+
+  provisioner local-exec {
+    interpreter = ["/bin/bash" ,"-c"]
+    command = "./../../scripts/uploadFirebaseConfig.sh ${terraform.workspace}"
+  }
+}
+
+resource "null_resource" "generate_app_properties" {
+  triggers = {
+    // currently safe to run every deploy, not just first time
+    run_always = timestamp()
+  }
+
+  provisioner local-exec {
+    interpreter = ["/bin/bash" ,"-c"]
+    command = "./../../scripts/generateAppProperties.sh ${terraform.workspace} ${aws_api_gateway_deployment.chat_deployment.invoke_url}/"
+  }
 }
 
 output "base_url" {

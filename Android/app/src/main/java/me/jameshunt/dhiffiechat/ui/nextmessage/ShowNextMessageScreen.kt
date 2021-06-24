@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -69,7 +70,9 @@ fun ShowNextMessageScreen(viewModel: ShowNextMessageViewModel, fromUserId: Strin
                 MediaType.Video -> VideoMessage(text = media.message.text, file = media.file)
             }
         }
-        ?: LoadingIndicator().also { viewModel.loadFile(fromUserId = fromUserId) }
+        ?: Scaffold {
+            LoadingIndicator().also { viewModel.loadFile(fromUserId = fromUserId) }
+        }
 }
 
 @Composable

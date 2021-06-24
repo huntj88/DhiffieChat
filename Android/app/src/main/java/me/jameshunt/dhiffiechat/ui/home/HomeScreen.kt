@@ -4,15 +4,10 @@ import android.Manifest
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Card
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -35,8 +30,8 @@ import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
-import me.jameshunt.dhiffiechat.activeColors
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
 import net.glxn.qrgen.android.MatrixToImageWriter
@@ -188,7 +183,11 @@ fun List<FriendMessageData>.ShowList(
     onItemClick: (FriendMessageData) -> Unit
 ) {
     if (this.isNotEmpty()) {
-        Text(text = title, modifier = Modifier.padding(start = 12.dp, top = 24.dp))
+        Text(
+            text = title,
+            fontSize = 22.sp,
+            modifier = Modifier.padding(start = 12.dp, top = 24.dp)
+        )
         this.forEach { data ->
             FriendCard(data) {
                 onItemClick(data)
@@ -207,7 +206,7 @@ fun FriendCard(friendData: FriendMessageData, onClick: () -> Unit) {
         Box(
             Modifier
                 .clip(CircleShape)
-                .border(1.5.dp, Color.Green, CircleShape)
+                .border(1.5.dp, MaterialTheme.colors.secondary, CircleShape)
                 .padding(4.dp)
         ) {
             Image(
@@ -296,25 +295,22 @@ private fun DialogStates(viewModel: HomeViewModel) {
                 }
             }
         )
-        DialogState.ScanSuccess -> {
-            Dialog(
-                onDismissRequest = { viewModel.dialogState.value = DialogState.None },
-                content = {
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .background(activeColors().secondary),
-                        contentAlignment = Alignment.Center,
-                        content = {
-                            Text(
-                                text = "Successfully Scanned other user's QR. Please make sure they scan yours",
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    )
-                }
-            )
-        }
+        DialogState.ScanSuccess -> Dialog(
+            onDismissRequest = { viewModel.dialogState.value = DialogState.None },
+            content = {
+                Card(
+                    modifier = Modifier.background(DhiffieChatApp.DialogColor),
+                    content = {
+                        Text(
+                            text = "Successfully Scanned other user's QR. Please make sure they scan yours",
+                            color = DhiffieChatApp.DialogTextColor,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                )
+            }
+        )
         DialogState.Share -> Dialog(
             onDismissRequest = { viewModel.dialogState.value = DialogState.None },
             content = {
@@ -331,7 +327,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
                 Box(
                     modifier = Modifier
                         .size(150.dp)
-                        .background(activeColors().secondary),
+                        .background(MaterialTheme.colors.secondary),
                     contentAlignment = Alignment.Center,
                     content = { LoadingIndicator() }
                 )
