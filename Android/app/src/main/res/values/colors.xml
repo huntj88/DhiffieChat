@@ -9,7 +9,8 @@
 
     <color name="colorBackground">#EEEEEE</color>
     <color name="colorNavText">#222222</color>
-
+    <color name="colorDialog">@color/white</color>
+    <color name="colorDialogText">#222222</color>
 
     <color name="white">#FFFFFFFF</color>
 </resources>

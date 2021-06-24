@@ -4,16 +4,10 @@ import android.Manifest
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -25,7 +19,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -302,25 +295,22 @@ private fun DialogStates(viewModel: HomeViewModel) {
                 }
             }
         )
-        DialogState.ScanSuccess -> {
-            Dialog(
-                onDismissRequest = { viewModel.dialogState.value = DialogState.None },
-                content = {
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .background(MaterialTheme.colors.secondary),
-                        contentAlignment = Alignment.Center,
-                        content = {
-                            Text(
-                                text = "Successfully Scanned other user's QR. Please make sure they scan yours",
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    )
-                }
-            )
-        }
+        DialogState.ScanSuccess -> Dialog(
+            onDismissRequest = { viewModel.dialogState.value = DialogState.None },
+            content = {
+                Card(
+                    modifier = Modifier.background(DhiffieChatApp.DialogColor),
+                    content = {
+                        Text(
+                            text = "Successfully Scanned other user's QR. Please make sure they scan yours",
+                            color = DhiffieChatApp.DialogTextColor,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                )
+            }
+        )
         DialogState.Share -> Dialog(
             onDismissRequest = { viewModel.dialogState.value = DialogState.None },
             content = {

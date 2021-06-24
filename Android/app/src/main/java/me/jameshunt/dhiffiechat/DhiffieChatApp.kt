@@ -35,6 +35,9 @@ class DhiffieChatApp : Application() {
                 background = Color(di.application.getColor(R.color.colorBackground)),
             )
         }
+
+        val DialogColor by lazy { Color(di.application.getColor(R.color.colorDialog)) }
+        val DialogTextColor by lazy { Color(di.application.getColor(R.color.colorDialogText)) }
     }
 
     override fun onCreate() {

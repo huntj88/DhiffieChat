@@ -6,4 +6,6 @@
     <color name="colorBackground">@color/colorPrimary</color>
 
     <color name="colorNavText">@color/colorOnPrimary</color>
+    <color name="colorDialog">@color/colorPrimary</color>
+    <color name="colorDialogText">@color/colorOnPrimary</color>
 </resources>
