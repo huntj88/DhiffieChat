@@ -14,6 +14,15 @@ import java.util.*
 class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransformAuthed<SendMessageRequest, SendMessageResponse>(request, context) { body, identity ->
+            val table = Singletons.dynamoDB.userTable()
+            val item = table.getItem("userId", identity.userId)
+
+            context.logger.log("checking if friends")
+            val friends = item?.getStringSet("friends") ?: emptySet()
+            if (!friends.contains(body.recipientUserId)) {
+                throw Unauthorized()
+            }
+
             // TODO: check if friends
             val messageCreatedAt = Instant.now()
 

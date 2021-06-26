@@ -2,6 +2,48 @@
 
 End-To-End Encrypted Private Chat
 
+I built this app because I wanted to play with encryption and experiment with building low cost automated cloud
+environments.
+
+---
+
+### Architecture, Automation, and Deploying Environments
+
+Due to the cost constraints I placed on myself, I wouldn't be able to use managed relational databases or provisioned
+server instances.
+
+The backend is built with AWS lambda, dynamoDB, s3. All of these are pay as you go, which is perfect because I don't really
+expect anybody to use this anyway `¯\_(ツ)_/¯`
+
+Creating new environments or modifying existing environments is automated through `Terraform`, and AWS costs are about
+$0.06/month during development.
+
+Terraform helps automate creation, configuration, or execution of the following resources and tasks.
+
+* AWS Gateway
+* AWS lambda functions
+* AWS DynamoDB Tables
+* AWS S3 Buckets
+* Generating Credentials
+* Configuring Access and Permissions
+* Generating Config files for the app to connect to new environments
+
+---
+
+### Android Automation
+
+![Input for CI build workflow](readme/androidWorkflowInputs.png)
+
+* The Config files to connect to the server are automatically generated when a new environment is created.
+
+
+* CI workflow to make builds for any specified branch/environment. Provides easy download access for QA. Prod builds generated
+  from the master branch also generate a GitHub release.
+
+
+* All CI builds are automatically tagged with a generated version name that makes it easy to see how the build was
+  generated, and where in the history of repository.
+
 ---
 
 ### Adding a Contact / Message Exchange Process
@@ -44,48 +86,6 @@ End-To-End Encrypted Private Chat
 
 * Any uploaded media is stored as encrypted binary data in s3, where after 14 days the data is automatically deleted.
   The user provided encrypted text is also automatically deleted from DynamoDB after 14 days
-
----
-
-### Architecture, Automation, and Deploying Environments
-
-One of the main goals of this project was to have as much of the project fully automated as possible.
-
-Another goal of this project was to leave it running as cheaply as possible, so no managed relational databases, or
-provisioned server instances.
-
-Currently, only a single CLI command is required to create a new environment, and AWS costs are about $0.06/month during
-development. I'm optimizing costs for lower numbers of users (expected), but it will scale to more users just fine.
-
-The "Server" is actually AWS lambda + dynamoDB + s3.
-
-Entire server environments can be created/updated with `terraform apply`, or removed entirely with `terraform destroy`
-
-Terraform helps automate creation, configuration, or execution of the following resources and tasks
-
-* AWS Gateway
-* AWS lambda functions
-* DynamoDB Tables
-* S3 Buckets
-* Generating Credentials
-* Configuring Access and Permissions
-* Generating Config files for the app to connect to new environments
-
-To Create a new environment, use Terraform workspaces and apply it.
-
----
-
-### Android Automation
-
-* The Config files to connect to the server are automatically generated when a new environment is created
-
-
-* CI workflow to make builds for any specified environment, with easy to access to download for QA. Prod builds also
-  generate a GitHub release.
-
-
-* All CI builds are automatically tagged with a generated version name that makes it easy to see how the build was
-  generated, and where in the history of repository.
 
 ---
 
