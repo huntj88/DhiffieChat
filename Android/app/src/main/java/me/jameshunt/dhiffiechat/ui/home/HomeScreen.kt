@@ -137,7 +137,10 @@ fun HomeScreen(
     })
 
     if (!isProfileSetup) {
-        toUserProfile()
+        LaunchedEffect("toUserProfile") {
+            // safely call toUserProfile() once with LaunchedEffect, even though its not a coroutine
+            toUserProfile()
+        }
         return
     }
 
