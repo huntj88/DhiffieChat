@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
+import me.jameshunt.dhiffiechat.service.MessageService
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
 import net.glxn.qrgen.android.MatrixToImageWriter
@@ -64,6 +65,7 @@ enum class DialogState {
 class HomeViewModel(
     private val applicationScope: CoroutineScope,
     private val userService: UserService,
+    private val messageService: MessageService,
     moshi: Moshi
 ) : ViewModel() {
 
@@ -81,7 +83,7 @@ class HomeViewModel(
     private val emitOnRefresh = MutableLiveData(Unit)
     val friendMessageData: LiveData<List<FriendMessageData>> by lazy {
         emitOnRefresh.asFlow().combine(userService.getFriends()) { _, friends ->
-            val summaries = userService.getMessageSummaries().associateBy { it.from }
+            val summaries = messageService.getMessageSummaries().associateBy { it.from }
             friends.map { friend ->
                 val messageFromUserSummary = summaries[friend.userId]
                 FriendMessageData(

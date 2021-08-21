@@ -12,11 +12,9 @@ import androidx.annotation.CallSuper
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,17 +28,16 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.service.FileLocationUtil
 import me.jameshunt.dhiffiechat.service.MediaType
-import me.jameshunt.dhiffiechat.service.S3Service
+import me.jameshunt.dhiffiechat.service.MessageService
 import me.jameshunt.dhiffiechat.ui.compose.StyledTextField
 import java.io.File
 
 class SendMessageViewModel(
-    private val s3Service: S3Service,
+    private val messageService: MessageService,
     private val fileUtil: FileLocationUtil,
     private val applicationScope: CoroutineScope
 ) : ViewModel() {
@@ -60,7 +57,7 @@ class SendMessageViewModel(
     fun sendMessage(text: String) {
         _sendState.value = SendState.Loading
         applicationScope.launch {
-            s3Service.sendMessage(
+            messageService.sendMessage(
                 recipientUserId = recipientUserId,
                 text = text.ifEmpty { null },
                 file = fileUtil.getInputFile(),

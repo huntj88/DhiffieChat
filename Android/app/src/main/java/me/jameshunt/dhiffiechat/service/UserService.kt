@@ -10,11 +10,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.Alias
 import me.jameshunt.dhiffiechat.AliasQueries
-import me.jameshunt.dhiffiechat.crypto.AESCrypto
-import me.jameshunt.dhiffiechat.crypto.base64ToByteArray
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
 import me.jameshunt.dhiffiechat.crypto.toUserId
-import me.jameshunt.dhiffiechat.service.LambdaApi.*
 import java.security.PublicKey
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -48,36 +45,20 @@ class UserService(
         }
     }
 
-    suspend fun getRelationships(): UserRelationships {
+    suspend fun getRelationships(): LambdaApi.UserRelationships {
         return api.getUserRelationships()
     }
 
     suspend fun addFriend(userId: String, alias: String) {
         aliasQueries.addAlias(userId, alias)
-        api.scanQR(body = ScanQR(scannedUserId = userId))
-    }
-
-    suspend fun getMessageSummaries(): List<MessageSummary> {
-        return api.getMessageSummaries()
-    }
-
-    suspend fun decryptMessageText(message: Message): Message {
-        val otherUserPublicKey = getUserPublicKey(userId = message.from)
-        val sharedSecret = authManager.userToUserMessage(otherUserPublicKey).sharedSecret
-
-        val decryptedText = message.text
-            ?.base64ToByteArray()
-            ?.let { AESCrypto.decrypt(it, sharedSecret) }
-            ?.toString(Charsets.UTF_8)
-
-        return message.copy(text = decryptedText)
+        api.scanQR(body = LambdaApi.ScanQR(scannedUserId = userId))
     }
 
     suspend fun createIdentity() {
         val userToServerCredentials = authManager.userToServerAuth()
 
         api.createIdentity(
-            body = CreateIdentity(
+            body = LambdaApi.CreateIdentity(
                 publicKey = identityManager.getIdentity().public,
                 encryptedToken = userToServerCredentials.encryptedToken,
                 fcmToken = getFcmToken()

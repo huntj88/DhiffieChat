@@ -8,9 +8,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,18 +28,13 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
-import me.jameshunt.dhiffiechat.*
-import me.jameshunt.dhiffiechat.service.LambdaApi.*
+import me.jameshunt.dhiffiechat.service.LambdaApi.Message
 import me.jameshunt.dhiffiechat.service.MediaType
-import me.jameshunt.dhiffiechat.service.S3Service
-import me.jameshunt.dhiffiechat.service.UserService
+import me.jameshunt.dhiffiechat.service.MessageService
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import java.io.File
 
-class ShowNextMessageViewModel(
-    private val s3Service: S3Service,
-    private val userService: UserService
-) : ViewModel() {
+class ShowNextMessageViewModel(private val messageService: MessageService) : ViewModel() {
     data class MediaMessage(val message: Message, val file: File)
 
     private var downloadEnabled = true
@@ -48,14 +46,14 @@ class ShowNextMessageViewModel(
         downloadEnabled = false
 
         viewModelScope.launch {
-            val message = userService
+            val message = messageService
                 .getMessageSummaries()
                 .first { it.from == fromUserId }
                 .next!!
 
             _media.value = MediaMessage(
-                message = userService.decryptMessageText(message),
-                file = s3Service.getDecryptedFile(message)
+                message = messageService.decryptMessageText(message),
+                file = messageService.getDecryptedFile(message)
             )
         }
     }

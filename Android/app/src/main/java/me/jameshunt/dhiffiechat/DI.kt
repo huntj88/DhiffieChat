@@ -76,12 +76,12 @@ class DI(val application: DhiffieChatApp) {
     private val userService = UserService(
         dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
     )
-    private val s3Service = S3Service(okhttp, authManager, api, userService, fileLocationUtil)
+    private val messageService = MessageService(okhttp, authManager, api, userService, fileLocationUtil)
 
     private val injectableComponents = mutableMapOf<String, Any>()
 
     init {
-        register(moshi, s3Service, userService, fileLocationUtil, launcherService)
+        register(moshi, messageService, userService, fileLocationUtil, launcherService)
 
         // TODO: need to register interface canonical name and not underlying class
         injectableComponents[CoroutineScope::class.java.canonicalName!!] = applicationScope

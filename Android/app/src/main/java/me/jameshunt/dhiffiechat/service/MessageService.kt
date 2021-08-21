@@ -1,7 +1,6 @@
 package me.jameshunt.dhiffiechat.service
 
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import me.jameshunt.dhiffiechat.crypto.*
 import okhttp3.*
@@ -9,16 +8,31 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.*
 import java.net.URL
-import java.security.PublicKey
 import kotlin.coroutines.suspendCoroutine
 
-class S3Service(
+class MessageService(
     private val okHttpClient: OkHttpClient,
     private val authManager: AuthManager,
     private val api: LambdaApi,
     private val userService: UserService,
     private val fileLocationUtil: FileLocationUtil,
 ) {
+
+    suspend fun getMessageSummaries(): List<LambdaApi.MessageSummary> {
+        return api.getMessageSummaries()
+    }
+
+    suspend fun decryptMessageText(message: LambdaApi.Message): LambdaApi.Message {
+        val otherUserPublicKey = userService.getUserPublicKey(userId = message.from)
+        val sharedSecret = authManager.userToUserMessage(otherUserPublicKey).sharedSecret
+
+        val decryptedText = message.text
+            ?.base64ToByteArray()
+            ?.let { AESCrypto.decrypt(it, sharedSecret) }
+            ?.toString(Charsets.UTF_8)
+
+        return message.copy(text = decryptedText)
+    }
 
     suspend fun getDecryptedFile(message: LambdaApi.Message): File {
         val otherUserPublicKey = userService.getUserPublicKey(message.from)
