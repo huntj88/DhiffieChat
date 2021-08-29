@@ -3,6 +3,7 @@
     package="me.jameshunt.dhiffiechat">
 
     <uses-feature android:name="android.hardware.camera.any" />
+
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -15,8 +16,9 @@
         android:supportsRtl="true">
         <activity
             android:name="me.jameshunt.dhiffiechat.LauncherActivity"
-            android:theme="@style/SplashTheme"
-            android:noHistory="true">
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@style/SplashTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,8 +28,7 @@
 
         <activity
             android:name="me.jameshunt.dhiffiechat.MainActivity"
-            android:theme="@style/Theme.DhiffieChat">
-        </activity>
+            android:theme="@style/Theme.DhiffieChat"></activity>
 
         <provider
             android:name="androidx.core.content.FileProvider"
