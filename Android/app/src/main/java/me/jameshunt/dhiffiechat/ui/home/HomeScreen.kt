@@ -4,16 +4,10 @@ import android.Manifest
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -34,13 +28,16 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.service.MessageService
 import me.jameshunt.dhiffiechat.service.UserService
+import me.jameshunt.dhiffiechat.ui.compose.ErrorHandlingDialog
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.ui.compose.withErrorHandling
+import me.jameshunt.dhiffiechat.ui.compose.Result
 import net.glxn.qrgen.android.MatrixToImageWriter
 import java.math.BigInteger
 import java.time.Duration
@@ -87,7 +84,7 @@ class HomeViewModel(
     val dialogState = MutableLiveData(DialogState.None)
 
     private val emitOnRefresh = MutableLiveData(Unit)
-    val friendMessageData: LiveData<List<FriendMessageData>> by lazy {
+    val friendMessageData: LiveData<Result<List<FriendMessageData>>> by lazy {
         emitOnRefresh.asFlow().combine(userService.getFriends()) { _, friends ->
             val summaries = messageService.getMessageSummaries().associateBy { it.from }
             friends.map { friend ->
@@ -99,7 +96,7 @@ class HomeViewModel(
                     mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
                 )
             }.sortedByDescending { it.mostRecentAt }
-        }.asLiveData()
+        }.withErrorHandling().asLiveData()
     }
 
     fun isUserProfileSetup(): Boolean = userService.isUserProfileSetup()
@@ -159,26 +156,32 @@ fun HomeScreen(
                     .fillMaxHeight()
                     .padding(8.dp)
             ) {
-                val messageSummaries = viewModel.friendMessageData.observeAsState().value
+                val friendMessageData = viewModel.friendMessageData
+                when (val messageSummariesResult = friendMessageData.observeAsState().value) {
+                    is Result.Success -> {
+                        val summaries = messageSummariesResult.data
+                        if (summaries.isEmpty()) {
+                            Text(text = "No Friends added yet, please exchange QR codes")
+                        }
 
-                messageSummaries?.let { summaries ->
-                    if (summaries.isEmpty()) {
-                        Text(text = "No Friends added yet, please exchange QR codes")
+                        summaries.filter { it.count > 0 }.ShowList(
+                            title = "Messages",
+                            onItemClick = { toShowNextMessage(it.friendUserId) }
+                        )
+
+                        summaries.filter { it.count == 0 }.ShowList(
+                            title = "Friends",
+                            onItemClick = { toSendMessage(it.friendUserId) }
+                        )
                     }
-
-                    summaries.filter { it.count > 0 }.ShowList(
-                        title = "Messages",
-                        onItemClick = { toShowNextMessage(it.friendUserId) }
-                    )
-
-                    summaries.filter { it.count == 0 }.ShowList(
-                        title = "Friends",
-                        onItemClick = { toSendMessage(it.friendUserId) }
-                    )
-                } ?: run {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(Modifier.align(Alignment.CenterHorizontally)) {
-                        LoadingIndicator()
+                    is Result.Failure -> {
+                        ErrorHandlingDialog(e = messageSummariesResult.throwable)
+                    }
+                    null -> {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(Modifier.align(Alignment.CenterHorizontally)) {
+                            LoadingIndicator()
+                        }
                     }
                 }
             }
