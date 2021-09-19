@@ -2,13 +2,14 @@ package me.jameshunt.dhiffiechat.ui.compose
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Card
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.unit.sp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.service.MessageService
@@ -41,12 +42,13 @@ fun ErrorHandlingDialog(t: Throwable, onDismiss: () -> Unit = {}) {
 
     FirebaseCrashlytics.getInstance().recordException(t)
 
-    Dialog(
+    AlertDialog(
+        modifier = Modifier.background(DhiffieChatApp.DialogColor),
         onDismissRequest = {
             shouldShowDialog = false
             onDismiss()
         },
-        content = {
+        title = {
             val message = when (transformedException) {
                 is HandledException.EnvironmentDestroyedOrNoInternet -> "Not connected to the internet or the environment has been destroyed"
                 is HandledException.DeployingNewCode -> "Upgrading Servers"
@@ -54,17 +56,20 @@ fun ErrorHandlingDialog(t: Throwable, onDismiss: () -> Unit = {}) {
                 else -> "Something went wrong"
             }
 
-            Card(
-                modifier = Modifier.background(DhiffieChatApp.DialogColor),
-                content = {
-                    Text(
-                        text = message,
-                        color = DhiffieChatApp.DialogTextColor,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
+            Text(
+                text = message,
+                color = DhiffieChatApp.DialogTextColor,
+                textAlign = TextAlign.Start,
+                fontSize = 20.sp,
+                modifier = Modifier.padding(16.dp)
             )
+        }, confirmButton = {
+            Button(onClick = {
+                shouldShowDialog = false
+                onDismiss()
+            }) {
+                Text(text = "Close")
+            }
         })
 }
 
