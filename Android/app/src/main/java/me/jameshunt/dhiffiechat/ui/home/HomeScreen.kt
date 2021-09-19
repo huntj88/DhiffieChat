@@ -4,10 +4,16 @@ import android.Manifest
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -28,13 +34,13 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.service.MessageService
-import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import me.jameshunt.dhiffiechat.service.UserService
+import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
 import net.glxn.qrgen.android.MatrixToImageWriter
 import java.math.BigInteger
 import java.time.Duration
@@ -293,7 +299,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
                 }
             },
             content = {
-                Card {
+                Card(modifier = Modifier.size(350.dp)) {
                     QRScanner { qrData ->
                         viewModel.addFriend(qrJson = qrData)
                     }
@@ -319,8 +325,8 @@ private fun DialogStates(viewModel: HomeViewModel) {
         DialogState.Share -> Dialog(
             onDismissRequest = { viewModel.dialogState.value = DialogState.None },
             content = {
-                viewModel.qrDataShare.observeAsState().value?.let {
-                    Card {
+                Card(modifier = Modifier.size(350.dp)) {
+                    viewModel.qrDataShare.observeAsState().value?.let {
                         QRCodeImage(it)
                     }
                 }
@@ -351,8 +357,7 @@ private fun QRCodeImage(data: String) {
 
     Image(
         bitmap = bitmap,
-        contentDescription = null,
-        modifier = Modifier.requiredSize(350.dp)
+        contentDescription = null
     )
 }
 
