@@ -1,5 +1,7 @@
 package me.jameshunt.dhiffiechat.service
 
+import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.jameshunt.dhiffiechat.crypto.*
@@ -18,114 +20,123 @@ class MessageService(
     private val fileLocationUtil: FileLocationUtil,
 ) {
 
-    suspend fun getMessageSummaries(): List<LambdaApi.MessageSummary> {
+    fun getMessageSummaries(): Single<List<LambdaApi.MessageSummary>> {
         return api.getMessageSummaries()
     }
 
-    suspend fun decryptMessageText(message: LambdaApi.Message): LambdaApi.Message {
-        val otherUserPublicKey = userService.getUserPublicKey(userId = message.from)
-        val sharedSecret = authManager.userToUserMessage(otherUserPublicKey).sharedSecret
+    fun decryptMessageText(message: LambdaApi.Message): Single<LambdaApi.Message> {
+        return userService.getUserPublicKey(userId = message.from)
+            .map { otherUserPublicKey -> authManager.userToUserMessage(otherUserPublicKey).sharedSecret }
+            .map { sharedSecret ->
+                val decryptedText = message.text
+                    ?.base64ToByteArray()
+                    ?.let { AESCrypto.decrypt(it, sharedSecret) }
+                    ?.toString(Charsets.UTF_8)
 
-        val decryptedText = message.text
-            ?.base64ToByteArray()
-            ?.let { AESCrypto.decrypt(it, sharedSecret) }
-            ?.toString(Charsets.UTF_8)
-
-        return message.copy(text = decryptedText)
+                message.copy(text = decryptedText)
+            }
     }
 
-    suspend fun getDecryptedFile(message: LambdaApi.Message): File {
-        val otherUserPublicKey = userService.getUserPublicKey(message.from)
-        val userToUserCredentials = authManager.userToUserMessage(otherUserPublicKey)
-
-        val body = LambdaApi.ConsumeMessage(message.fileKey, message.messageCreatedAt)
-        val s3Url = api.consumeMessage(body = body).s3Url
-
-        withContext(Dispatchers.Default) {
-            AESCrypto.decrypt(
-                inputStream = download(s3Url),
-                output = fileLocationUtil.incomingDecryptedFile(),
-                key = userToUserCredentials.sharedSecret
-            )
-        }
-
-        return fileLocationUtil.incomingDecryptedFile()
+    fun getDecryptedFile(message: LambdaApi.Message): Single<File> {
+        return userService.getUserPublicKey(message.from)
+            .map { otherUserPublicKey -> authManager.userToUserMessage(otherUserPublicKey) }
+            .observeOn(Schedulers.computation())
+            .flatMap { userToUserCredentials ->
+                val body = LambdaApi.ConsumeMessage(message.fileKey, message.messageCreatedAt)
+                api
+                    .consumeMessage(body = body)
+                    .flatMap { download(it.s3Url) }
+                    .map {
+                        AESCrypto.decrypt(
+                            inputStream = it,
+                            output = fileLocationUtil.incomingDecryptedFile(),
+                            key = userToUserCredentials.sharedSecret
+                        )
+                    }
+            }
+            .map { fileLocationUtil.incomingDecryptedFile() }
     }
 
-    suspend fun sendMessage(recipientUserId: String, text: String?, file: File, mediaType: MediaType) {
+    fun sendMessage(
+        recipientUserId: String,
+        text: String?,
+        file: File,
+        mediaType: MediaType
+    ): Single<Unit> {
         // TODO: Remove metadata from files
-        val recipientPublicKey = userService.getUserPublicKey(recipientUserId)
-        val userToUserCredentials = authManager.userToUserMessage(recipientPublicKey)
+        return userService.getUserPublicKey(recipientUserId)
+            .map { recipientPublicKey -> authManager.userToUserMessage(recipientPublicKey) }
+            .observeOn(Schedulers.computation())
+            .map { userToUserCredentials ->
+                val output = fileLocationUtil.outgoingEncryptedFile()
 
-        val output = fileLocationUtil.outgoingEncryptedFile()
+                AESCrypto.encrypt(
+                    file = file,
+                    output = output,
+                    key = userToUserCredentials.sharedSecret
+                )
 
-        withContext(Dispatchers.Default) {
-            AESCrypto.encrypt(
-                file = file,
-                output = output,
-                key = userToUserCredentials.sharedSecret
-            )
-        }
+                val encryptedText = text
+                    ?.let { AESCrypto.encrypt(text.toByteArray(), userToUserCredentials.sharedSecret) }
+                    ?.toBase64String()
 
-        val encryptedText = text
-            ?.let { AESCrypto.encrypt(text.toByteArray(), userToUserCredentials.sharedSecret) }
-            ?.toBase64String()
+                val body = LambdaApi.SendMessage(
+                    recipientUserId = recipientUserId,
+                    text = encryptedText,
+                    s3Key = output.toS3Key(),
+                    mediaType = mediaType
+                )
 
-        val body = LambdaApi.SendMessage(
-            recipientUserId = recipientUserId,
-            text = encryptedText,
-            s3Key = output.toS3Key(),
-            mediaType = mediaType
-        )
-        val response = api.sendMessage(body = body)
-
-        upload(response.uploadUrl, output)
-        file.delete()
-        output.delete()
+                api.sendMessage(body = body).map { response ->
+                    upload(response.uploadUrl, output)
+                    file.delete()
+                    output.delete()
+                }
+            }
     }
 
-    private suspend fun upload(url: URL, file: File) {
+    private fun upload(url: URL, file: File): Single<Unit> {
         val request = Request.Builder()
             .url(url)
             .put(file.asRequestBody("application/octet-stream".toMediaTypeOrNull()))
             .build()
 
-        suspendCoroutine<Unit> { continuation ->
+        return Single.create<Unit> { continuation ->
             okHttpClient.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    continuation.resumeWith(Result.failure(e))
+                    continuation.onError(e)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful) {
-                        continuation.resumeWith(Result.success(Unit))
+                        continuation.onSuccess(Unit)
                     } else {
                         TODO()
                     }
                 }
             })
-        }
+        }.subscribeOn(Schedulers.io())
     }
 
-    private suspend fun download(url: URL): InputStream {
+    private fun download(url: URL): Single<InputStream> {
         val request = Request.Builder().url(url).get().build()
 
-        return suspendCoroutine { continuation ->
+        return Single.create<InputStream> { continuation ->
             okHttpClient.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
-                    continuation.resumeWith(Result.failure(e))
+                    continuation.onError(e)
                 }
 
                 override fun onResponse(call: Call, response: Response) {
                     if (response.isSuccessful) {
-                        continuation.resumeWith(Result.success(response.body!!.byteStream()))
+                        continuation.onSuccess(response.body!!.byteStream())
                     } else {
                         // will crash if file not finished uploading yet
                         TODO()
                     }
                 }
             })
-        }
+        }.subscribeOn(Schedulers.io())
     }
 }
 

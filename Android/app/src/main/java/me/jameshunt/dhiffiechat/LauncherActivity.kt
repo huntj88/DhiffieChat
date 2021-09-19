@@ -6,6 +6,10 @@ import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.disposables.DisposableContainer
+import io.reactivex.rxjava3.kotlin.subscribeBy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.ui.compose.InjectableViewModelFactory
@@ -25,21 +29,27 @@ class LauncherActivity: FragmentActivity() {
     }
 }
 
-class LauncherScreenViewModel(
-    private val service: LauncherService,
-    private val applicationScope: CoroutineScope
-): ViewModel() {
+class LauncherScreenViewModel(private val service: LauncherService): ViewModel() {
     enum class LauncherState {
         Loading,
         Done
     }
 
+    private val disposables = CompositeDisposable()
     val state = MutableLiveData(LauncherState.Loading)
 
     fun load() {
-        applicationScope.launch {
-            service.init()
-            state.value = LauncherState.Done
-        }
+        val disposable = service.init().observeOn(AndroidSchedulers.mainThread()) .subscribeBy(
+            onSuccess = { state.value = LauncherState.Done },
+            onError = {}
+        )
+
+        service.init()
+        disposables.add(disposable)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disposables.clear()
     }
 }

@@ -45,17 +45,17 @@ class ShowNextMessageViewModel(private val messageService: MessageService) : Vie
         if (!downloadEnabled) return
         downloadEnabled = false
 
-        viewModelScope.launch {
-            val message = messageService
-                .getMessageSummaries()
-                .first { it.from == fromUserId }
-                .next!!
-
-            _media.value = MediaMessage(
-                message = messageService.decryptMessageText(message),
-                file = messageService.getDecryptedFile(message)
-            )
-        }
+//        viewModelScope.launch {
+//            val message = messageService
+//                .getMessageSummaries()
+//                .first { it.from == fromUserId }
+//                .next!!
+//
+//            _media.value = MediaMessage(
+//                message = messageService.decryptMessageText(message),
+//                file = messageService.getDecryptedFile(message)
+//            )
+//        }
     }
 }
 

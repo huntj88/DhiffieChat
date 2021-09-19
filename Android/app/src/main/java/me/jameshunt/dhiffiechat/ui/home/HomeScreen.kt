@@ -4,10 +4,16 @@ import android.Manifest
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -27,8 +33,9 @@ import androidx.lifecycle.*
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
+import io.reactivex.rxjava3.core.BackpressureStrategy
+import io.reactivex.rxjava3.core.Observable
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
@@ -36,7 +43,6 @@ import me.jameshunt.dhiffiechat.service.MessageService
 import me.jameshunt.dhiffiechat.service.UserService
 import me.jameshunt.dhiffiechat.ui.compose.ErrorHandlingDialog
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
-import me.jameshunt.dhiffiechat.ui.compose.withErrorHandling
 import me.jameshunt.dhiffiechat.ui.compose.Result
 import net.glxn.qrgen.android.MatrixToImageWriter
 import java.math.BigInteger
@@ -57,13 +63,13 @@ data class FriendMessageData(
 )
 
 sealed class DialogState {
-    object CameraPermission: DialogState()
-    object Scan: DialogState()
-    object ScanSuccess: DialogState()
-    data class ScanFailure(val t: Throwable): DialogState()
-    object Share: DialogState()
-    object Loading: DialogState()
-    object None: DialogState()
+    object CameraPermission : DialogState()
+    object Scan : DialogState()
+    object ScanSuccess : DialogState()
+    data class ScanFailure(val t: Throwable) : DialogState()
+    object Share : DialogState()
+    object Loading : DialogState()
+    object None : DialogState()
 }
 
 class HomeViewModel(
@@ -84,27 +90,31 @@ class HomeViewModel(
 
     val dialogState = MutableLiveData(DialogState.None as DialogState)
 
-    private val emitOnRefresh = MutableLiveData(Unit)
     val friendMessageData: LiveData<Result<List<FriendMessageData>>> by lazy {
-        emitOnRefresh.asFlow().combine(userService.getFriends()) { _, friends ->
-            val summaries = messageService.getMessageSummaries().associateBy { it.from }
-            friends.map { friend ->
-                val messageFromUserSummary = summaries[friend.userId]
-                FriendMessageData(
-                    friendUserId = friend.userId,
-                    alias = friend.alias,
-                    count = messageFromUserSummary?.count ?: 0,
-                    mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
-                )
-            }.sortedByDescending { it.mostRecentAt }
-        }.withErrorHandling().asLiveData()
+        userService.getFriends()
+            .flatMapSingle { friends ->
+                messageService
+                    .getMessageSummaries()
+                    .map { it.associateBy { it.from } }
+                    .map { summaries ->
+                        friends.map { friend ->
+                            val messageFromUserSummary = summaries[friend.userId]
+                            FriendMessageData(
+                                friendUserId = friend.userId,
+                                alias = friend.alias,
+                                count = messageFromUserSummary?.count ?: 0,
+                                mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
+                            )
+                        }.sortedByDescending { it.mostRecentAt }
+                    }
+            }
+            .map { Result.Success(it) as Result<List<FriendMessageData>>}
+            .onErrorResumeNext { Observable.just(Result.Failure(it)) }
+            .toFlowable(BackpressureStrategy.LATEST)
+            .let { LiveDataReactiveStreams.fromPublisher(it) }
     }
 
     fun isUserProfileSetup(): Boolean = userService.isUserProfileSetup()
-
-    fun onRefreshData() {
-        emitOnRefresh.value = Unit
-    }
 
     fun scanSelected() {
         dialogState.value = DialogState.CameraPermission
@@ -141,7 +151,6 @@ fun HomeScreen(
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
             if (event == Lifecycle.Event.ON_RESUME) {
                 isProfileSetup = viewModel.isUserProfileSetup()
-                viewModel.onRefreshData()
             }
         }
     })
