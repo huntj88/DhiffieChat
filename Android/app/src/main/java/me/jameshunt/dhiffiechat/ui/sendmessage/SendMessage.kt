@@ -45,14 +45,15 @@ class SendMessageViewModel(
     var mediaType: MediaType? = null
     var text: String? = null
 
-    enum class SendState {
-        CollectMessageText,
-        Loading,
-        Finish
+    sealed class SendState {
+        object CollectMessageText: SendState()
+        object Loading: SendState()
+        data class Error(val t: Throwable): SendState()
+        object Finish: SendState()
     }
 
     private val disposables = CompositeDisposable()
-    private val _sendState = MutableLiveData(SendState.CollectMessageText)
+    private val _sendState = MutableLiveData(SendState.CollectMessageText as SendState)
     val sendState: LiveData<SendState> = _sendState
 
     fun sendMessage(text: String) {
@@ -67,7 +68,7 @@ class SendMessageViewModel(
             )
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onError = { /* TODO */ },
+                onError = { _sendState.value = SendState.Error(it) },
                 onSuccess = { _sendState.value = SendState.Finish }
             )
 
@@ -75,6 +76,10 @@ class SendMessageViewModel(
     }
 
     fun getInputFile(): File = fileUtil.getInputFile()
+
+    fun toCollectMessageState() {
+        _sendState.value = SendState.CollectMessageText
+    }
 
     override fun onCleared() {
         super.onCleared()

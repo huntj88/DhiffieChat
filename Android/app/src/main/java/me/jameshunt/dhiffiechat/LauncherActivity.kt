@@ -38,7 +38,10 @@ class LauncherScreenViewModel(private val service: LauncherService): ViewModel()
     fun load() {
         val disposable = service.init().observeOn(AndroidSchedulers.mainThread()).subscribeBy(
             onSuccess = { state.value = LauncherState.Done },
-            onError = {}
+            onError = {
+                // ignore error, let home screen show error
+                state.value = LauncherState.Done
+            }
         )
         disposables.add(disposable)
     }
