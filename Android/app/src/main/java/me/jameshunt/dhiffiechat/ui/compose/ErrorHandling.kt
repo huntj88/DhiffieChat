@@ -9,7 +9,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import me.jameshunt.dhiffiechat.DhiffieChatApp
+import me.jameshunt.dhiffiechat.service.MessageService
 import retrofit2.HttpException
 import java.net.UnknownHostException
 
@@ -30,8 +32,14 @@ fun ErrorHandlingDialog(t: Throwable, onDismiss: () -> Unit = {}) {
             401 -> HandledException.Unauthorized
             else -> t
         }
+        is MessageService.HttpException -> when (t.okHttpResponse.code) {
+            401 -> HandledException.Unauthorized
+            else -> t
+        }
         else -> t
     }
+
+    FirebaseCrashlytics.getInstance().recordException(t)
 
     Dialog(
         onDismissRequest = {

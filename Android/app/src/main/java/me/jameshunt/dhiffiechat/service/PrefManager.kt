@@ -30,8 +30,6 @@ class PrefManager(private val prefs: SharedPreferences) {
             toDecrypt = prefs.getString(key, null) ?: generateDefaultPassword()
         )
     }
-
-
 }
 
 private class AndroidCrypto(private val keyName: String) {

@@ -113,7 +113,7 @@ class MessageService(
                     if (response.isSuccessful) {
                         continuation.onSuccess(Unit)
                     } else {
-                        TODO()
+                        continuation.onError(HttpException(response))
                     }
                 }
             })
@@ -133,13 +133,16 @@ class MessageService(
                     if (response.isSuccessful) {
                         continuation.onSuccess(response.body!!.byteStream())
                     } else {
-                        // will crash if file not finished uploading yet
-                        TODO()
+                        continuation.onError(HttpException(response))
                     }
                 }
             })
         }.subscribeOn(Schedulers.io())
     }
+
+    class HttpException(val okHttpResponse: Response): RuntimeException(
+        message = "${okHttpResponse.message} ${okHttpResponse.request.url}"
+    )
 }
 
 enum class MediaType {

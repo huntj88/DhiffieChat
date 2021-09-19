@@ -23,7 +23,6 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 class DI(val application: DhiffieChatApp) {
-    private val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val fileLocationUtil = FileLocationUtil(application)
     private val prefManager = PrefManager(
         prefs = application.getSharedPreferences("dhiffieChat", Context.MODE_PRIVATE)
@@ -84,9 +83,6 @@ class DI(val application: DhiffieChatApp) {
 
     init {
         register(moshi, messageService, userService, fileLocationUtil, launcherService)
-
-        // TODO: need to register interface canonical name and not underlying class
-        injectableComponents[CoroutineScope::class.java.canonicalName!!] = applicationScope
     }
 
     private fun register(vararg entry: Any) {
