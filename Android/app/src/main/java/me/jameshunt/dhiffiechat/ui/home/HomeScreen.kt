@@ -360,7 +360,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
             }
         )
         DialogState.Loading -> Dialog(
-            onDismissRequest = { /*TODO*/ },
+            onDismissRequest = {},
             content = {
                 Box(
                     modifier = Modifier
