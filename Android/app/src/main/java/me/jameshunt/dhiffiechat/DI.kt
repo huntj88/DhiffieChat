@@ -5,15 +5,12 @@ import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import me.jameshunt.dhiffiechat.crypto.toBase64String
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
 import me.jameshunt.dhiffiechat.service.*
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.net.URL
 import java.security.PublicKey
@@ -22,7 +19,6 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 class DI(val application: DhiffieChatApp) {
-    private val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val fileLocationUtil = FileLocationUtil(application)
     private val prefManager = PrefManager(
         prefs = application.getSharedPreferences("dhiffieChat", Context.MODE_PRIVATE)
@@ -58,7 +54,7 @@ class DI(val application: DhiffieChatApp) {
 
     private val okhttp = OkHttpClient
         .Builder()
-        .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+//        .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
         .addInterceptor(headerInterceptor)
         .connectTimeout(20, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
@@ -69,22 +65,20 @@ class DI(val application: DhiffieChatApp) {
         .client(okhttp)
         .baseUrl(BuildConfig.BASE_URL)
         .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
         .build()
 
     private val api = retrofit.create(LambdaApi::class.java)
-    private val launcherService = LauncherService(api)
     private val userService = UserService(
         dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
     )
+    private val launcherService = LauncherService(api, userService)
     private val messageService = MessageService(okhttp, authManager, api, userService, fileLocationUtil)
 
     private val injectableComponents = mutableMapOf<String, Any>()
 
     init {
         register(moshi, messageService, userService, fileLocationUtil, launcherService)
-
-        // TODO: need to register interface canonical name and not underlying class
-        injectableComponents[CoroutineScope::class.java.canonicalName!!] = applicationScope
     }
 
     private fun register(vararg entry: Any) {

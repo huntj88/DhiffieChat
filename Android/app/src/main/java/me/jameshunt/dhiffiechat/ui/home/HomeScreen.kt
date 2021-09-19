@@ -33,14 +33,18 @@ import androidx.lifecycle.*
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.BackpressureStrategy
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.subscribeBy
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.service.MessageService
 import me.jameshunt.dhiffiechat.service.UserService
+import me.jameshunt.dhiffiechat.ui.compose.ErrorHandlingDialog
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.ui.compose.Result
 import net.glxn.qrgen.android.MatrixToImageWriter
 import java.math.BigInteger
 import java.time.Duration
@@ -59,54 +63,59 @@ data class FriendMessageData(
     val mostRecentAt: Instant?
 )
 
-enum class DialogState {
-    CameraPermission,
-    Scan,
-    ScanSuccess,
-    Share,
-    Loading,
-    None
+sealed class DialogState {
+    object CameraPermission : DialogState()
+    object Scan : DialogState()
+    object ScanSuccess : DialogState()
+    data class ScanFailure(val t: Throwable) : DialogState()
+    object Share : DialogState()
+    object Loading : DialogState()
+    object None : DialogState()
 }
 
 class HomeViewModel(
-    private val applicationScope: CoroutineScope,
     private val userService: UserService,
     private val messageService: MessageService,
     moshi: Moshi
 ) : ViewModel() {
 
+    private val disposables = CompositeDisposable()
     private val qrAdapter = moshi.adapter(QRData::class.java)
 
-    val alias = userService.getAlias().asLiveData()
+    val alias = userService.getAlias().let { LiveDataReactiveStreams.fromPublisher(it) }
     val qrDataShare: LiveData<String?> = alias.map { alias ->
-        alias
+        alias?.orElse(null)
             ?.let { QRData(it.userId, it.alias) }
             ?.let { qrAdapter.toJson(it) }
     }
 
-    val dialogState = MutableLiveData(DialogState.None)
+    val dialogState = MutableLiveData(DialogState.None as DialogState)
 
-    private val emitOnRefresh = MutableLiveData(Unit)
-    val friendMessageData: LiveData<List<FriendMessageData>> by lazy {
-        emitOnRefresh.asFlow().combine(userService.getFriends()) { _, friends ->
-            val summaries = messageService.getMessageSummaries().associateBy { it.from }
-            friends.map { friend ->
-                val messageFromUserSummary = summaries[friend.userId]
-                FriendMessageData(
-                    friendUserId = friend.userId,
-                    alias = friend.alias,
-                    count = messageFromUserSummary?.count ?: 0,
-                    mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
-                )
-            }.sortedByDescending { it.mostRecentAt }
-        }.asLiveData()
+    val friendMessageData: LiveData<Result<List<FriendMessageData>>> by lazy {
+        userService.getFriends()
+            .flatMapSingle { friends ->
+                messageService
+                    .getMessageSummaries()
+                    .map { it.associateBy { it.from } }
+                    .map { summaries ->
+                        friends.map { friend ->
+                            val messageFromUserSummary = summaries[friend.userId]
+                            FriendMessageData(
+                                friendUserId = friend.userId,
+                                alias = friend.alias,
+                                count = messageFromUserSummary?.count ?: 0,
+                                mostRecentAt = messageFromUserSummary?.mostRecentCreatedAt
+                            )
+                        }.sortedByDescending { it.mostRecentAt }
+                    }
+            }
+            .map { Result.Success(it) as Result<List<FriendMessageData>> }
+            .onErrorResumeNext { Observable.just(Result.Failure(it)) }
+            .toFlowable(BackpressureStrategy.LATEST)
+            .let { LiveDataReactiveStreams.fromPublisher(it) }
     }
 
     fun isUserProfileSetup(): Boolean = userService.isUserProfileSetup()
-
-    fun onRefreshData() {
-        emitOnRefresh.value = Unit
-    }
 
     fun scanSelected() {
         dialogState.value = DialogState.CameraPermission
@@ -119,10 +128,20 @@ class HomeViewModel(
     fun addFriend(qrJson: String) {
         dialogState.value = DialogState.Loading
         val (userId, alias) = qrAdapter.fromJson(qrJson)!!
-        applicationScope.launch {
-            userService.addFriend(userId, alias)
-            dialogState.value = DialogState.ScanSuccess
-        }
+
+        val disposable = userService.addFriend(userId, alias)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { dialogState.value = DialogState.ScanSuccess },
+                onError = { dialogState.value = DialogState.ScanFailure(it) }
+            )
+
+        disposables.add(disposable)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disposables.clear()
     }
 }
 
@@ -139,7 +158,6 @@ fun HomeScreen(
         override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
             if (event == Lifecycle.Event.ON_RESUME) {
                 isProfileSetup = viewModel.isUserProfileSetup()
-                viewModel.onRefreshData()
             }
         }
     })
@@ -159,26 +177,32 @@ fun HomeScreen(
                     .fillMaxHeight()
                     .padding(8.dp)
             ) {
-                val messageSummaries = viewModel.friendMessageData.observeAsState().value
+                val friendMessageData = viewModel.friendMessageData
+                when (val messageSummariesResult = friendMessageData.observeAsState().value) {
+                    is Result.Success -> {
+                        val summaries = messageSummariesResult.data
+                        if (summaries.isEmpty()) {
+                            Text(text = "No Friends added yet, please exchange QR codes")
+                        }
 
-                messageSummaries?.let { summaries ->
-                    if (summaries.isEmpty()) {
-                        Text(text = "No Friends added yet, please exchange QR codes")
+                        summaries.filter { it.count > 0 }.ShowList(
+                            title = "Messages",
+                            onItemClick = { toShowNextMessage(it.friendUserId) }
+                        )
+
+                        summaries.filter { it.count == 0 }.ShowList(
+                            title = "Friends",
+                            onItemClick = { toSendMessage(it.friendUserId) }
+                        )
                     }
-
-                    summaries.filter { it.count > 0 }.ShowList(
-                        title = "Messages",
-                        onItemClick = { toShowNextMessage(it.friendUserId) }
-                    )
-
-                    summaries.filter { it.count == 0 }.ShowList(
-                        title = "Friends",
-                        onItemClick = { toSendMessage(it.friendUserId) }
-                    )
-                } ?: run {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Box(Modifier.align(Alignment.CenterHorizontally)) {
-                        LoadingIndicator()
+                    is Result.Failure -> {
+                        ErrorHandlingDialog(t = messageSummariesResult.throwable)
+                    }
+                    null -> {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Box(Modifier.align(Alignment.CenterHorizontally)) {
+                            LoadingIndicator()
+                        }
                     }
                 }
             }
@@ -290,7 +314,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
         }
     )
 
-    when (viewModel.dialogState.observeAsState().value!!) {
+    when (val result = viewModel.dialogState.observeAsState().value!!) {
         DialogState.CameraPermission -> cameraPermissionContract.launch(Manifest.permission.CAMERA)
         DialogState.Scan -> Dialog(
             onDismissRequest = {
@@ -322,6 +346,9 @@ private fun DialogStates(viewModel: HomeViewModel) {
                 )
             }
         )
+        is DialogState.ScanFailure -> ErrorHandlingDialog(t = result.t) {
+            viewModel.dialogState.value = DialogState.None
+        }
         DialogState.Share -> Dialog(
             onDismissRequest = { viewModel.dialogState.value = DialogState.None },
             content = {
@@ -333,7 +360,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
             }
         )
         DialogState.Loading -> Dialog(
-            onDismissRequest = { /*TODO*/ },
+            onDismissRequest = {},
             content = {
                 Box(
                     modifier = Modifier

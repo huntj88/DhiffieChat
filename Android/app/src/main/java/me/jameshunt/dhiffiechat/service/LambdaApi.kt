@@ -1,5 +1,6 @@
 package me.jameshunt.dhiffiechat.service
 
+import io.reactivex.rxjava3.core.Single
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -11,10 +12,11 @@ import java.security.PublicKey
 import java.time.Instant
 
 
-class LauncherService(private val api: LambdaApi) {
-    suspend fun init() {
-        api.initSingleEndpoint()
-    }
+class LauncherService(private val api: LambdaApi, private val userService: UserService) {
+    fun init(): Single<Unit> = api
+        .initSingleEndpoint()
+        .flatMap { userService.createIdentity() }
+        .map { Unit }
 }
 
 data class ResponseMessage(val message: String)
@@ -22,16 +24,16 @@ data class ResponseMessage(val message: String)
 interface LambdaApi {
 
     @POST("PerformRequest")
-    suspend fun initSingleEndpoint(@Query("type") type: String = "Init"): ResponseMessage
+    fun initSingleEndpoint(@Query("type") type: String = "Init"): Single<ResponseMessage>
 
     data class GetUserPublicKey(val userId: String)
     data class GetUserPublicKeyResponse(val publicKey: String)
 
     @POST("PerformRequest")
-    suspend fun getUserPublicKey(
+    fun getUserPublicKey(
         @Query("type") type: String = "GetUserPublicKey",
         @Body body: GetUserPublicKey
-    ): GetUserPublicKeyResponse
+    ): Single<GetUserPublicKeyResponse>
 
     data class MessageSummary(
         val from: String,
@@ -51,9 +53,9 @@ interface LambdaApi {
     )
 
     @POST("PerformRequest")
-    suspend fun getMessageSummaries(
+    fun getMessageSummaries(
         @Query("type") type: String = "GetMessageSummaries"
-    ): List<MessageSummary>
+    ): Single<List<MessageSummary>>
 
 
     data class UserRelationships(
@@ -63,9 +65,9 @@ interface LambdaApi {
     )
 
     @POST("PerformRequest")
-    suspend fun getUserRelationships(
+    fun getUserRelationships(
         @Query("type") type: String = "GetUserRelationships"
-    ): UserRelationships
+    ): Single<UserRelationships>
 
     /**
      * idempotent above
@@ -79,18 +81,18 @@ interface LambdaApi {
     )
 
     @POST("PerformRequest")
-    suspend fun createIdentity(
+    fun createIdentity(
         @Query("type") type: String = "CreateIdentity",
         @Body body: CreateIdentity
-    ): ResponseMessage
+    ): Single<ResponseMessage>
 
     data class ScanQR(val scannedUserId: String)
 
     @POST("PerformRequest")
-    suspend fun scanQR(
+    fun scanQR(
         @Query("type") type: String = "ScanQR",
         @Body body: ScanQR
-    ): ResponseMessage
+    ): Single<ResponseMessage>
 
 
     data class SendMessage(
@@ -102,10 +104,10 @@ interface LambdaApi {
     data class SendMessageResponse(val uploadUrl: URL)
 
     @POST("PerformRequest")
-    suspend fun sendMessage(
+    fun sendMessage(
         @Query("type") type: String = "SendMessage",
         @Body body: SendMessage
-    ): SendMessageResponse
+    ): Single<SendMessageResponse>
 
     data class ConsumeMessage(
         val fileKey: String,
@@ -114,10 +116,10 @@ interface LambdaApi {
     data class ConsumeMessageResponse(val s3Url: URL)
 
     @POST("PerformRequest")
-    suspend fun consumeMessage(
+    fun consumeMessage(
         @Query("type") type: String = "ConsumeMessage",
         @Body body: ConsumeMessage
-    ): ConsumeMessageResponse
+    ): Single<ConsumeMessageResponse>
 }
 
 class HeaderInterceptor(

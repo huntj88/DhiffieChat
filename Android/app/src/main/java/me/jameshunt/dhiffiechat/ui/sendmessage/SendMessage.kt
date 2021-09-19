@@ -28,8 +28,9 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.subscribeBy
 import me.jameshunt.dhiffiechat.service.FileLocationUtil
 import me.jameshunt.dhiffiechat.service.MediaType
 import me.jameshunt.dhiffiechat.service.MessageService
@@ -38,36 +39,52 @@ import java.io.File
 
 class SendMessageViewModel(
     private val messageService: MessageService,
-    private val fileUtil: FileLocationUtil,
-    private val applicationScope: CoroutineScope
+    private val fileUtil: FileLocationUtil
 ) : ViewModel() {
     lateinit var recipientUserId: String
     var mediaType: MediaType? = null
     var text: String? = null
 
-    enum class SendState {
-        CollectMessageText,
-        Loading,
-        Finish
+    sealed class SendState {
+        object CollectMessageText: SendState()
+        object Loading: SendState()
+        data class Error(val t: Throwable): SendState()
+        object Finish: SendState()
     }
 
-    private val _sendState = MutableLiveData(SendState.CollectMessageText)
+    private val disposables = CompositeDisposable()
+    private val _sendState = MutableLiveData(SendState.CollectMessageText as SendState)
     val sendState: LiveData<SendState> = _sendState
 
     fun sendMessage(text: String) {
         _sendState.value = SendState.Loading
-        applicationScope.launch {
-            messageService.sendMessage(
+
+        val disposable = messageService
+            .sendMessage(
                 recipientUserId = recipientUserId,
                 text = text.ifEmpty { null },
                 file = fileUtil.getInputFile(),
                 mediaType = mediaType!!
             )
-            _sendState.value = SendState.Finish
-        }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onError = { _sendState.value = SendState.Error(it) },
+                onSuccess = { _sendState.value = SendState.Finish }
+            )
+
+        disposables.add(disposable)
     }
 
     fun getInputFile(): File = fileUtil.getInputFile()
+
+    fun toCollectMessageState() {
+        _sendState.value = SendState.CollectMessageText
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disposables.clear()
+    }
 }
 
 class TakeVideo : ActivityResultContract<Uri, Boolean>() {

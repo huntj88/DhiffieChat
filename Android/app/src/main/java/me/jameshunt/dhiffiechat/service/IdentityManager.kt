@@ -1,5 +1,6 @@
 package me.jameshunt.dhiffiechat.service
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import me.jameshunt.dhiffiechat.Encryption_keyQueries
 import me.jameshunt.dhiffiechat.crypto.*
 import java.security.KeyPair
@@ -28,6 +29,8 @@ class IdentityManager(private val encryptionKeyQueries: Encryption_keyQueries) {
             publicKey = keyPair.public.toBase64String(),
             privateKey = keyPair.private.toBase64String()
         )
+
+        FirebaseCrashlytics.getInstance().setUserId(keyPair.toUserId())
     }
 }
 

@@ -25,7 +25,7 @@ fun Fragment.openNavDrawer() {
         it.findViewById<DrawerLayout>(R.id.drawer_layout)
             ?.openDrawer(GravityCompat.START)
             .also {
-                activity?.findViewById<TextView>(R.id.navigationAliasText)?.text = viewModel.alias.value?.alias
+                activity?.findViewById<TextView>(R.id.navigationAliasText)?.text = viewModel.alias.value?.orElse(null)?.alias
             }
     }
 }
@@ -50,7 +50,7 @@ class NavDrawerHandler(private val activity: MainActivity) {
         )
 
         viewModel.alias.observe(activity) {
-            activity.findViewById<TextView>(R.id.navigationAliasText)?.text = it?.alias
+            activity.findViewById<TextView>(R.id.navigationAliasText)?.text = it.orElse(null)?.alias
         }
     }
 

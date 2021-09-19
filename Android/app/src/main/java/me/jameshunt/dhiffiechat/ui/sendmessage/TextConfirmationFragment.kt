@@ -16,12 +16,18 @@ class TextConfirmationFragment : ComposeFragment() {
     @Composable
     override fun ScreenComposable() {
         BackAppBar(title = "Send Message") {
-            when (viewModel.sendState.observeAsState().value!!) {
+            when (val result = viewModel.sendState.observeAsState().value!!) {
                 SendMessageViewModel.SendState.CollectMessageText -> TextConfirmation(
                     onConfirm = { msg -> viewModel.sendMessage(msg) }
                 )
                 SendMessageViewModel.SendState.Loading -> LoadingIndicator()
-                SendMessageViewModel.SendState.Finish -> findNavController().popBackStack(R.id.send_message, true)
+                is SendMessageViewModel.SendState.Error -> ErrorHandlingDialog(
+                    t = result.t,
+                    onDismiss = { viewModel.toCollectMessageState() }
+                )
+                SendMessageViewModel.SendState.Finish -> {
+                    findNavController().popBackStack(R.id.send_message, true)
+                }
             }
         }
     }
