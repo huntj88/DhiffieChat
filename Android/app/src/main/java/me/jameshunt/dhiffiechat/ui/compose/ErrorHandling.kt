@@ -18,33 +18,38 @@ import java.net.UnknownHostException
 
 
 @Composable
-fun ErrorHandlingDialog(e: Throwable) {
+fun ErrorHandlingDialog(t: Throwable, onDismiss: () -> Unit = {}) {
     var shouldShowDialog by remember { mutableStateOf(true) }
 
     if (!shouldShowDialog) {
         return
     }
 
-    Dialog(onDismissRequest = { shouldShowDialog = false }) {
-        val message = when (e) {
-            is HandledException.EnvironmentDestroyedOrNoInternet -> "Not connected to the internet or the environment has been destroyed"
-            is HandledException.DeployingNewCode -> "Upgrading Servers"
-            is HandledException.Unauthorized -> "Unauthorized"
-            else -> "Something went wrong"
-        }
-
-        Card(
-            modifier = Modifier.background(DhiffieChatApp.DialogColor),
-            content = {
-                Text(
-                    text = message,
-                    color = DhiffieChatApp.DialogTextColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(16.dp)
-                )
+    Dialog(
+        onDismissRequest = {
+            shouldShowDialog = false
+            onDismiss()
+        },
+        content = {
+            val message = when (t) {
+                is HandledException.EnvironmentDestroyedOrNoInternet -> "Not connected to the internet or the environment has been destroyed"
+                is HandledException.DeployingNewCode -> "Upgrading Servers"
+                is HandledException.Unauthorized -> "Unauthorized"
+                else -> "Something went wrong"
             }
-        )
-    }
+
+            Card(
+                modifier = Modifier.background(DhiffieChatApp.DialogColor),
+                content = {
+                    Text(
+                        text = message,
+                        color = DhiffieChatApp.DialogTextColor,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            )
+        })
 }
 
 sealed class HandledException : Exception() {

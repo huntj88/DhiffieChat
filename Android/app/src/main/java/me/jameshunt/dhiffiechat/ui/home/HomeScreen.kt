@@ -56,13 +56,14 @@ data class FriendMessageData(
     val mostRecentAt: Instant?
 )
 
-enum class DialogState {
-    CameraPermission,
-    Scan,
-    ScanSuccess,
-    Share,
-    Loading,
-    None
+sealed class DialogState {
+    object CameraPermission: DialogState()
+    object Scan: DialogState()
+    object ScanSuccess: DialogState()
+    data class ScanFailure(val t: Throwable): DialogState()
+    object Share: DialogState()
+    object Loading: DialogState()
+    object None: DialogState()
 }
 
 class HomeViewModel(
@@ -81,7 +82,7 @@ class HomeViewModel(
             ?.let { qrAdapter.toJson(it) }
     }
 
-    val dialogState = MutableLiveData(DialogState.None)
+    val dialogState = MutableLiveData(DialogState.None as DialogState)
 
     private val emitOnRefresh = MutableLiveData(Unit)
     val friendMessageData: LiveData<Result<List<FriendMessageData>>> by lazy {
@@ -117,8 +118,12 @@ class HomeViewModel(
         dialogState.value = DialogState.Loading
         val (userId, alias) = qrAdapter.fromJson(qrJson)!!
         applicationScope.launch {
-            userService.addFriend(userId, alias)
-            dialogState.value = DialogState.ScanSuccess
+            try {
+                userService.addFriend(userId, alias)
+                dialogState.value = DialogState.ScanSuccess
+            } catch (e: Throwable) {
+                dialogState.value = DialogState.ScanFailure(e)
+            }
         }
     }
 }
@@ -175,7 +180,7 @@ fun HomeScreen(
                         )
                     }
                     is Result.Failure -> {
-                        ErrorHandlingDialog(e = messageSummariesResult.throwable)
+                        ErrorHandlingDialog(t = messageSummariesResult.throwable)
                     }
                     null -> {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -293,7 +298,7 @@ private fun DialogStates(viewModel: HomeViewModel) {
         }
     )
 
-    when (viewModel.dialogState.observeAsState().value!!) {
+    when (val result = viewModel.dialogState.observeAsState().value!!) {
         DialogState.CameraPermission -> cameraPermissionContract.launch(Manifest.permission.CAMERA)
         DialogState.Scan -> Dialog(
             onDismissRequest = {
@@ -325,6 +330,9 @@ private fun DialogStates(viewModel: HomeViewModel) {
                 )
             }
         )
+        is DialogState.ScanFailure -> ErrorHandlingDialog(t = result.t) {
+            viewModel.dialogState.value = DialogState.None
+        }
         DialogState.Share -> Dialog(
             onDismissRequest = { viewModel.dialogState.value = DialogState.None },
             content = {

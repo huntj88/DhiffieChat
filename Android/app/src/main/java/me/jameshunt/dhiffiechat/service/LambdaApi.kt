@@ -11,9 +11,14 @@ import java.security.PublicKey
 import java.time.Instant
 
 
-class LauncherService(private val api: LambdaApi) {
+class LauncherService(private val api: LambdaApi, private val userService: UserService) {
     suspend fun init() {
-        api.initSingleEndpoint()
+        try {
+            api.initSingleEndpoint()
+            userService.createIdentity()
+        } catch (e: Exception) {
+            // let home screen show error
+        }
     }
 }
 

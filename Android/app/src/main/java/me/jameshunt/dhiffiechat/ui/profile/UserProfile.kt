@@ -3,7 +3,9 @@ package me.jameshunt.dhiffiechat.ui.profile
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -15,22 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.service.UserService
 import me.jameshunt.dhiffiechat.ui.compose.StyledTextField
 
-class UserProfileViewModel(
-    private val service: UserService,
-    applicationScope: CoroutineScope
-) : ViewModel() {
-    init {
-        applicationScope.launch {
-            service.createIdentity()
-        }
-    }
-
+class UserProfileViewModel(private val service: UserService) : ViewModel() {
     val alias: LiveData<String?> = service.getAlias().map { it?.alias }.asLiveData()
 
     fun setAlias(alias: String) {
