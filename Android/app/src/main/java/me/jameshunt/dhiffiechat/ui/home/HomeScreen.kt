@@ -33,10 +33,11 @@ import androidx.lifecycle.*
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
 import com.squareup.moshi.Moshi
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.BackpressureStrategy
 import io.reactivex.rxjava3.core.Observable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.subscribeBy
 import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.service.MessageService
@@ -73,17 +74,17 @@ sealed class DialogState {
 }
 
 class HomeViewModel(
-    private val applicationScope: CoroutineScope,
     private val userService: UserService,
     private val messageService: MessageService,
     moshi: Moshi
 ) : ViewModel() {
 
+    private val disposables = CompositeDisposable()
     private val qrAdapter = moshi.adapter(QRData::class.java)
 
-    val alias = userService.getAlias().asLiveData()
+    val alias = userService.getAlias().let { LiveDataReactiveStreams.fromPublisher(it) }
     val qrDataShare: LiveData<String?> = alias.map { alias ->
-        alias
+        alias?.orElse(null)
             ?.let { QRData(it.userId, it.alias) }
             ?.let { qrAdapter.toJson(it) }
     }
@@ -108,7 +109,7 @@ class HomeViewModel(
                         }.sortedByDescending { it.mostRecentAt }
                     }
             }
-            .map { Result.Success(it) as Result<List<FriendMessageData>>}
+            .map { Result.Success(it) as Result<List<FriendMessageData>> }
             .onErrorResumeNext { Observable.just(Result.Failure(it)) }
             .toFlowable(BackpressureStrategy.LATEST)
             .let { LiveDataReactiveStreams.fromPublisher(it) }
@@ -127,14 +128,20 @@ class HomeViewModel(
     fun addFriend(qrJson: String) {
         dialogState.value = DialogState.Loading
         val (userId, alias) = qrAdapter.fromJson(qrJson)!!
-        applicationScope.launch {
-            try {
-                userService.addFriend(userId, alias)
-                dialogState.value = DialogState.ScanSuccess
-            } catch (e: Throwable) {
-                dialogState.value = DialogState.ScanFailure(e)
-            }
-        }
+
+        val disposable = userService.addFriend(userId, alias)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { dialogState.value = DialogState.ScanSuccess },
+                onError = { dialogState.value = DialogState.ScanFailure(it) }
+            )
+
+        disposables.add(disposable)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disposables.clear()
     }
 }
 

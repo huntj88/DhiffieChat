@@ -2,15 +2,17 @@ package me.jameshunt.dhiffiechat.service
 
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import me.jameshunt.dhiffiechat.crypto.*
+import me.jameshunt.dhiffiechat.crypto.AESCrypto
+import me.jameshunt.dhiffiechat.crypto.base64ToByteArray
+import me.jameshunt.dhiffiechat.crypto.toBase64String
+import me.jameshunt.dhiffiechat.crypto.toS3Key
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.*
+import java.io.File
+import java.io.IOException
+import java.io.InputStream
 import java.net.URL
-import kotlin.coroutines.suspendCoroutine
 
 class MessageService(
     private val okHttpClient: OkHttpClient,

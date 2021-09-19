@@ -3,19 +3,18 @@ package me.jameshunt.dhiffiechat.service
 import android.util.Log
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
-import com.squareup.sqldelight.runtime.coroutines.asFlow
-import com.squareup.sqldelight.runtime.coroutines.mapToList
 import com.squareup.sqldelight.runtime.rx3.asObservable
 import com.squareup.sqldelight.runtime.rx3.mapToList
+import io.reactivex.rxjava3.core.BackpressureStrategy
+import io.reactivex.rxjava3.core.Flowable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import me.jameshunt.dhiffiechat.Alias
 import me.jameshunt.dhiffiechat.AliasQueries
 import me.jameshunt.dhiffiechat.crypto.toPublicKey
 import me.jameshunt.dhiffiechat.crypto.toUserId
 import java.security.PublicKey
+import java.util.*
 
 class UserService(
     private val aliasQueries: AliasQueries,
@@ -25,11 +24,11 @@ class UserService(
     private val prefManager: PrefManager
 ) {
 
-    fun getAlias(): Flow<Alias?> {
+    fun getAlias(): Flowable<Optional<Alias>> {
         val userId = identityManager.getIdentity().toUserId()
-        return aliasQueries.getAliases().asFlow().mapToList().map { aliases ->
-            aliases.firstOrNull { it.userId == userId }
-        }
+        return aliasQueries.getAliases().asObservable().mapToList().map { aliases ->
+            Optional.ofNullable(aliases.firstOrNull { it.userId == userId })
+        }.toFlowable(BackpressureStrategy.LATEST)
     }
 
     fun setAlias(alias: String) {
@@ -50,9 +49,9 @@ class UserService(
         return api.getUserRelationships()
     }
 
-    suspend fun addFriend(userId: String, alias: String) {
+    fun addFriend(userId: String, alias: String): Single<Unit> {
         aliasQueries.addAlias(userId, alias)
-        api.scanQR(body = LambdaApi.ScanQR(scannedUserId = userId))
+        return api.scanQR(body = LambdaApi.ScanQR(scannedUserId = userId)).map { Unit }
     }
 
     fun createIdentity(): Single<Unit> {

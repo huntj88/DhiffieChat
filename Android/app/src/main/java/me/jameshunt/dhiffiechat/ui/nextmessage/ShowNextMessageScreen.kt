@@ -27,7 +27,10 @@ import androidx.lifecycle.*
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.ui.PlayerView
-import kotlinx.coroutines.launch
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.Singles
+import io.reactivex.rxjava3.kotlin.subscribeBy
 import me.jameshunt.dhiffiechat.service.LambdaApi.Message
 import me.jameshunt.dhiffiechat.service.MediaType
 import me.jameshunt.dhiffiechat.service.MessageService
@@ -37,25 +40,29 @@ import java.io.File
 class ShowNextMessageViewModel(private val messageService: MessageService) : ViewModel() {
     data class MediaMessage(val message: Message, val file: File)
 
-    private var downloadEnabled = true
     private val _media: MutableLiveData<MediaMessage?> = MutableLiveData(null)
     val media: LiveData<MediaMessage?> = _media
 
-    fun loadFile(fromUserId: String) {
-        if (!downloadEnabled) return
-        downloadEnabled = false
+    private val disposables = CompositeDisposable()
 
-//        viewModelScope.launch {
-//            val message = messageService
-//                .getMessageSummaries()
-//                .first { it.from == fromUserId }
-//                .next!!
-//
-//            _media.value = MediaMessage(
-//                message = messageService.decryptMessageText(message),
-//                file = messageService.getDecryptedFile(message)
-//            )
-//        }
+    fun loadFile(fromUserId: String) {
+        val disposable = messageService.getMessageSummaries().flatMap {
+            val message = it.first { it.from == fromUserId }.next!!
+            Singles.zip(
+                messageService.decryptMessageText(message),
+                messageService.getDecryptedFile(message)
+            ).map { (msg, file) -> MediaMessage(message = msg, file = file) }
+        }.observeOn(AndroidSchedulers.mainThread()).subscribeBy(
+            onError = { it.printStackTrace() /* TODO */ },
+            onSuccess = { _media.value = it }
+        )
+
+        disposables.add(disposable)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        disposables.clear()
     }
 }
 

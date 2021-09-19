@@ -89,10 +89,10 @@ interface LambdaApi {
     data class ScanQR(val scannedUserId: String)
 
     @POST("PerformRequest")
-    suspend fun scanQR(
+    fun scanQR(
         @Query("type") type: String = "ScanQR",
         @Body body: ScanQR
-    ): ResponseMessage
+    ): Single<ResponseMessage>
 
 
     data class SendMessage(

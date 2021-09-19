@@ -15,14 +15,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.LiveDataReactiveStreams
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import kotlinx.coroutines.flow.map
+import androidx.lifecycle.map
 import me.jameshunt.dhiffiechat.service.UserService
 import me.jameshunt.dhiffiechat.ui.compose.StyledTextField
 
 class UserProfileViewModel(private val service: UserService) : ViewModel() {
-    val alias: LiveData<String?> = service.getAlias().map { it?.alias }.asLiveData()
+    val alias: LiveData<String?> = service.getAlias()
+        .let { LiveDataReactiveStreams.fromPublisher(it) }.map { it.orElse(null)?.alias }
 
     fun setAlias(alias: String) {
         service.setAlias(alias)
@@ -40,7 +41,7 @@ fun UserProfile(viewModel: UserProfileViewModel, onAliasSet: () -> Unit) {
             StyledTextField(
                 value = alias,
                 labelString = "Alias",
-                onValueChange = { aliasSave = it}
+                onValueChange = { aliasSave = it }
             )
             // TODO: Select icon
             Button(

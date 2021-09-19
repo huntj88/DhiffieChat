@@ -8,10 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.disposables.DisposableContainer
 import io.reactivex.rxjava3.kotlin.subscribeBy
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import me.jameshunt.dhiffiechat.ui.compose.InjectableViewModelFactory
 import me.jameshunt.dhiffiechat.service.LauncherService
 
@@ -39,12 +36,10 @@ class LauncherScreenViewModel(private val service: LauncherService): ViewModel()
     val state = MutableLiveData(LauncherState.Loading)
 
     fun load() {
-        val disposable = service.init().observeOn(AndroidSchedulers.mainThread()) .subscribeBy(
+        val disposable = service.init().observeOn(AndroidSchedulers.mainThread()).subscribeBy(
             onSuccess = { state.value = LauncherState.Done },
             onError = {}
         )
-
-        service.init()
         disposables.add(disposable)
     }
 
