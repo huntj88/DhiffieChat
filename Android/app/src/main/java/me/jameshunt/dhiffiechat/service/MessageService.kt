@@ -69,7 +69,7 @@ class MessageService(
         return userService.getUserPublicKey(recipientUserId)
             .map { recipientPublicKey -> authManager.userToUserMessage(recipientPublicKey) }
             .observeOn(Schedulers.computation())
-            .map { userToUserCredentials ->
+            .flatMap { userToUserCredentials ->
                 val output = fileLocationUtil.outgoingEncryptedFile()
 
                 AESCrypto.encrypt(
@@ -79,7 +79,12 @@ class MessageService(
                 )
 
                 val encryptedText = text
-                    ?.let { AESCrypto.encrypt(text.toByteArray(), userToUserCredentials.sharedSecret) }
+                    ?.let {
+                        AESCrypto.encrypt(
+                            text.toByteArray(),
+                            userToUserCredentials.sharedSecret
+                        )
+                    }
                     ?.toBase64String()
 
                 val body = LambdaApi.SendMessage(
@@ -89,11 +94,12 @@ class MessageService(
                     mediaType = mediaType
                 )
 
-                api.sendMessage(body = body).map { response ->
-                    upload(response.uploadUrl, output)
-                    file.delete()
-                    output.delete()
-                }
+                api.sendMessage(body = body)
+                    .flatMap { response -> upload(response.uploadUrl, output) }
+                    .doAfterSuccess {
+                        file.delete()
+                        output.delete()
+                    }
             }
     }
 
@@ -140,8 +146,8 @@ class MessageService(
         }.subscribeOn(Schedulers.io())
     }
 
-    class HttpException(val okHttpResponse: Response): RuntimeException(
-        message = "${okHttpResponse.message} ${okHttpResponse.request.url}"
+    class HttpException(val okHttpResponse: Response) : RuntimeException(
+        "${okHttpResponse.message} ${okHttpResponse.request.url}"
     )
 }
 

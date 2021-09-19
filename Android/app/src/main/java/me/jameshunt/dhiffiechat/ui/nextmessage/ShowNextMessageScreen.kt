@@ -34,28 +34,33 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import me.jameshunt.dhiffiechat.service.LambdaApi.Message
 import me.jameshunt.dhiffiechat.service.MediaType
 import me.jameshunt.dhiffiechat.service.MessageService
+import me.jameshunt.dhiffiechat.ui.compose.ErrorHandlingDialog
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
+import me.jameshunt.dhiffiechat.ui.compose.Result
 import java.io.File
 
 class ShowNextMessageViewModel(private val messageService: MessageService) : ViewModel() {
     data class MediaMessage(val message: Message, val file: File)
 
-    private val _media: MutableLiveData<MediaMessage?> = MutableLiveData(null)
-    val media: LiveData<MediaMessage?> = _media
+    private val _media: MutableLiveData<Result<MediaMessage>?> = MutableLiveData(null)
+    val media: LiveData<Result<MediaMessage>?> = _media
 
     private val disposables = CompositeDisposable()
 
     fun loadFile(fromUserId: String) {
-        val disposable = messageService.getMessageSummaries().flatMap {
-            val message = it.first { it.from == fromUserId }.next!!
-            Singles.zip(
-                messageService.decryptMessageText(message),
-                messageService.getDecryptedFile(message)
-            ).map { (msg, file) -> MediaMessage(message = msg, file = file) }
-        }.observeOn(AndroidSchedulers.mainThread()).subscribeBy(
-            onError = { it.printStackTrace() /* TODO */ },
-            onSuccess = { _media.value = it }
-        )
+        val disposable = messageService.getMessageSummaries()
+            .flatMap {
+                val message = it.first { it.from == fromUserId }.next!!
+                Singles.zip(
+                    messageService.decryptMessageText(message),
+                    messageService.getDecryptedFile(message)
+                ).map { (msg, file) -> MediaMessage(message = msg, file = file) }
+            }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onError = { _media.value = Result.Failure(it) },
+                onSuccess = { _media.value = Result.Success(it) }
+            )
 
         disposables.add(disposable)
     }
@@ -69,10 +74,22 @@ class ShowNextMessageViewModel(private val messageService: MessageService) : Vie
 @Composable
 fun ShowNextMessageScreen(viewModel: ShowNextMessageViewModel, fromUserId: String) {
     viewModel.media.observeAsState().value
-        ?.let { media ->
-            when (media.message.mediaType) {
-                MediaType.Image -> ImageMessage(text = media.message.text, file = media.file)
-                MediaType.Video -> VideoMessage(text = media.message.text, file = media.file)
+        ?.let { result ->
+            when (result) {
+                is Result.Failure -> ErrorHandlingDialog(t = result.throwable)
+                is Result.Success -> {
+                    val media = result.data
+                    when (media.message.mediaType) {
+                        MediaType.Image -> ImageMessage(
+                            text = media.message.text,
+                            file = media.file
+                        )
+                        MediaType.Video -> VideoMessage(
+                            text = media.message.text,
+                            file = media.file
+                        )
+                    }
+                }
             }
         }
         ?: Scaffold {

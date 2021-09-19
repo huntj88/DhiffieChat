@@ -25,7 +25,9 @@ class TextConfirmationFragment : ComposeFragment() {
                     t = result.t,
                     onDismiss = { viewModel.toCollectMessageState() }
                 )
-                SendMessageViewModel.SendState.Finish -> findNavController().popBackStack(R.id.send_message, true)
+                SendMessageViewModel.SendState.Finish -> {
+                    findNavController().popBackStack(R.id.send_message, true)
+                }
             }
         }
     }
