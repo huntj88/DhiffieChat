@@ -7,7 +7,6 @@ import androidx.compose.material.lightColors
 import androidx.compose.ui.graphics.Color
 
 // TODO: Limit media length to 60 seconds, put a max size in mb just in case, but with extra roominess
-// TODO: global error dialog for network errors
 // TODO: welcome screen
 // TODO: empty state on home screen
 

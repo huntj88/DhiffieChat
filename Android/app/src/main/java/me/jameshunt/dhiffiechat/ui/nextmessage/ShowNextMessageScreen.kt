@@ -34,9 +34,9 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import me.jameshunt.dhiffiechat.service.LambdaApi.Message
 import me.jameshunt.dhiffiechat.service.MediaType
 import me.jameshunt.dhiffiechat.service.MessageService
-import me.jameshunt.dhiffiechat.ui.compose.ErrorHandlingDialog
+import me.jameshunt.dhiffiechat.ErrorHandlingDialog
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
-import me.jameshunt.dhiffiechat.ui.compose.Result
+import me.jameshunt.dhiffiechat.Result
 import java.io.File
 
 class ShowNextMessageViewModel(private val messageService: MessageService) : ViewModel() {

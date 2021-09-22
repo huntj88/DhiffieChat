@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat.ui.compose
+package me.jameshunt.dhiffiechat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
@@ -7,11 +7,11 @@ import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.service.MessageService
 import retrofit2.HttpException
 import java.net.UnknownHostException
@@ -49,15 +49,8 @@ fun ErrorHandlingDialog(t: Throwable, onDismiss: () -> Unit = {}) {
             onDismiss()
         },
         title = {
-            val message = when (transformedException) {
-                is HandledException.EnvironmentDestroyedOrNoInternet -> "Not connected to the internet or the environment has been destroyed"
-                is HandledException.DeployingNewCode -> "Upgrading Servers"
-                is HandledException.Unauthorized -> "Unauthorized"
-                else -> "Something went wrong"
-            }
-
             Text(
-                text = message,
+                text = errorMessage(t = transformedException),
                 color = DhiffieChatApp.DialogTextColor,
                 textAlign = TextAlign.Start,
                 fontSize = 20.sp,
@@ -70,13 +63,22 @@ fun ErrorHandlingDialog(t: Throwable, onDismiss: () -> Unit = {}) {
             }) {
                 Text(text = "Close")
             }
-        })
+        }
+    )
 }
 
 sealed class HandledException : Exception() {
     object EnvironmentDestroyedOrNoInternet : HandledException()
     object DeployingNewCode : HandledException()
     object Unauthorized : HandledException()
+}
+
+@Composable
+fun errorMessage(t: Throwable): String = when (t) {
+    is HandledException.EnvironmentDestroyedOrNoInternet -> stringResource(R.string.environment_destroyed_or_no_internet)
+    is HandledException.DeployingNewCode -> stringResource(R.string.deploying_new_code)
+    is HandledException.Unauthorized -> stringResource(R.string.unauthorized)
+    else -> stringResource(R.string.some_went_wrong)
 }
 
 sealed class Result<out T> {

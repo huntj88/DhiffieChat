@@ -5,6 +5,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navGraphViewModels
 import me.jameshunt.dhiffiechat.R
+import me.jameshunt.dhiffiechat.ErrorHandlingDialog
 import me.jameshunt.dhiffiechat.ui.compose.*
 
 class TextConfirmationFragment : ComposeFragment() {

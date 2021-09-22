@@ -42,9 +42,9 @@ import me.jameshunt.dhiffiechat.DhiffieChatApp
 import me.jameshunt.dhiffiechat.R
 import me.jameshunt.dhiffiechat.service.MessageService
 import me.jameshunt.dhiffiechat.service.UserService
-import me.jameshunt.dhiffiechat.ui.compose.ErrorHandlingDialog
+import me.jameshunt.dhiffiechat.ErrorHandlingDialog
 import me.jameshunt.dhiffiechat.ui.compose.LoadingIndicator
-import me.jameshunt.dhiffiechat.ui.compose.Result
+import me.jameshunt.dhiffiechat.Result
 import net.glxn.qrgen.android.MatrixToImageWriter
 import java.math.BigInteger
 import java.time.Duration
