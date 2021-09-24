@@ -20,6 +20,8 @@ class PerformRequest: RequestHandler<Map<String, Any?>, GatewayResponse> {
             "GetUserPublicKey" -> GetUserPublicKey().handleRequest(request, context)
             "GetUserRelationships" -> GetUserRelationships().handleRequest(request, context)
             "GetMessageSummaries" -> GetMessageSummaries().handleRequest(request, context)
+            "RemainingEphemeralReceiveKeys" -> RemainingEphemeralReceiveKeys().handleRequest(request, context)
+            "UploadEphemeralReceiveKeys" -> UploadEphemeralReceiveKeys().handleRequest(request, context)
             else -> TODO()
         }
     }

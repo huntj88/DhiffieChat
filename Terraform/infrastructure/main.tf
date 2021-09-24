@@ -76,6 +76,25 @@ resource "aws_dynamodb_table" "message-dynamodb-table" {
   }
 }
 
+resource "aws_dynamodb_table" "ephemeral-key-dynamodb-table" {
+  name           = "${terraform.workspace}.EphemeralKey"
+  billing_mode   = "PAY_PER_REQUEST"
+  read_capacity  = 1
+  write_capacity = 1
+  hash_key       = "userId"
+  range_key      = "sortKey"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "sortKey"
+    type = "S"
+  }
+}
+
 resource "aws_iam_role" "function_role" {
   name = "${terraform.workspace}_function_role"
 
@@ -168,7 +187,8 @@ resource "aws_iam_policy" "function_policy" {
         Effect = "Allow"
         Resource = [
           aws_dynamodb_table.user-dynamodb-table.arn,
-          aws_dynamodb_table.message-dynamodb-table.arn
+          aws_dynamodb_table.message-dynamodb-table.arn,
+          aws_dynamodb_table.ephemeral-key-dynamodb-table.arn
         ]
       }
     ]

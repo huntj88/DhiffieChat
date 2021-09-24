@@ -23,7 +23,6 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 throw Unauthorized()
             }
 
-            // TODO: check if friends
             val messageCreatedAt = Instant.now()
 
             val signedUrlRequest = GeneratePresignedUrlRequest(encryptedFileBucket, body.s3Key)
