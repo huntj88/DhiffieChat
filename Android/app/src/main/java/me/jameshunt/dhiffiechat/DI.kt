@@ -72,13 +72,16 @@ class DI(val application: DhiffieChatApp) {
     private val userService = UserService(
         dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
     )
-    private val launcherService = LauncherService(api, userService)
-    private val messageService = MessageService(okhttp, authManager, api, userService, fileLocationUtil)
+    private val ephemeralKeySyncService =
+        EphemeralKeySyncService(api, dbQueryManager.getEncryptionKeyQueries())
+
+    private val messageService =
+        MessageService(okhttp, authManager, api, userService, fileLocationUtil)
 
     private val injectableComponents = mutableMapOf<String, Any>()
 
     init {
-        register(moshi, messageService, userService, fileLocationUtil, launcherService)
+        register(moshi, messageService, userService, fileLocationUtil, ephemeralKeySyncService)
     }
 
     private fun register(vararg entry: Any) {
