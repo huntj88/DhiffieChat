@@ -9,10 +9,12 @@ import androidx.lifecycle.ViewModel
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
+import me.jameshunt.dhiffiechat.service.EphemeralKeySyncService
+import me.jameshunt.dhiffiechat.service.LambdaApi
+import me.jameshunt.dhiffiechat.service.UserService
 import me.jameshunt.dhiffiechat.ui.compose.InjectableViewModelFactory
-import me.jameshunt.dhiffiechat.service.LauncherService
 
-class LauncherActivity: FragmentActivity() {
+class LauncherActivity : FragmentActivity() {
     private val viewModel: LauncherScreenViewModel by viewModels { InjectableViewModelFactory() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,7 +28,11 @@ class LauncherActivity: FragmentActivity() {
     }
 }
 
-class LauncherScreenViewModel(private val service: LauncherService): ViewModel() {
+class LauncherScreenViewModel(
+    private val api: LambdaApi,
+    private val userService: UserService,
+    private val ephemeralKeySyncService: EphemeralKeySyncService
+) : ViewModel() {
     enum class LauncherState {
         Loading,
         Done
@@ -36,13 +42,17 @@ class LauncherScreenViewModel(private val service: LauncherService): ViewModel()
     val state = MutableLiveData(LauncherState.Loading)
 
     fun load() {
-        val disposable = service.init().observeOn(AndroidSchedulers.mainThread()).subscribeBy(
-            onSuccess = { state.value = LauncherState.Done },
-            onError = {
-                // ignore error, let home screen show error
-                state.value = LauncherState.Done
-            }
-        )
+        val disposable = api.initSingleEndpoint()
+            .flatMap { userService.createIdentity() }
+            .flatMap { ephemeralKeySyncService.populateEphemeralReceiveKeys() }
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onSuccess = { state.value = LauncherState.Done },
+                onError = {
+                    // ignore error, let home screen show error
+                    state.value = LauncherState.Done
+                }
+            )
         disposables.add(disposable)
     }
 

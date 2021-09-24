@@ -1,6 +1,7 @@
 package me.jameshunt.dhiffiechat.service
 
 import io.reactivex.rxjava3.core.Single
+import me.jameshunt.dhiffiechat.BuildConfig
 import okhttp3.Headers
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -10,14 +11,6 @@ import retrofit2.http.Query
 import java.net.URL
 import java.security.PublicKey
 import java.time.Instant
-
-
-class LauncherService(private val api: LambdaApi, private val userService: UserService) {
-    fun init(): Single<Unit> = api
-        .initSingleEndpoint()
-        .flatMap { userService.createIdentity() }
-        .map { Unit }
-}
 
 data class ResponseMessage(val message: String)
 
@@ -120,6 +113,19 @@ interface LambdaApi {
         @Query("type") type: String = "ConsumeMessage",
         @Body body: ConsumeMessage
     ): Single<ConsumeMessageResponse>
+
+    data class RemainingEphemeralReceiveKeysResponse(val remainingKeys: Int)
+    @POST("PerformRequest")
+    fun remainingEphemeralReceiveKeys(
+        @Query("type") type: String = "RemainingEphemeralReceiveKeys"
+    ): Single<RemainingEphemeralReceiveKeysResponse>
+
+    data class UploadReceiveKeys(val newKeys: List<PublicKey>)
+    @POST("PerformRequest")
+    fun uploadEphemeralReceiveKeys(
+        @Query("type") type: String = "UploadEphemeralReceiveKeys",
+        @Body body: UploadReceiveKeys
+    ): Single<ResponseMessage>
 }
 
 class HeaderInterceptor(
@@ -129,8 +135,11 @@ class HeaderInterceptor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
 
-        // do not bother with Auth for CreateIdentity request
-        return when (request.url.toString().contains("CreateIdentity")) {
+        // do not bother with Auth for CreateIdentity request or wrong base url
+        val skipAuth = BuildConfig.BASE_URL !in request.url.toString() ||
+            request.url.toString().contains("CreateIdentity")
+
+        return when (skipAuth) {
             true -> chain.proceed(request)
             false -> {
                 val headers = request.headers.newBuilder()
