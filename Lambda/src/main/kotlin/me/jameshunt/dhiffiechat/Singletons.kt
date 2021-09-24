@@ -12,7 +12,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
 const val configBucketSuffix = "dhiffiechat-config-bucket"
 const val encryptedFileBucketSuffix = "dhiffiechat-encrypted-file-bucket"
-val environment = System.getenv("DHIFFIE_ENVIRONMENT")
+val environment: String = System.getenv("DHIFFIE_ENVIRONMENT")
 val configBucket = "${environment}-$configBucketSuffix"
 val encryptedFileBucket = "${environment}-$encryptedFileBucketSuffix"
 
@@ -30,3 +30,4 @@ object Singletons {
 
 fun DynamoDB.messageTable(): Table = this.getTable("${environment}.Message")
 fun DynamoDB.userTable(): Table = this.getTable("${environment}.User")
+fun DynamoDB.ephemeralKeyTable(): Table = this.getTable("${environment}.EphemeralKey")

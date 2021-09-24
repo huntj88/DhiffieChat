@@ -10,6 +10,7 @@ import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import me.jameshunt.dhiffiechat.service.EphemeralKeySyncService
+import me.jameshunt.dhiffiechat.service.InitService
 import me.jameshunt.dhiffiechat.service.LambdaApi
 import me.jameshunt.dhiffiechat.service.UserService
 import me.jameshunt.dhiffiechat.ui.compose.InjectableViewModelFactory
@@ -28,11 +29,7 @@ class LauncherActivity : FragmentActivity() {
     }
 }
 
-class LauncherScreenViewModel(
-    private val api: LambdaApi,
-    private val userService: UserService,
-    private val ephemeralKeySyncService: EphemeralKeySyncService
-) : ViewModel() {
+class LauncherScreenViewModel(private val initService: InitService) : ViewModel() {
     enum class LauncherState {
         Loading,
         Done
@@ -42,9 +39,7 @@ class LauncherScreenViewModel(
     val state = MutableLiveData(LauncherState.Loading)
 
     fun load() {
-        val disposable = api.initSingleEndpoint()
-            .flatMap { userService.createIdentity() }
-            .flatMap { ephemeralKeySyncService.populateEphemeralReceiveKeys() }
+        val disposable = initService.init()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { state.value = LauncherState.Done },
