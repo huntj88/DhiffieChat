@@ -44,7 +44,7 @@ class MessageService(
             .map { otherUserPublicKey -> authManager.userToUserMessage(otherUserPublicKey) }
             .observeOn(Schedulers.computation())
             .flatMap { userToUserCredentials ->
-                val body = LambdaApi.ConsumeMessage(message.fileKey, message.messageCreatedAt)
+                val body = LambdaApi.ConsumeMessage(message.messageCreatedAt)
                 api
                     .consumeMessage(body = body)
                     .flatMap { download(it.s3Url) }

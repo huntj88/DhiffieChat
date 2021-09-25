@@ -22,7 +22,7 @@ class ConsumeMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
             ).toMessage()
 
             if (message.signedS3UrlExpiration?.isBefore(Instant.now()) == true) {
-                return GatewayResponse(statusCode = 410, body = "")
+                throw HandledExceptions.Gone()
             }
 
             val signedUrl = message.signedS3Url ?: generateAndSaveS3Url(message)
@@ -55,7 +55,6 @@ class ConsumeMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
 }
 
 data class ConsumeMessageRequest(
-    val fileKey: String,
     val timeSent: Instant
 )
 

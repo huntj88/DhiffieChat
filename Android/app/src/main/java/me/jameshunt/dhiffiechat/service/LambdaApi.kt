@@ -103,7 +103,6 @@ interface LambdaApi {
     ): Single<SendMessageResponse>
 
     data class ConsumeMessage(
-        val fileKey: String,
         val timeSent: Instant
     )
     data class ConsumeMessageResponse(val s3Url: URL)
@@ -126,6 +125,14 @@ interface LambdaApi {
         @Query("type") type: String = "UploadEphemeralReceiveKeys",
         @Body body: UploadReceiveKeys
     ): Single<ResponseMessage>
+
+    data class EphemeralPublicKeyRequest(val userId: String)
+    data class EphemeralPublicKeyResponse(val publicKey: PublicKey)
+    @POST("PerformRequest")
+    fun getEphemeralPublicKey(
+        @Query("type") type: String = "GetEphemeralPublicKey",
+        @Body body: EphemeralPublicKeyRequest
+    ): Single<EphemeralPublicKeyResponse>
 }
 
 class HeaderInterceptor(

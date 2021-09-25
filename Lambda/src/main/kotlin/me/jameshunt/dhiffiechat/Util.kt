@@ -33,11 +33,8 @@ inline fun <reified Body, Out> awsTransform(
             }
         )
         GatewayResponse(body = out)
-    } catch (e: Unauthorized) {
-        GatewayResponse(
-            body = Singletons.objectMapper.writeValueAsString(mapOf("message" to "Authentication error")),
-            statusCode = 401
-        )
+    } catch (e: HandledExceptions.Unauthorized) {
+        e.toResponse()
     }
 }
 
@@ -61,11 +58,8 @@ inline fun <reified Body, Out> awsTransformAuthed(
             }
         )
         GatewayResponse(body = out)
-    } catch (e: Unauthorized) {
-        GatewayResponse(
-            body = Singletons.objectMapper.writeValueAsString(mapOf("message" to "Authentication error")),
-            statusCode = 401
-        )
+    } catch (e: HandledExceptions.Unauthorized) {
+        e.toResponse()
     }
 }
 
@@ -129,7 +123,28 @@ fun validateAndGetIdentity(request: Map<String, Any?>): Identity {
     )
 }
 
-class Unauthorized : Exception()
+sealed class HandledExceptions: Exception() {
+    class Unauthorized : HandledExceptions()
+    class NotFound : HandledExceptions()
+    class Gone: HandledExceptions()
+
+    fun toResponse(): GatewayResponse {
+        return when (this) {
+            is Unauthorized -> GatewayResponse(
+                body = Singletons.objectMapper.writeValueAsString(mapOf("message" to "Authentication error")),
+                statusCode = 401
+            )
+            is NotFound -> GatewayResponse(
+                body = Singletons.objectMapper.writeValueAsString(mapOf("message" to "Resource not found")),
+                statusCode = 404
+            )
+            is Gone -> GatewayResponse(
+                body = Singletons.objectMapper.writeValueAsString(mapOf("message" to "Resource gone")),
+                statusCode = 410
+            )
+        }
+    }
+}
 
 fun Instant.format(): String {
     return DateTimeFormatter.ISO_INSTANT.format(this)
