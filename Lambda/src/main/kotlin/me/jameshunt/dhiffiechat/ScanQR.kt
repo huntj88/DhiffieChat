@@ -15,9 +15,7 @@ class ScanQR : RequestHandler<Map<String, Any?>, GatewayResponse> {
             val table = Singletons.dynamoDB.userTable()
             val item = table.getItem("userId", identity.userId)
 
-            context.logger.log("checking if already friends")
-            val friends = item?.getStringSet("friends") ?: emptySet()
-            if (friends.contains(body.scannedUserId)) {
+            if (isFriends(userIdA = identity.userId, userIdB = body.scannedUserId)) {
                 return@awsTransformAuthed
             }
 

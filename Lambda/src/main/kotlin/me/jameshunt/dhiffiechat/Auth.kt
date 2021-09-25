@@ -39,7 +39,7 @@ fun validateAndGetIdentity(userId: String, encryptedToken: String): Identity {
     val publicKey = getUserPublicKey(userId)
     return when (doesUserHavePrivateKey(publicKey, encryptedToken)) {
         true -> Identity(publicKey = publicKey)
-        false -> throw Unauthorized()
+        false -> throw HandledExceptions.Unauthorized()
     }
 }
 
@@ -50,4 +50,18 @@ fun getUserPublicKey(userId: String): PublicKey {
         .asMap()
         .let { it["publicKey"] as String }
         .toPublicKey()
+}
+
+fun ensureFriends(userIdA: String, userIdB: String) {
+    if (!isFriends(userIdA, userIdB)) {
+        throw HandledExceptions.Unauthorized()
+    }
+}
+
+fun isFriends(userIdA: String, userIdB: String): Boolean {
+    val table = Singletons.dynamoDB.userTable()
+    val item = table.getItem("userId", userIdA)
+
+    val friends = item?.getStringSet("friends") ?: emptySet()
+    return friends.contains(userIdB)
 }

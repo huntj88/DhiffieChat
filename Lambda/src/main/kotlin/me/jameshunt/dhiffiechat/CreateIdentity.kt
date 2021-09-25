@@ -18,7 +18,7 @@ class CreateIdentity : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransform<RequestData, Unit>(request, context) { body ->
             if (!doesUserHavePrivateKey(body.publicKey.toPublicKey(), body.encryptedToken)) {
-                throw Unauthorized()
+                throw HandledExceptions.Unauthorized()
             }
             val userTable = Singletons.dynamoDB.userTable()
             val userId = body.publicKey.toPublicKey().toUserId()

@@ -2,6 +2,9 @@ package me.jameshunt.dhiffiechat
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.jameshunt.dhiffiechat.ephemeralkeys.GetEphemeralPublicKey
+import me.jameshunt.dhiffiechat.ephemeralkeys.RemainingEphemeralReceiveKeys
+import me.jameshunt.dhiffiechat.ephemeralkeys.UploadEphemeralReceiveKeys
 
 class PerformRequest: RequestHandler<Map<String, Any?>, GatewayResponse> {
     /**
@@ -22,6 +25,7 @@ class PerformRequest: RequestHandler<Map<String, Any?>, GatewayResponse> {
             "GetMessageSummaries" -> GetMessageSummaries().handleRequest(request, context)
             "RemainingEphemeralReceiveKeys" -> RemainingEphemeralReceiveKeys().handleRequest(request, context)
             "UploadEphemeralReceiveKeys" -> UploadEphemeralReceiveKeys().handleRequest(request, context)
+            "GetEphemeralPublicKey" -> GetEphemeralPublicKey().handleRequest(request, context)
             else -> TODO()
         }
     }
