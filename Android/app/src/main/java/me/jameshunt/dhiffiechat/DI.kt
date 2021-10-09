@@ -49,7 +49,7 @@ class DI(val application: DhiffieChatApp) {
         .build()
 
     private val identityManager = IdentityManager(dbQueryManager.getEncryptionKeyQueries())
-    private val authManager = AuthManager(identityManager, moshi)
+    private val authManager = ServerAuthManager(identityManager, moshi)
     private val headerInterceptor = HeaderInterceptor(identityManager, authManager)
 
     private val okhttp = OkHttpClient
@@ -73,12 +73,12 @@ class DI(val application: DhiffieChatApp) {
         dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
     )
     private val ephemeralKeySyncService =
-        EphemeralKeySyncService(api, dbQueryManager.getEncryptionKeyQueries(), authManager)
+        EphemeralKeySyncService(api, dbQueryManager.getEncryptionKeyQueries(), identityManager)
 
     private val initService = InitService(api, userService, ephemeralKeySyncService)
 
     private val messageService =
-        MessageService(okhttp, authManager, api, userService, fileLocationUtil, dbQueryManager.getEncryptionKeyQueries())
+        MessageService(identityManager, okhttp, api, userService, fileLocationUtil, dbQueryManager.getEncryptionKeyQueries())
 
     private val injectableComponents = mutableMapOf<String, Any>()
 

@@ -14,8 +14,8 @@ import java.io.InputStream
 import java.net.URL
 
 class MessageService(
+    private val identityManager: IdentityManager,
     private val okHttpClient: OkHttpClient,
-    private val authManager: AuthManager,
     private val api: LambdaApi,
     private val userService: UserService,
     private val fileLocationUtil: FileLocationUtil,
@@ -34,8 +34,8 @@ class MessageService(
 
         return userService.getUserPublicKey(userId = message.from)
             .map {
-                val senderPublic = authManager.verifySigningByDecrypting(
-                    base64 = message.signedSendingPublicKey,
+                val senderPublic = verifySigningByDecrypting(
+                    encryptedBase64PublicKey = message.signedSendingPublicKey,
                     otherUser = it
                 )
 
@@ -60,8 +60,8 @@ class MessageService(
 
         return userService.getUserPublicKey(userId = message.from)
             .map {
-                val senderPublic = authManager.verifySigningByDecrypting(
-                    base64 = message.signedSendingPublicKey,
+                val senderPublic = verifySigningByDecrypting(
+                    encryptedBase64PublicKey = message.signedSendingPublicKey,
                     otherUser = it
                 )
 
@@ -98,7 +98,7 @@ class MessageService(
             .getUserPublicKey(recipientUserId)
             .zipWith(ephemeral)
             .map { (otherUser, ephemeral) ->
-                authManager.verifySigningByDecrypting(ephemeral.signedPublicKey, otherUser)
+                verifySigningByDecrypting(ephemeral.signedPublicKey, otherUser)
             }
             .flatMap { publicKey ->
                 val sendingKeyPair = DHCrypto.genDHKeyPair()
@@ -118,7 +118,7 @@ class MessageService(
                     s3Key = output.toS3Key(),
                     mediaType = mediaType,
                     ephemeralPublicKey = publicKey,
-                    signedSendingPublicKey = authManager.signByEncrypting(sendingKeyPair.public)
+                    signedSendingPublicKey = identityManager.signByEncrypting(sendingKeyPair.public)
                 )
 
                 api.sendMessage(body = body)

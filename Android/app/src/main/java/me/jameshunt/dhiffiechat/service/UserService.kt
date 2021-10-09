@@ -1,7 +1,6 @@
 package me.jameshunt.dhiffiechat.service
 
 import android.util.Log
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import com.squareup.sqldelight.runtime.rx3.asObservable
 import com.squareup.sqldelight.runtime.rx3.mapToList
@@ -19,7 +18,7 @@ import java.util.*
 class UserService(
     private val aliasQueries: AliasQueries,
     private val api: LambdaApi,
-    private val authManager: AuthManager,
+    private val serverAuthManager: ServerAuthManager,
     private val identityManager: IdentityManager,
     private val prefManager: PrefManager
 ) {
@@ -55,7 +54,7 @@ class UserService(
     }
 
     fun createIdentity(): Single<Unit> {
-        val userToServerCredentials = authManager.userToServerAuth()
+        val userToServerCredentials = serverAuthManager.userToServerAuth()
 
         return getFcmToken().flatMap { fcmToken ->
             api.createIdentity(
@@ -73,7 +72,7 @@ class UserService(
         try {
             cont.onSuccess(tokenHandle.result)
         } catch (e: IllegalStateException) {
-            tokenHandle.addOnCompleteListener(OnCompleteListener { task ->
+            tokenHandle.addOnCompleteListener { task ->
                 if (!task.isSuccessful) {
                     Log.w("UserService", "Fetching FCM registration token failed", task.exception)
                     cont.onError(task.exception!!)
@@ -82,7 +81,7 @@ class UserService(
                 // Get new FCM registration token
                 val token = task.result
                 cont.onSuccess(token)
-            })
+            }
         }
     }
 

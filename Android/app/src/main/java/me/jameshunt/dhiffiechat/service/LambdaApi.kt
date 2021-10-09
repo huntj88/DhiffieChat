@@ -141,7 +141,7 @@ interface LambdaApi {
 
 class HeaderInterceptor(
     private val identityManager: IdentityManager,
-    private val authManager: AuthManager
+    private val serverAuthManager: ServerAuthManager
 ): Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -174,7 +174,7 @@ class HeaderInterceptor(
     }
 
     private fun userToServerHeaders(): Map<String, String> {
-        val userToServerCredentials = authManager.userToServerAuth()
+        val userToServerCredentials = serverAuthManager.userToServerAuth()
         return mapOf(
             "userServerEncryptedToken" to userToServerCredentials.encryptedToken
         )
