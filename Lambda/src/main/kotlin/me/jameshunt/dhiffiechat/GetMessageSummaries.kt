@@ -57,6 +57,8 @@ data class Message(
     val uploadFinished: Boolean,
     val signedS3Url: URL?,
     val signedS3UrlExpiration: Instant?,
+    val ephemeralPublicKey: String,
+    val signedSendingPublicKey: String,
     @JsonIgnore
     val expiresAt: Instant // used for amazon dynamoDB automatic item expiration
 )
@@ -72,6 +74,8 @@ fun Item.toMessage(): Message {
         uploadFinished = this.getBoolean("uploadFinished"),
         signedS3Url = this.getString("signedS3Url")?.let { URL(it) },
         signedS3UrlExpiration = this.getString("signedS3UrlExpiration")?.let { Instant.parse(it) },
+        ephemeralPublicKey = this.getString("ephemeralPublicKey"),
+        signedSendingPublicKey = this.getString("signedSendingPublicKey"),
         expiresAt = Instant.ofEpochSecond(this.getLong("expiresAt"))
     )
 }
@@ -87,6 +91,8 @@ fun Message.toItem(): Item {
         "uploadFinished" to uploadFinished,
         "signedS3Url" to signedS3Url?.toString(),
         "signedS3UrlExpiration" to signedS3UrlExpiration?.format(),
+        "ephemeralPublicKey" to ephemeralPublicKey,
+        "signedSendingPublicKey" to signedSendingPublicKey,
         "expiresAt" to expiresAt.epochSecond
     )
 
