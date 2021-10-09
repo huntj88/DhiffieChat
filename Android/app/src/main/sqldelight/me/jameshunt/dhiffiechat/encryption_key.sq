@@ -9,3 +9,6 @@ INSERT INTO encryption_key(public_key, private_key) VALUES (:publicKey, :private
 
 selectIdentity:
 SELECT public_key, private_key FROM encryption_key WHERE id = 1;
+
+selectPrivate:
+SELECT private_key FROM encryption_key WHERE public_key = :publicKey;

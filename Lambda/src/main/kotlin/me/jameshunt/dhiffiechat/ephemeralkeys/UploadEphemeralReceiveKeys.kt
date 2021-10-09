@@ -9,18 +9,18 @@ import me.jameshunt.dhiffiechat.ephemeralKeyTable
 import java.util.*
 
 class UploadEphemeralReceiveKeys : RequestHandler<Map<String, Any?>, GatewayResponse> {
-    data class UploadReceiveKeys(val newKeys: List<String>)
+    data class UploadReceiveKeys(val newSignedKeys: List<String>)
 
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
         return awsTransformAuthed<UploadReceiveKeys, Unit>(request, context) { keys, identity ->
             val ephemeralKeysTable = Singletons.dynamoDB.ephemeralKeyTable()
 
-            keys.newKeys
+            keys.newSignedKeys
                 .map { publicKeyAsBase64 ->
                     EphemeralReceiveKey(
                         userId = identity.userId,
                         sortKey = UUID.randomUUID().toString(),
-                        publicKey = publicKeyAsBase64
+                        signedPublicKey = publicKeyAsBase64
                     )
                 }
                 .forEach { ephemeralKeysTable.putItem(it.toItem()) }

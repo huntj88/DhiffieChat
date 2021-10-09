@@ -1,11 +1,10 @@
 package me.jameshunt.dhiffiechat.service
 
 import io.reactivex.rxjava3.core.Single
+import io.reactivex.rxjava3.kotlin.zipWith
 import io.reactivex.rxjava3.schedulers.Schedulers
-import me.jameshunt.dhiffiechat.crypto.AESCrypto
-import me.jameshunt.dhiffiechat.crypto.base64ToByteArray
-import me.jameshunt.dhiffiechat.crypto.toBase64String
-import me.jameshunt.dhiffiechat.crypto.toS3Key
+import me.jameshunt.dhiffiechat.Encryption_keyQueries
+import me.jameshunt.dhiffiechat.crypto.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -20,6 +19,7 @@ class MessageService(
     private val api: LambdaApi,
     private val userService: UserService,
     private val fileLocationUtil: FileLocationUtil,
+    private val encryptionKeyQueries: Encryption_keyQueries
 ) {
 
     fun getMessageSummaries(): Single<List<LambdaApi.MessageSummary>> {
@@ -27,8 +27,20 @@ class MessageService(
     }
 
     fun decryptMessageText(message: LambdaApi.Message): Single<LambdaApi.Message> {
+        val private = encryptionKeyQueries
+            .selectPrivate(message.ephemeralPublicKey.toBase64String())
+            .executeAsOne()
+            .toPrivateKey()
+
         return userService.getUserPublicKey(userId = message.from)
-            .map { otherUserPublicKey -> authManager.userToUserMessage(otherUserPublicKey).sharedSecret }
+            .map {
+                val senderPublic = authManager.verifySigningByDecrypting(
+                    base64 = message.signedSendingPublicKey,
+                    otherUser = it
+                )
+
+                DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = senderPublic)
+            }
             .map { sharedSecret ->
                 val decryptedText = message.text
                     ?.base64ToByteArray()
@@ -37,13 +49,26 @@ class MessageService(
 
                 message.copy(text = decryptedText)
             }
+        // TODO: remove private key from local db after usage
     }
 
     fun getDecryptedFile(message: LambdaApi.Message): Single<File> {
-        return userService.getUserPublicKey(message.from)
-            .map { otherUserPublicKey -> authManager.userToUserMessage(otherUserPublicKey) }
+        val private = encryptionKeyQueries
+            .selectPrivate(message.ephemeralPublicKey.toBase64String())
+            .executeAsOne()
+            .toPrivateKey()
+
+        return userService.getUserPublicKey(userId = message.from)
+            .map {
+                val senderPublic = authManager.verifySigningByDecrypting(
+                    base64 = message.signedSendingPublicKey,
+                    otherUser = it
+                )
+
+                DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = senderPublic)
+            }
             .observeOn(Schedulers.computation())
-            .flatMap { userToUserCredentials ->
+            .flatMap { sharedSecret ->
                 val body = LambdaApi.ConsumeMessage(message.messageCreatedAt)
                 api
                     .consumeMessage(body = body)
@@ -52,7 +77,7 @@ class MessageService(
                         AESCrypto.decrypt(
                             inputStream = it,
                             output = fileLocationUtil.incomingDecryptedFile(),
-                            key = userToUserCredentials.sharedSecret
+                            key = sharedSecret
                         )
                     }
             }
@@ -65,33 +90,35 @@ class MessageService(
         file: File,
         mediaType: MediaType
     ): Single<Unit> {
-        // TODO: Remove metadata from files
-        return userService.getUserPublicKey(recipientUserId)
-            .map { recipientPublicKey -> authManager.userToUserMessage(recipientPublicKey) }
-            .observeOn(Schedulers.computation())
-            .flatMap { userToUserCredentials ->
+        val ephemeral = api.getEphemeralPublicKey(
+            body = LambdaApi.EphemeralPublicKeyRequest(recipientUserId)
+        )
+
+        return userService
+            .getUserPublicKey(recipientUserId)
+            .zipWith(ephemeral)
+            .map { (otherUser, ephemeral) ->
+                authManager.verifySigningByDecrypting(ephemeral.signedPublicKey, otherUser)
+            }
+            .flatMap { publicKey ->
+                val sendingKeyPair = DHCrypto.genDHKeyPair()
+                val secret = DHCrypto.agreeSecretKey(sendingKeyPair.private, publicKey)
+
                 val output = fileLocationUtil.outgoingEncryptedFile()
 
-                AESCrypto.encrypt(
-                    file = file,
-                    output = output,
-                    key = userToUserCredentials.sharedSecret
-                )
+                AESCrypto.encrypt(file = file, output = output, key = secret)
 
                 val encryptedText = text
-                    ?.let {
-                        AESCrypto.encrypt(
-                            text.toByteArray(),
-                            userToUserCredentials.sharedSecret
-                        )
-                    }
+                    ?.let { AESCrypto.encrypt(text.toByteArray(), secret) }
                     ?.toBase64String()
 
                 val body = LambdaApi.SendMessage(
                     recipientUserId = recipientUserId,
                     text = encryptedText,
                     s3Key = output.toS3Key(),
-                    mediaType = mediaType
+                    mediaType = mediaType,
+                    ephemeralPublicKey = publicKey,
+                    signedSendingPublicKey = authManager.signByEncrypting(sendingKeyPair.public)
                 )
 
                 api.sendMessage(body = body)

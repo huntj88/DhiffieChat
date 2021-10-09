@@ -42,7 +42,9 @@ interface LambdaApi {
         val text: String?,
         val fileKey: String,
         val mediaType: MediaType,
-        val signedS3Url: URL?
+        val signedS3Url: URL?,
+        val ephemeralPublicKey: PublicKey,
+        val signedSendingPublicKey: String
     )
 
     @POST("PerformRequest")
@@ -92,7 +94,9 @@ interface LambdaApi {
         val recipientUserId: String,
         val text: String?,
         val s3Key: String,
-        val mediaType: MediaType
+        val mediaType: MediaType,
+        val ephemeralPublicKey: PublicKey,
+        val signedSendingPublicKey: String
     )
     data class SendMessageResponse(val uploadUrl: URL)
 
@@ -119,7 +123,7 @@ interface LambdaApi {
         @Query("type") type: String = "RemainingEphemeralReceiveKeys"
     ): Single<RemainingEphemeralReceiveKeysResponse>
 
-    data class UploadReceiveKeys(val newKeys: List<PublicKey>)
+    data class UploadReceiveKeys(val newSignedKeys: List<String>)
     @POST("PerformRequest")
     fun uploadEphemeralReceiveKeys(
         @Query("type") type: String = "UploadEphemeralReceiveKeys",
@@ -127,7 +131,7 @@ interface LambdaApi {
     ): Single<ResponseMessage>
 
     data class EphemeralPublicKeyRequest(val userId: String)
-    data class EphemeralPublicKeyResponse(val publicKey: PublicKey)
+    data class EphemeralPublicKeyResponse(val signedPublicKey: String) // "signed" public key
     @POST("PerformRequest")
     fun getEphemeralPublicKey(
         @Query("type") type: String = "GetEphemeralPublicKey",
