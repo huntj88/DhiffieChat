@@ -27,14 +27,14 @@ class RemainingEphemeralReceiveKeys : RequestHandler<Map<String, Any?>, GatewayR
 data class EphemeralReceiveKey(
     val userId: String,
     val sortKey: String,
-    val publicKey: String
+    val signedPublicKey: String
 )
 
 fun Item.toEphemeralReceiveKey(): EphemeralReceiveKey {
     return EphemeralReceiveKey(
         userId = this.getString("userId"),
         sortKey = this.getString("sortKey"),
-        publicKey = this.getString("publicKey")
+        signedPublicKey = this.getString("signedPublicKey")
     )
 }
 
@@ -42,7 +42,7 @@ fun EphemeralReceiveKey.toItem(): Item {
     val map = mapOf(
         "userId" to userId,
         "sortKey" to sortKey,
-        "publicKey" to publicKey
+        "signedPublicKey" to signedPublicKey
     )
 
     return Item.fromMap(map)

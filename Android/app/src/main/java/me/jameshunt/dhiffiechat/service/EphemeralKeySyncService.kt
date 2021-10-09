@@ -2,13 +2,14 @@ package me.jameshunt.dhiffiechat.service
 
 import io.reactivex.rxjava3.core.Single
 import me.jameshunt.dhiffiechat.Encryption_keyQueries
-import me.jameshunt.dhiffiechat.crypto.DHCrypto
-import me.jameshunt.dhiffiechat.crypto.toBase64String
+import me.jameshunt.dhiffiechat.crypto.*
 import java.security.PublicKey
+
 
 class EphemeralKeySyncService(
     private val lambdaApi: LambdaApi,
-    private val encryptionKeyQueries: Encryption_keyQueries
+    private val encryptionKeyQueries: Encryption_keyQueries,
+    private val authManager: AuthManager
 ) {
     fun populateEphemeralReceiveKeys(): Single<Unit> {
         return lambdaApi
@@ -17,6 +18,7 @@ class EphemeralKeySyncService(
                 val numToGenerate = 100 - it.remainingKeys
                 (0 until numToGenerate).map { publicKeyOfNewKeyPair() }
             }
+            .map { keys -> keys.map { authManager.signByEncrypting(it) } }
             .map { LambdaApi.UploadReceiveKeys(it) }
             .flatMap { lambdaApi.uploadEphemeralReceiveKeys(body = it) }
             .map { Unit }
