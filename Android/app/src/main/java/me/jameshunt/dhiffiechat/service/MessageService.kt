@@ -28,36 +28,6 @@ class MessageService(
         return api.getMessageSummaries()
     }
 
-    fun decryptMessageText(message: LambdaApi.Message): Single<LambdaApi.Message> {
-        return getSharedSecretForDecryption(message).map { sharedSecret ->
-            val decryptedText = message.text
-                ?.base64ToByteArray()
-                ?.let { AESCrypto.decrypt(it, sharedSecret) }
-                ?.toString(Charsets.UTF_8)
-
-            message.copy(text = decryptedText)
-        }
-        // TODO: remove private key from local db after usage
-    }
-
-    fun getDecryptedFile(message: LambdaApi.Message): Single<File> {
-        return getSharedSecretForDecryption(message)
-            .observeOn(Schedulers.computation())
-            .flatMap { sharedSecret ->
-                api
-                    .consumeMessage(body = LambdaApi.ConsumeMessage(message.messageCreatedAt))
-                    .flatMap { download(it.s3Url) }
-                    .map {
-                        AESCrypto.decrypt(
-                            inputStream = it,
-                            output = fileLocationUtil.incomingDecryptedFile(),
-                            key = sharedSecret
-                        )
-                    }
-            }
-            .map { fileLocationUtil.incomingDecryptedFile() }
-    }
-
     fun sendMessage(
         recipientUserId: String,
         text: String?,
@@ -117,6 +87,48 @@ class MessageService(
                         output.delete()
                     }
             }
+    }
+
+    fun decryptMessage(message: LambdaApi.Message): Single<Pair<LambdaApi.Message, File>> {
+        return getSharedSecretForDecryption(message)
+            .flatMap { sharedSecret ->
+                val decryptedMessage = decryptMessageText(message, sharedSecret)
+                getDecryptedFile(message, sharedSecret).map { decryptedMessage to it }
+            }
+            .doOnSuccess {
+                val ephemeralPublicKey = message.ephemeralPublicKey.toBase64String()
+                encryptionKeyQueries.deleteEphemeral(publicKey = ephemeralPublicKey)
+            }
+    }
+
+    private fun decryptMessageText(
+        message: LambdaApi.Message,
+        sharedSecret: SecretKey
+    ): LambdaApi.Message {
+        val decryptedText = message.text
+            ?.base64ToByteArray()
+            ?.let { AESCrypto.decrypt(it, sharedSecret) }
+            ?.toString(Charsets.UTF_8)
+
+        return message.copy(text = decryptedText)
+    }
+
+    private fun getDecryptedFile(
+        message: LambdaApi.Message,
+        sharedSecret: SecretKey
+    ): Single<File> {
+        return api
+            .consumeMessage(body = LambdaApi.ConsumeMessage(message.messageCreatedAt))
+            .flatMap { download(it.s3Url) }
+            .observeOn(Schedulers.computation())
+            .map {
+                AESCrypto.decrypt(
+                    inputStream = it,
+                    output = fileLocationUtil.incomingDecryptedFile(),
+                    key = sharedSecret
+                )
+            }
+            .map { fileLocationUtil.incomingDecryptedFile() }
     }
 
     private fun getSharedSecretForDecryption(message: LambdaApi.Message): Single<SecretKey> {

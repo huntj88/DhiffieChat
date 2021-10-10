@@ -12,3 +12,6 @@ SELECT public_key, private_key FROM encryption_key WHERE id = 1;
 
 selectPrivate:
 SELECT private_key FROM encryption_key WHERE public_key = :publicKey;
+
+deleteEphemeral:
+DELETE FROM encryption_key WHERE public_key = :publicKey;
