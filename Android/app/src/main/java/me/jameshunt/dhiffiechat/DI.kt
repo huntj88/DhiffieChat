@@ -78,8 +78,10 @@ class DI(val application: DhiffieChatApp) {
 
     private val initService = InitService(api, userService, ephemeralKeySyncService)
 
-    private val messageService =
-        MessageService(identityManager, okhttp, api, userService, fileLocationUtil, dbQueryManager.getEncryptionKeyQueries())
+    private val messageService = MessageService(
+        identityManager, okhttp, api, userService,
+        fileLocationUtil, dbQueryManager.getEncryptionKeyQueries()
+    )
 
     private val injectableComponents = mutableMapOf<String, Any>()
 

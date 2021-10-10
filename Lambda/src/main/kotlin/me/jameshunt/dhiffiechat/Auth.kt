@@ -24,8 +24,8 @@ data class Identity(val publicKey: PublicKey) {
 
 fun doesUserHavePrivateKey(publicKey: PublicKey, token: String, signature: String): Boolean {
     return if (RSACrypto.canVerify(token, signature, publicKey)) {
-        val token = Singletons.objectMapper.readValue<Token>(token.base64ToByteArray().toString(Charsets.UTF_8))
-        token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
+        val decoded = Singletons.objectMapper.readValue<Token>(token.base64ToByteArray().toString(Charsets.UTF_8))
+        decoded.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
     } else {
         false
     }

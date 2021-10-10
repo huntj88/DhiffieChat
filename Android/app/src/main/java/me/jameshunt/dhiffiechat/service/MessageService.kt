@@ -34,21 +34,19 @@ class MessageService(
         file: File,
         mediaType: MediaType
     ): Single<Unit> {
-        val ephemeral = api.getEphemeralPublicKey(
-            body = LambdaApi.EphemeralPublicKeyRequest(recipientUserId)
-        )
-
         return userService
             .getUserPublicKey(recipientUserId)
-            .zipWith(ephemeral)
-            .map { (otherUsersPublicKey, ephemeral) ->
+            .zipWith(api.getEphemeralPublicKey(
+                body = LambdaApi.EphemeralPublicKeyRequest(recipientUserId)
+            ))
+            .map { (otherUsersPublicKey, otherUserEphemeral) ->
                 val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
-                    ephemeral.publicKey.toBase64String(),
-                    ephemeral.signature,
+                    otherUserEphemeral.publicKey.toBase64String(),
+                    otherUserEphemeral.signature,
                     otherUsersPublicKey
                 )
                 if (ephemeralCameFromCorrectUser) {
-                    ephemeral.publicKey
+                    otherUserEphemeral.publicKey
                 } else {
                     throw HandledException.InvalidSignature
                 }
