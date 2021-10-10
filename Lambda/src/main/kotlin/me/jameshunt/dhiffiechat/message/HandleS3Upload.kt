@@ -1,10 +1,11 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.message
 
 import com.amazonaws.services.dynamodbv2.document.AttributeUpdate
 import com.amazonaws.services.dynamodbv2.document.QueryFilter
 import com.amazonaws.services.dynamodbv2.document.RangeKeyCondition
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.jameshunt.dhiffiechat.*
 
 import java.net.URLDecoder
 import java.time.Instant

@@ -13,8 +13,8 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 const val configBucketSuffix = "dhiffiechat-config-bucket"
 const val encryptedFileBucketSuffix = "dhiffiechat-encrypted-file-bucket"
 val environment: String = System.getenv("DHIFFIE_ENVIRONMENT")
-val configBucket = "${environment}-$configBucketSuffix"
-val encryptedFileBucket = "${environment}-$encryptedFileBucketSuffix"
+val configBucket = "$environment-$configBucketSuffix"
+val encryptedFileBucket = "$environment-$encryptedFileBucketSuffix"
 
 object Singletons {
     val objectMapper: ObjectMapper = ObjectMapper()
@@ -28,6 +28,6 @@ object Singletons {
     val firebase: FirebaseManager by lazy { FirebaseManager(serverCredentials) }
 }
 
-fun DynamoDB.messageTable(): Table = this.getTable("${environment}.Message")
-fun DynamoDB.userTable(): Table = this.getTable("${environment}.User")
-fun DynamoDB.ephemeralKeyTable(): Table = this.getTable("${environment}.EphemeralKey")
+fun DynamoDB.messageTable(): Table = this.getTable("$environment.Message")
+fun DynamoDB.userTable(): Table = this.getTable("$environment.User")
+fun DynamoDB.ephemeralKeyTable(): Table = this.getTable("$environment.EphemeralKey")

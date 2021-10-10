@@ -151,5 +151,3 @@ sealed class HandledExceptions: Exception() {
 fun Instant.format(): String {
     return DateTimeFormatter.ISO_INSTANT.format(this)
 }
-
-data class SignedKey(val publicKey: String, val signature: String)

@@ -1,10 +1,11 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.message
 
 import com.amazonaws.HttpMethod
 import com.amazonaws.services.dynamodbv2.document.AttributeUpdate
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest
+import me.jameshunt.dhiffiechat.*
 import java.net.URL
 import java.time.Instant
 import java.time.temporal.ChronoUnit

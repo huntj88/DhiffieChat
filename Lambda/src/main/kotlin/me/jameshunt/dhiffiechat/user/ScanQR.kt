@@ -1,4 +1,4 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.user
 
 import com.amazonaws.services.dynamodbv2.document.AttributeUpdate
 import com.amazonaws.services.dynamodbv2.document.PrimaryKey
@@ -6,6 +6,7 @@ import com.amazonaws.services.dynamodbv2.document.Table
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.LambdaLogger
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.jameshunt.dhiffiechat.*
 
 data class QR(val scannedUserId: String)
 

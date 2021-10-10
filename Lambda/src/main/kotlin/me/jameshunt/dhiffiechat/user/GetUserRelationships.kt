@@ -1,7 +1,11 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.user
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.jameshunt.dhiffiechat.GatewayResponse
+import me.jameshunt.dhiffiechat.Singletons
+import me.jameshunt.dhiffiechat.awsTransformAuthed
+import me.jameshunt.dhiffiechat.userTable
 
 
 class GetUserRelationships : RequestHandler<Map<String, Any?>, GatewayResponse> {

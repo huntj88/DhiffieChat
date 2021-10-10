@@ -5,6 +5,13 @@ import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.jameshunt.dhiffiechat.ephemeralkeys.GetEphemeralPublicKey
 import me.jameshunt.dhiffiechat.ephemeralkeys.RemainingEphemeralReceiveKeys
 import me.jameshunt.dhiffiechat.ephemeralkeys.UploadEphemeralReceiveKeys
+import me.jameshunt.dhiffiechat.message.ConsumeMessage
+import me.jameshunt.dhiffiechat.message.GetMessageSummaries
+import me.jameshunt.dhiffiechat.message.SendMessage
+import me.jameshunt.dhiffiechat.user.CreateIdentity
+import me.jameshunt.dhiffiechat.user.GetUserPublicKey
+import me.jameshunt.dhiffiechat.user.GetUserRelationships
+import me.jameshunt.dhiffiechat.user.ScanQR
 
 class PerformRequest: RequestHandler<Map<String, Any?>, GatewayResponse> {
     /**

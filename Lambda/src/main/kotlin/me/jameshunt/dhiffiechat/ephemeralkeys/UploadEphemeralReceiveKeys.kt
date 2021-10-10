@@ -2,7 +2,10 @@ package me.jameshunt.dhiffiechat.ephemeralkeys
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
-import me.jameshunt.dhiffiechat.*
+import me.jameshunt.dhiffiechat.GatewayResponse
+import me.jameshunt.dhiffiechat.Singletons
+import me.jameshunt.dhiffiechat.awsTransformAuthed
+import me.jameshunt.dhiffiechat.ephemeralKeyTable
 import java.util.*
 
 class UploadEphemeralReceiveKeys : RequestHandler<Map<String, Any?>, GatewayResponse> {
