@@ -51,10 +51,9 @@ class ShowNextMessageViewModel(private val messageService: MessageService) : Vie
         val disposable = messageService.getMessageSummaries()
             .flatMap {
                 val message = it.first { it.from == fromUserId }.next!!
-                Singles.zip(
-                    messageService.decryptMessageText(message),
-                    messageService.getDecryptedFile(message)
-                ).map { (msg, file) -> MediaMessage(message = msg, file = file) }
+                messageService.decryptMessage(message).map { (decryptedMessage, file) ->
+                    MediaMessage(message = decryptedMessage, file = file)
+                }
             }
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
