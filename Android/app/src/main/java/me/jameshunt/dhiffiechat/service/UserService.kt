@@ -86,28 +86,18 @@ class UserService(
     }
 
     fun getUserPublicKey(userId: String): Single<PublicKey> {
-        fun validate(publicKey: PublicKey): Single<PublicKey> {
-            val userIdFromPublic = publicKey.toUserId()
-            return getFriends()
-                .firstOrError()
-                .map { it.map { it.userId } }
-                .map { friends ->
-                    // maintain a list of your friends locally to validate against (MiTM), if not in list then abort.
-                    val isLocalFriend = friends.contains(userIdFromPublic)
+        fun validate(publicKey: PublicKey): PublicKey {
+            if (userId != publicKey.toUserId()) {
+                throw IllegalStateException("Incorrect public key given for user: $userId")
+            }
 
-                    // verify that public key given matches whats expected
-                    val isValid = isLocalFriend && userId == userIdFromPublic
-                    if (!isValid) {
-                        throw IllegalStateException("Incorrect public key given for user: $userId")
-                    }
-                }
-                .map { publicKey }
+            return publicKey
         }
 
         return api
             .getUserPublicKey(body = LambdaApi.GetUserPublicKey(userId = userId))
             .map { it.publicKey.toRSAPublicKey() }
-            .flatMap { validate(it) }
+            .map { validate(it) }
     }
 
     fun isUserProfileSetup(): Boolean {
