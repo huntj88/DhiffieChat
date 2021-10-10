@@ -1,8 +1,11 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.user
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
 import me.jameshunt.dhiffiechat.crypto.toBase64String
+import me.jameshunt.dhiffiechat.GatewayResponse
+import me.jameshunt.dhiffiechat.awsTransformAuthed
+import me.jameshunt.dhiffiechat.getUserPublicKey
 
 class GetUserPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse> {
     override fun handleRequest(data: Map<String, Any?>, context: Context): GatewayResponse {

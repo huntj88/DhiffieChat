@@ -1,51 +1,10 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.message
 
 import com.amazonaws.services.dynamodbv2.document.Item
-import com.amazonaws.services.dynamodbv2.document.QueryFilter
-import com.amazonaws.services.dynamodbv2.document.RangeKeyCondition
-import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.RequestHandler
 import com.fasterxml.jackson.annotation.JsonIgnore
+import me.jameshunt.dhiffiechat.format
 import java.net.URL
 import java.time.Instant
-import java.time.temporal.ChronoUnit
-
-class GetMessageSummaries : RequestHandler<Map<String, Any?>, GatewayResponse> {
-    override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<Unit, List<MessageFromUserSummary>>(request, context) { _, identity ->
-            val messageTable = Singletons.dynamoDB.messageTable()
-            val startPeriod = Instant.now().minus(14, ChronoUnit.DAYS)
-
-            messageTable
-                .query(
-                    // TODO: filter by file upload finished, plan is to use s3 event trigger which
-                    // TODO: kicks off lambda to set upload finished, and send notification
-                    "to", identity.userId,
-                    RangeKeyCondition("messageCreatedAt").between(startPeriod.format(), Instant.now().format()),
-                    QueryFilter("signedS3Url").eq(null),
-                    QueryFilter("uploadFinished").eq(true)
-                )
-                .map { it.toMessage() }
-                .groupBy { it.from }
-                .map { (from, messagesFromOneUser) ->
-                    MessageFromUserSummary(
-                        from = from,
-                        count = messagesFromOneUser.count(),
-                        mostRecentCreatedAt = messagesFromOneUser.maxOfOrNull { it.messageCreatedAt },
-                        next = messagesFromOneUser.minByOrNull { it.messageCreatedAt }!!
-                    )
-                }
-                .sortedByDescending { it.mostRecentCreatedAt }
-        }
-    }
-}
-
-data class MessageFromUserSummary(
-    val from: String,
-    val count: Int,
-    val mostRecentCreatedAt: Instant?,
-    val next: Message?
-)
 
 data class Message(
     val to: String,

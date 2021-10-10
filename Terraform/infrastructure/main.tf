@@ -228,7 +228,7 @@ resource "aws_lambda_function" "handle_s3_upload" {
   function_name    = "${terraform.workspace}_HandleS3Upload"
   filename         = "../../Lambda/build/distributions/Lambda-1.0-SNAPSHOT.zip"
   source_code_hash = filebase64sha256("../../Lambda/build/distributions/Lambda-1.0-SNAPSHOT.zip")
-  handler          = "me.jameshunt.dhiffiechat.HandleS3Upload::handleRequest"
+  handler          = "me.jameshunt.dhiffiechat.message.HandleS3Upload::handleRequest"
   role             = aws_iam_role.function_role.arn
   runtime          = "java8"
   timeout          = 30

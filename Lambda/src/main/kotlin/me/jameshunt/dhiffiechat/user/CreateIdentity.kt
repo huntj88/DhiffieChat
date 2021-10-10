@@ -1,9 +1,10 @@
-package me.jameshunt.dhiffiechat
+package me.jameshunt.dhiffiechat.user
 
 import com.amazonaws.services.dynamodbv2.document.AttributeUpdate
 import com.amazonaws.services.dynamodbv2.document.Item
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestHandler
+import me.jameshunt.dhiffiechat.*
 import me.jameshunt.dhiffiechat.crypto.toRSAPublicKey
 import me.jameshunt.dhiffiechat.crypto.toUserId
 
