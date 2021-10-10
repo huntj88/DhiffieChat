@@ -13,6 +13,7 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
+import javax.crypto.SecretKey
 
 class MessageService(
     private val identityManager: IdentityManager,
@@ -28,63 +29,23 @@ class MessageService(
     }
 
     fun decryptMessageText(message: LambdaApi.Message): Single<LambdaApi.Message> {
-        val private = encryptionKeyQueries
-            .selectPrivate(message.ephemeralPublicKey.toBase64String())
-            .executeAsOne()
-            .toDHPrivateKey()
+        return getSharedSecretForDecryption(message).map { sharedSecret ->
+            val decryptedText = message.text
+                ?.base64ToByteArray()
+                ?.let { AESCrypto.decrypt(it, sharedSecret) }
+                ?.toString(Charsets.UTF_8)
 
-        return userService.getUserPublicKey(userId = message.from)
-            .map { otherUsersPublicKey ->
-                val sendingEphemeral = message.sendingPublicKey
-                val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
-                    base64 = sendingEphemeral.toBase64String(),
-                    signatureBase64 = message.sendingPublicKeySignature,
-                    publicKey = otherUsersPublicKey
-                )
-
-                if (ephemeralCameFromCorrectUser) {
-                    DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = sendingEphemeral)
-                } else {
-                    throw HandledException.InvalidSignature
-                }
-            }
-            .map { sharedSecret ->
-                val decryptedText = message.text
-                    ?.base64ToByteArray()
-                    ?.let { AESCrypto.decrypt(it, sharedSecret) }
-                    ?.toString(Charsets.UTF_8)
-
-                message.copy(text = decryptedText)
-            }
+            message.copy(text = decryptedText)
+        }
         // TODO: remove private key from local db after usage
     }
 
     fun getDecryptedFile(message: LambdaApi.Message): Single<File> {
-        val private = encryptionKeyQueries
-            .selectPrivate(message.ephemeralPublicKey.toBase64String())
-            .executeAsOne()
-            .toDHPrivateKey()
-
-        return userService.getUserPublicKey(userId = message.from)
-            .map { otherUsersPublicKey ->
-                val sendingEphemeral = message.sendingPublicKey
-                val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
-                    base64 = sendingEphemeral.toBase64String(),
-                    signatureBase64 = message.sendingPublicKeySignature,
-                    publicKey = otherUsersPublicKey
-                )
-
-                if (ephemeralCameFromCorrectUser) {
-                    DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = sendingEphemeral)
-                } else {
-                    throw HandledException.InvalidSignature
-                }
-            }
+        return getSharedSecretForDecryption(message)
             .observeOn(Schedulers.computation())
             .flatMap { sharedSecret ->
-                val body = LambdaApi.ConsumeMessage(message.messageCreatedAt)
                 api
-                    .consumeMessage(body = body)
+                    .consumeMessage(body = LambdaApi.ConsumeMessage(message.messageCreatedAt))
                     .flatMap { download(it.s3Url) }
                     .map {
                         AESCrypto.decrypt(
@@ -155,6 +116,29 @@ class MessageService(
                         file.delete()
                         output.delete()
                     }
+            }
+    }
+
+    private fun getSharedSecretForDecryption(message: LambdaApi.Message): Single<SecretKey> {
+        val privateEphemeral = encryptionKeyQueries
+            .selectPrivate(publicKey = message.ephemeralPublicKey.toBase64String())
+            .executeAsOne()
+            .toDHPrivateKey()
+
+        return userService.getUserPublicKey(userId = message.from)
+            .map { otherUsersPublicKey ->
+                val sendingEphemeral = message.sendingPublicKey
+                val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
+                    base64 = sendingEphemeral.toBase64String(),
+                    signatureBase64 = message.sendingPublicKeySignature,
+                    publicKey = otherUsersPublicKey
+                )
+
+                if (ephemeralCameFromCorrectUser) {
+                    DHCrypto.agreeSecretKey(prkSelf = privateEphemeral, pbkPeer = sendingEphemeral)
+                } else {
+                    throw HandledException.InvalidSignature
+                }
             }
     }
 
