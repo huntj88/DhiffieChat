@@ -3,13 +3,13 @@ package me.jameshunt.dhiffiechat
 import com.amazonaws.services.dynamodbv2.document.PrimaryKey
 import com.fasterxml.jackson.module.kotlin.readValue
 import me.jameshunt.dhiffiechat.crypto.*
-import java.security.GeneralSecurityException
 import java.security.PublicKey
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 
 private data class Token(
+    val userId: String,
     val type: String = "Authentication",
     val expires: String // instant
 ) {
@@ -22,22 +22,18 @@ data class Identity(val publicKey: PublicKey) {
         get() = publicKey.toUserId()
 }
 
-fun doesUserHavePrivateKey(publicKey: PublicKey, encryptedToken: String): Boolean {
-    val token = try {
-        val sharedSecretKey = DHCrypto.agreeSecretKey(Singletons.credentials.serverPrivateKey, publicKey)
-        val tokenString = AESCrypto.decrypt(encryptedToken.base64ToByteArray(), sharedSecretKey)
-        Singletons.objectMapper.readValue<Token>(tokenString)
-    } catch (e: GeneralSecurityException) {
-        e.printStackTrace()
-        return false
+fun doesUserHavePrivateKey(publicKey: PublicKey, token: String, signature: String): Boolean {
+    return if (RSACrypto.canVerify(token, signature, publicKey)) {
+        val token = Singletons.objectMapper.readValue<Token>(token.base64ToByteArray().toString(Charsets.UTF_8))
+        token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
+    } else {
+        false
     }
-
-    return token.expiresInstant > Instant.now().minus(5, ChronoUnit.MINUTES)
 }
 
-fun validateAndGetIdentity(userId: String, encryptedToken: String): Identity {
+fun validateAndGetIdentity(userId: String, token: String, signature: String): Identity {
     val publicKey = getUserPublicKey(userId)
-    return when (doesUserHavePrivateKey(publicKey, encryptedToken)) {
+    return when (doesUserHavePrivateKey(publicKey, token, signature)) {
         true -> Identity(publicKey = publicKey)
         false -> throw HandledExceptions.Unauthorized()
     }
@@ -49,7 +45,7 @@ fun getUserPublicKey(userId: String): PublicKey {
         .getItem(PrimaryKey("userId", userId))
         .asMap()
         .let { it["publicKey"] as String }
-        .toPublicKey()
+        .toRSAPublicKey()
 }
 
 fun ensureFriends(userIdA: String, userIdB: String) {

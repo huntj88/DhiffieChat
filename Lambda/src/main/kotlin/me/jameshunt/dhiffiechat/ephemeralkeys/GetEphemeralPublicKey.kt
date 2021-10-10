@@ -6,10 +6,9 @@ import me.jameshunt.dhiffiechat.*
 
 class GetEphemeralPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse> {
     data class Request(val userId: String)
-    data class Response(val signedPublicKey: String)
 
     override fun handleRequest(request: Map<String, Any?>, context: Context): GatewayResponse {
-        return awsTransformAuthed<Request, Response>(request, context) { requestData, identity ->
+        return awsTransformAuthed<Request, SignedKey>(request, context) { requestData, identity ->
             ensureFriends(identity.userId, requestData.userId)
 
             val ephemeralKeysTable = Singletons.dynamoDB.ephemeralKeyTable()
@@ -25,7 +24,7 @@ class GetEphemeralPublicKey : RequestHandler<Map<String, Any?>, GatewayResponse>
                     )
                 }
 
-            Response(signedPublicKey = nextKey.signedPublicKey)
+            SignedKey(publicKey = nextKey.publicKey, signature = nextKey.signature)
         }
     }
 }

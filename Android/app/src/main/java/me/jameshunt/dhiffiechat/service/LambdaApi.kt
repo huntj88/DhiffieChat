@@ -44,7 +44,8 @@ interface LambdaApi {
         val mediaType: MediaType,
         val signedS3Url: URL?,
         val ephemeralPublicKey: PublicKey,
-        val signedSendingPublicKey: String
+        val sendingPublicKey: PublicKey,
+        val sendingPublicKeySignature: String
     )
 
     @POST("PerformRequest")
@@ -71,7 +72,7 @@ interface LambdaApi {
      */
     data class CreateIdentity(
         val publicKey: PublicKey,
-        val encryptedToken: String,
+        val credentials: ServerAuthManager.ServerCredentials,
         val fcmToken: String
     )
 
@@ -96,7 +97,7 @@ interface LambdaApi {
         val s3Key: String,
         val mediaType: MediaType,
         val ephemeralPublicKey: PublicKey,
-        val signedSendingPublicKey: String
+        val signedSendingPublicKey: SignedKey
     )
     data class SendMessageResponse(val uploadUrl: URL)
 
@@ -123,7 +124,8 @@ interface LambdaApi {
         @Query("type") type: String = "RemainingEphemeralReceiveKeys"
     ): Single<RemainingEphemeralReceiveKeysResponse>
 
-    data class UploadReceiveKeys(val newSignedKeys: List<String>)
+    data class UploadReceiveKeys(val newSignedKeys: List<SignedKey>)
+    data class SignedKey(val publicKey: PublicKey, val signature: String)
     @POST("PerformRequest")
     fun uploadEphemeralReceiveKeys(
         @Query("type") type: String = "UploadEphemeralReceiveKeys",
@@ -131,12 +133,11 @@ interface LambdaApi {
     ): Single<ResponseMessage>
 
     data class EphemeralPublicKeyRequest(val userId: String)
-    data class EphemeralPublicKeyResponse(val signedPublicKey: String) // "signed" public key
     @POST("PerformRequest")
     fun getEphemeralPublicKey(
         @Query("type") type: String = "GetEphemeralPublicKey",
         @Body body: EphemeralPublicKeyRequest
-    ): Single<EphemeralPublicKeyResponse>
+    ): Single<SignedKey>
 }
 
 class HeaderInterceptor(
@@ -176,7 +177,8 @@ class HeaderInterceptor(
     private fun userToServerHeaders(): Map<String, String> {
         val userToServerCredentials = serverAuthManager.userToServerAuth()
         return mapOf(
-            "userServerEncryptedToken" to userToServerCredentials.encryptedToken
+            "dhiffie_token" to userToServerCredentials.token,
+            "dhiffie_signature" to userToServerCredentials.signature
         )
     }
 }

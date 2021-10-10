@@ -1,51 +1,43 @@
 package me.jameshunt.dhiffiechat.service
 
 import com.squareup.moshi.Moshi
-import me.jameshunt.dhiffiechat.BuildConfig
 import me.jameshunt.dhiffiechat.crypto.*
-import java.security.PublicKey
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import javax.crypto.SecretKey
 
 class ServerAuthManager(
     private val identityManager: IdentityManager,
     private val moshi: Moshi
 ) {
     private data class Token(
+        val userId: String,
         val type: String = "Authentication",
         val expires: Instant
     )
 
     data class ServerCredentials(
-        val userId: String,
-        val encryptedToken: String,
-        @Transient
-        val sharedSecret: SecretKey
+        val token: String,
+        val signature: String
     )
 
-    private fun Token.toSerialized(): ByteArray = moshi
+    private fun Token.toSerialized(): String = moshi
         .adapter(Token::class.java)
         .toJson(this)
         .toByteArray()
+        .toBase64String()
 
     fun userToServerAuth(): ServerCredentials {
-        val sharedSecretKey = DHCrypto.agreeSecretKey(
-            prkSelf = identityManager.getIdentity().private,
-            pbkPeer = getServerPublicKey()
-        )
-        val token = Token(expires = Instant.now().plus(1L, ChronoUnit.MINUTES))
-
-        val encryptedToken = AESCrypto
-            .encrypt(input = token.toSerialized(), sharedSecretKey)
-            .toBase64String()
+        val token = Token(
+            userId = identityManager.getIdentity().toUserId(),
+            expires = Instant.now().plus(1L, ChronoUnit.MINUTES)
+        ).toSerialized()
 
         return ServerCredentials(
-            userId = identityManager.getIdentity().toUserId(),
-            encryptedToken = encryptedToken,
-            sharedSecret = sharedSecretKey
+            token = token,
+            signature =  RSACrypto.sign(
+                privateKey = identityManager.getIdentity().private,
+                base64 = token
+            )
         )
     }
-
-    private fun getServerPublicKey(): PublicKey = BuildConfig.SERVER_PUBLIC_KEY.toPublicKey()
 }

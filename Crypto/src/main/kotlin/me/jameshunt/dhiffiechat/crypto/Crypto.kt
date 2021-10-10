@@ -52,6 +52,31 @@ object DHCrypto {
     }
 }
 
+object RSACrypto {
+
+    fun generateKeyPair(): KeyPair {
+        val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
+        keyPairGenerator.initialize(4096)
+        return keyPairGenerator.generateKeyPair()
+    }
+
+    fun sign(base64: String, privateKey: PrivateKey): String {
+        val privateSignature = Signature.getInstance("SHA256withRSA")
+        privateSignature.initSign(privateKey)
+        privateSignature.update(base64.base64ToByteArray())
+        val signature = privateSignature.sign()
+        return signature.toBase64String()
+    }
+
+    fun canVerify(base64: String, signatureBase64: String, publicKey: PublicKey): Boolean {
+        val publicSignature = Signature.getInstance("SHA256withRSA")
+        publicSignature.initVerify(publicKey)
+        publicSignature.update(base64.base64ToByteArray())
+        val signatureBytes = signatureBase64.base64ToByteArray()
+        return publicSignature.verify(signatureBytes)
+    }
+}
+
 object AESCrypto {
     private const val SEPARATOR = ","
 
@@ -150,12 +175,22 @@ object AESCrypto {
     }
 }
 
-fun String.toPublicKey(): PublicKey {
+fun String.toRSAPublicKey(): PublicKey {
+    val bytes = this.base64ToByteArray()
+    return KeyFactory.getInstance("RSA").generatePublic(X509EncodedKeySpec(bytes))
+}
+
+fun String.toRSAPrivateKey(): PrivateKey {
+    val bytes = this.base64ToByteArray()
+    return KeyFactory.getInstance("RSA").generatePrivate(PKCS8EncodedKeySpec(bytes))
+}
+
+fun String.toDHPublicKey(): PublicKey {
     val bytes = this.base64ToByteArray()
     return KeyFactory.getInstance("DH").generatePublic(X509EncodedKeySpec(bytes))
 }
 
-fun String.toPrivateKey(): PrivateKey {
+fun String.toDHPrivateKey(): PrivateKey {
     val bytes = this.base64ToByteArray()
     return KeyFactory.getInstance("DH").generatePrivate(PKCS8EncodedKeySpec(bytes))
 }
