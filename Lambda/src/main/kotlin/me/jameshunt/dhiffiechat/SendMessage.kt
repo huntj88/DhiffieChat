@@ -37,7 +37,8 @@ class SendMessage : RequestHandler<Map<String, Any?>, GatewayResponse> {
                 signedS3Url = null,
                 signedS3UrlExpiration = null,
                 ephemeralPublicKey = body.ephemeralPublicKey,
-                signedSendingPublicKey = body.signedSendingPublicKey,
+                sendingPublicKey = body.signedSendingPublicKey.publicKey,
+                sendingPublicKeySignature = body.signedSendingPublicKey.signature,
                 expiresAt = messageCreatedAt.plus(14, ChronoUnit.DAYS)
             )
 
@@ -54,7 +55,7 @@ data class SendMessageRequest(
     val s3Key: String,
     val mediaType: String,
     val ephemeralPublicKey: String,
-    val signedSendingPublicKey: String
+    val signedSendingPublicKey: SignedKey
 )
 
 data class SendMessageResponse(val uploadUrl: URL)

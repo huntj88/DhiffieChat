@@ -10,7 +10,7 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import me.jameshunt.dhiffiechat.Alias
 import me.jameshunt.dhiffiechat.AliasQueries
-import me.jameshunt.dhiffiechat.crypto.toPublicKey
+import me.jameshunt.dhiffiechat.crypto.toRSAPublicKey
 import me.jameshunt.dhiffiechat.crypto.toUserId
 import java.security.PublicKey
 import java.util.*
@@ -60,7 +60,7 @@ class UserService(
             api.createIdentity(
                 body = LambdaApi.CreateIdentity(
                     publicKey = identityManager.getIdentity().public,
-                    encryptedToken = userToServerCredentials.encryptedToken,
+                    credentials = userToServerCredentials,
                     fcmToken = fcmToken
                 )
             )
@@ -90,7 +90,7 @@ class UserService(
             val userIdFromPublic = publicKey.toUserId()
             return getFriends()
                 .firstOrError()
-                .map { it.first().userId }
+                .map { it.map { it.userId } }
                 .map { friends ->
                     // maintain a list of your friends locally to validate against (MiTM), if not in list then abort.
                     val isLocalFriend = friends.contains(userIdFromPublic)
@@ -106,7 +106,7 @@ class UserService(
 
         return api
             .getUserPublicKey(body = LambdaApi.GetUserPublicKey(userId = userId))
-            .map { it.publicKey.toPublicKey() }
+            .map { it.publicKey.toRSAPublicKey() }
             .flatMap { validate(it) }
     }
 

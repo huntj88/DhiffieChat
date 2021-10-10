@@ -115,11 +115,13 @@ inline fun <reified Params> getQueryParams(request: Map<String, Any?>, logger: L
 fun validateAndGetIdentity(request: Map<String, Any?>): Identity {
     val headers = request["headers"]!!.let { it as Map<String, String> }
     val userId = headers["userid"]!!
-    val userServerEncryptedToken = headers["userserverencryptedtoken"]!!
+    val token = headers["dhiffie_token"]!!
+    val signature = headers["dhiffie_signature"]!!
 
     return validateAndGetIdentity(
         userId = userId,
-        encryptedToken = userServerEncryptedToken
+        token = token,
+        signature = signature
     )
 }
 
@@ -149,3 +151,5 @@ sealed class HandledExceptions: Exception() {
 fun Instant.format(): String {
     return DateTimeFormatter.ISO_INSTANT.format(this)
 }
+
+data class SignedKey(val publicKey: String, val signature: String)

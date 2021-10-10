@@ -24,8 +24,8 @@ object Singletons {
 
     val dynamoDB: DynamoDB = DynamoDB(AmazonDynamoDBClientBuilder.defaultClient())
     val s3: AmazonS3 = AmazonS3ClientBuilder.standard().build()
-    val credentials: Credentials = Credentials(s3)
-    val firebase: FirebaseManager by lazy { FirebaseManager(credentials) }
+    private val serverCredentials: ServerCredentials = ServerCredentials(s3)
+    val firebase: FirebaseManager by lazy { FirebaseManager(serverCredentials) }
 }
 
 fun DynamoDB.messageTable(): Table = this.getTable("${environment}.Message")

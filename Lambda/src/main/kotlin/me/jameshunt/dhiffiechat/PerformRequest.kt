@@ -15,7 +15,6 @@ class PerformRequest: RequestHandler<Map<String, Any?>, GatewayResponse> {
 
         return when (map["type"] as String) {
             "Init" -> GatewayResponse(body = Singletons.objectMapper.writeValueAsString(mapOf("message" to "success")))
-                .also { Singletons.credentials.serverPrivateKey }
             "CreateIdentity" -> CreateIdentity().handleRequest(request, context)
             "ConsumeMessage" -> ConsumeMessage().handleRequest(request, context)
             "ScanQR" -> ScanQR().handleRequest(request, context)

@@ -71,6 +71,7 @@ sealed class HandledException : Exception() {
     object EnvironmentDestroyedOrNoInternet : HandledException()
     object DeployingNewCode : HandledException()
     object Unauthorized : HandledException()
+    object InvalidSignature: HandledException()
 }
 
 @Composable

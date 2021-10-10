@@ -4,6 +4,7 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.kotlin.zipWith
 import io.reactivex.rxjava3.schedulers.Schedulers
 import me.jameshunt.dhiffiechat.Encryption_keyQueries
+import me.jameshunt.dhiffiechat.HandledException
 import me.jameshunt.dhiffiechat.crypto.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -30,16 +31,22 @@ class MessageService(
         val private = encryptionKeyQueries
             .selectPrivate(message.ephemeralPublicKey.toBase64String())
             .executeAsOne()
-            .toPrivateKey()
+            .toDHPrivateKey()
 
         return userService.getUserPublicKey(userId = message.from)
-            .map {
-                val senderPublic = verifySigningByDecrypting(
-                    encryptedBase64PublicKey = message.signedSendingPublicKey,
-                    otherUser = it
+            .map { otherUsersPublicKey ->
+                val sendingEphemeral = message.sendingPublicKey
+                val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
+                    base64 = sendingEphemeral.toBase64String(),
+                    signatureBase64 = message.sendingPublicKeySignature,
+                    publicKey = otherUsersPublicKey
                 )
 
-                DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = senderPublic)
+                if (ephemeralCameFromCorrectUser) {
+                    DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = sendingEphemeral)
+                } else {
+                    throw HandledException.InvalidSignature
+                }
             }
             .map { sharedSecret ->
                 val decryptedText = message.text
@@ -56,16 +63,22 @@ class MessageService(
         val private = encryptionKeyQueries
             .selectPrivate(message.ephemeralPublicKey.toBase64String())
             .executeAsOne()
-            .toPrivateKey()
+            .toDHPrivateKey()
 
         return userService.getUserPublicKey(userId = message.from)
-            .map {
-                val senderPublic = verifySigningByDecrypting(
-                    encryptedBase64PublicKey = message.signedSendingPublicKey,
-                    otherUser = it
+            .map { otherUsersPublicKey ->
+                val sendingEphemeral = message.sendingPublicKey
+                val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
+                    base64 = sendingEphemeral.toBase64String(),
+                    signatureBase64 = message.sendingPublicKeySignature,
+                    publicKey = otherUsersPublicKey
                 )
 
-                DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = senderPublic)
+                if (ephemeralCameFromCorrectUser) {
+                    DHCrypto.agreeSecretKey(prkSelf = private, pbkPeer = sendingEphemeral)
+                } else {
+                    throw HandledException.InvalidSignature
+                }
             }
             .observeOn(Schedulers.computation())
             .flatMap { sharedSecret ->
@@ -97,8 +110,17 @@ class MessageService(
         return userService
             .getUserPublicKey(recipientUserId)
             .zipWith(ephemeral)
-            .map { (otherUser, ephemeral) ->
-                verifySigningByDecrypting(ephemeral.signedPublicKey, otherUser)
+            .map { (otherUsersPublicKey, ephemeral) ->
+                val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
+                    ephemeral.publicKey.toBase64String(),
+                    ephemeral.signature,
+                    otherUsersPublicKey
+                )
+                if (ephemeralCameFromCorrectUser) {
+                    ephemeral.publicKey
+                } else {
+                    throw HandledException.InvalidSignature
+                }
             }
             .flatMap { publicKey ->
                 val sendingKeyPair = DHCrypto.genDHKeyPair()
@@ -118,7 +140,13 @@ class MessageService(
                     s3Key = output.toS3Key(),
                     mediaType = mediaType,
                     ephemeralPublicKey = publicKey,
-                    signedSendingPublicKey = identityManager.signByEncrypting(sendingKeyPair.public)
+                    signedSendingPublicKey = LambdaApi.SignedKey(
+                        publicKey = sendingKeyPair.public,
+                        signature = RSACrypto.sign(
+                            sendingKeyPair.public.toBase64String(),
+                            identityManager.getIdentity().private
+                        )
+                    )
                 )
 
                 api.sendMessage(body = body)
