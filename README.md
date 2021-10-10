@@ -1,9 +1,10 @@
 # DhiffieChat
 
-End-To-End Encrypted Private Chat
+End-To-End Encrypted Private Chat - Now with ephemeral key pairs!
 
 I built this app because I wanted to play with encryption and experiment with building low cost automated cloud
-environments.
+environments. The Clients do not trust the server, and a worst case server compromise event would only leak the 
+last 14 days of metadata
 
 ---
 
@@ -46,31 +47,19 @@ Terraform helps automate creation, configuration, or execution of the following 
 
 ---
 
-### Adding a Contact / Message Exchange Process
+### Security
 
-* Every user provided piece of data is encrypted before it leaves the device. The encryption process uses a shared key
-  derived from a Diffie-Hellman key exchange, so the server is never aware of the credentials required to decrypt the
-  data.
+Every user generates an RSA keypair which is used to securely identify themselves. This RSA keypair is used to sign 
+ephemeral Diffie-Hellman public keys so that when someone sends/receives a message, they know that the ephemeral keypair 
+belongs to user that claims to have generated it. Since ephemeral key pairs are used, compromises of old keys do not 
+allow new messages signed with new keys to be decrypted. A new ephemeral keypair is used for each message.
 
+Every user provided piece of data is encrypted before it leaves the device. The encryption process uses a shared key
+derived from a Diffie-Hellman key exchange, so the server is never aware of the credentials required to decrypt the
+data. With the shared secret, both users are able to encrypt and decrypt the AES encrypted message shared between them
 
-* To add a contact you must exchange QR codes which contains the user's
-  `alias` as well as a hash of their public key, which is used to identity themselves. The `alias` is also never shared
-  with the server.
-
-
-* With the shared secret generated from Key exchange, both users are able to encrypt and decrypt the AES encrypted
-  message shared between them
-
-
-* A QR code is used because it is a method that can be as secure as you want it to be. A MiTM attack would be the
-  primary concern as you don't need to make an account to use the app.
-
-
-* On the more secure end of the spectrum it would be impractical to MiTM attack two people physically in the same
-  location exchanging QR codes. Alternatively you could send a picture of the QR code over any other trusted form of
-  communication.
-
----
+To add a contact you must exchange QR codes which contains the user's `alias` as well as a hash of their RSA public
+key, which is used to identity themselves. The `alias` is also never shared with the server.
 
 ### Other Ways your data is kept private and protected
 
@@ -79,18 +68,11 @@ Terraform helps automate creation, configuration, or execution of the following 
 
 
 * For any authenticated network request the app generates a token containing an expiration time in the near future. This
-  token is encrypted using the same method to send secure messages, except this time using the servers public key
-  instead of another users public key. The server code uses the token, and the users public key to authenticate the
-  network request.
+  token is signed with the RSA identity keypair. The server code uses the token, and the users public key to 
+  authenticate the network request.
 
 
-* Any uploaded media is stored as encrypted binary data in s3, where after 14 days the data is automatically deleted.
+* Any uploaded media is stored as AES encrypted data in s3, where after 14 days the data is automatically deleted.
   The user provided encrypted text is also automatically deleted from DynamoDB after 14 days
 
 ---
-
-### Coming soon
-
-* Ephemeral keys: Right now a user has one main private/public Diffie-Hellman key pair which is used for encrypting the
-  data. In the future, each message should be encrypted using a different set of credentials, and no key pair should be
-  used for more than one message
