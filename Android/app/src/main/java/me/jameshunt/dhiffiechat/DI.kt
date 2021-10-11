@@ -1,6 +1,7 @@
 package me.jameshunt.dhiffiechat
 
 import android.content.Context
+import android.os.Environment
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
@@ -13,6 +14,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.io.File
 import java.net.URL
 import java.security.PublicKey
 import java.time.Instant
@@ -20,7 +22,12 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 class DI(val application: DhiffieChatApp) {
-    private val fileLocationUtil = FileLocationUtil(application)
+    private val cacheDir: File = application.cacheDir
+    private val fileProviderDir: File = File(
+        application.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+        "DhiffieChat"
+    )
+    private val fileLocationUtil = FileLocationUtil(cacheDir, fileProviderDir)
     private val prefManager = PrefManager(
         prefs = application.getSharedPreferences("dhiffieChat", Context.MODE_PRIVATE)
     )
@@ -49,7 +56,7 @@ class DI(val application: DhiffieChatApp) {
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
-    private val identityManager = IdentityManager(dbQueryManager.getEncryptionKeyQueries())
+    private val identityManager = IdentityManagerImpl(dbQueryManager.getEncryptionKeyQueries())
     private val authManager = ServerAuthManager(identityManager, moshi)
     private val headerInterceptor = HeaderInterceptor(identityManager, authManager)
 
@@ -70,18 +77,20 @@ class DI(val application: DhiffieChatApp) {
         .build()
 
     private val api = retrofit.create(LambdaApi::class.java)
+    private val remoteFileService = RemoteFileService(okhttp)
     private val userService = UserService(
         dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
     )
+
+    private val messageService = MessageService(
+        identityManager, remoteFileService, api, fileLocationUtil,
+        dbQueryManager.getEncryptionKeyQueries()
+    )
+
     private val ephemeralKeySyncService =
         EphemeralKeySyncService(api, dbQueryManager.getEncryptionKeyQueries(), identityManager)
 
     private val initService = InitService(api, userService, ephemeralKeySyncService)
-
-    private val messageService = MessageService(
-        identityManager, okhttp, api, userService,
-        fileLocationUtil, dbQueryManager.getEncryptionKeyQueries()
-    )
 
     private val injectableComponents = mutableMapOf<String, Any>()
 

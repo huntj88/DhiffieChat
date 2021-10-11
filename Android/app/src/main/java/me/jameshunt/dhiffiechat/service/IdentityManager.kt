@@ -5,10 +5,16 @@ import me.jameshunt.dhiffiechat.Encryption_keyQueries
 import me.jameshunt.dhiffiechat.crypto.*
 import java.security.KeyPair
 
-class IdentityManager(private val encryptionKeyQueries: Encryption_keyQueries) {
+interface IdentityManager {
+    fun getIdentity(): KeyPair
+}
+
+class IdentityManagerImpl(
+    private val encryptionKeyQueries: Encryption_keyQueries
+): IdentityManager {
     private var cached: KeyPair? = null
 
-    fun getIdentity(): KeyPair = synchronized(this) {
+    override fun getIdentity(): KeyPair = synchronized(this) {
         get() ?: new().also { save(it) }
     }
 
