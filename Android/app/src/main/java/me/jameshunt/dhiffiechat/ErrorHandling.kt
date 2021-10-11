@@ -12,7 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import me.jameshunt.dhiffiechat.service.MessageService
+import me.jameshunt.dhiffiechat.service.RemoteFileService
 import retrofit2.HttpException
 import java.net.UnknownHostException
 
@@ -33,7 +33,7 @@ fun ErrorHandlingDialog(t: Throwable, onDismiss: () -> Unit = {}) {
             401 -> HandledException.Unauthorized
             else -> t
         }
-        is MessageService.HttpException -> when (t.okHttpResponse.code) {
+        is RemoteFileService.HttpException -> when (t.okHttpResponse.code) {
             401 -> HandledException.Unauthorized
             else -> t
         }

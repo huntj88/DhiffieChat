@@ -10,9 +10,6 @@ import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import me.jameshunt.dhiffiechat.Alias
 import me.jameshunt.dhiffiechat.AliasQueries
-import me.jameshunt.dhiffiechat.crypto.toRSAPublicKey
-import me.jameshunt.dhiffiechat.crypto.toUserId
-import java.security.PublicKey
 import java.util.*
 
 class UserService(
@@ -83,21 +80,6 @@ class UserService(
                 cont.onSuccess(token)
             }
         }
-    }
-
-    fun getUserRSAPublicKey(userId: String): Single<PublicKey> {
-        fun validate(publicKey: PublicKey): PublicKey {
-            if (userId != publicKey.toUserId()) {
-                throw IllegalStateException("Incorrect public key given for user: $userId")
-            }
-
-            return publicKey
-        }
-
-        return api
-            .getUserPublicKey(body = LambdaApi.GetUserPublicKey(userId = userId))
-            .map { it.publicKey.toRSAPublicKey() }
-            .map { validate(it) }
     }
 
     fun isUserProfileSetup(): Boolean {

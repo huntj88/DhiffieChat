@@ -6,23 +6,14 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import me.jameshunt.dhiffiechat.Encryption_keyQueries
 import me.jameshunt.dhiffiechat.HandledException
 import me.jameshunt.dhiffiechat.crypto.*
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
-import java.io.IOException
-import java.io.InputStream
-import java.net.URL
 import java.security.PublicKey
-import java.security.interfaces.RSAPublicKey
 import javax.crypto.SecretKey
-import javax.crypto.interfaces.DHPublicKey
 
 class MessageService(
     private val identityManager: IdentityManager,
-    private val okHttpClient: OkHttpClient,
+    private val remoteFileService: RemoteFileService,
     private val api: LambdaApi,
-    private val userService: UserService,
     private val fileLocationUtil: FileLocationUtil,
     private val encryptionKeyQueries: Encryption_keyQueries
 ) {
@@ -37,8 +28,7 @@ class MessageService(
         file: File,
         mediaType: MediaType
     ): Single<Unit> {
-        return userService
-            .getUserRSAPublicKey(recipientUserId)
+        return getUserRSAPublicKey(recipientUserId)
             .zipWith(api.getEphemeralPublicKey(
                 body = LambdaApi.EphemeralPublicKeyRequest(recipientUserId)
             ))
@@ -83,7 +73,7 @@ class MessageService(
                 )
 
                 api.sendMessage(body = body)
-                    .flatMap { response -> upload(response.uploadUrl, output) }
+                    .flatMap { response -> remoteFileService.upload(response.uploadUrl, output) }
                     .doAfterSuccess {
                         file.delete()
                         output.delete()
@@ -121,7 +111,7 @@ class MessageService(
     ): Single<File> {
         return api
             .consumeMessage(body = LambdaApi.ConsumeMessage(message.messageCreatedAt))
-            .flatMap { download(it.s3Url) }
+            .flatMap { remoteFileService.download(it.s3Url) }
             .observeOn(Schedulers.computation())
             .map {
                 AESCrypto.decrypt(
@@ -139,7 +129,7 @@ class MessageService(
             .executeAsOne()
             .toDHPrivateKey()
 
-        return userService.getUserRSAPublicKey(userId = message.from)
+        return getUserRSAPublicKey(userId = message.from)
             .map { otherUsersRSAPublicKey ->
                 val sendingEphemeral = message.sendingPublicKey
                 val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
@@ -156,52 +146,20 @@ class MessageService(
             }
     }
 
-    private fun upload(url: URL, file: File): Single<Unit> {
-        val request = Request.Builder()
-            .url(url)
-            .put(file.asRequestBody("application/octet-stream".toMediaTypeOrNull()))
-            .build()
+    private fun getUserRSAPublicKey(userId: String): Single<PublicKey> {
+        fun validate(publicKey: PublicKey): PublicKey {
+            if (userId != publicKey.toUserId()) {
+                throw IllegalStateException("Incorrect public key given for user: $userId")
+            }
 
-        return Single.create<Unit> { continuation ->
-            okHttpClient.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    continuation.onError(e)
-                }
+            return publicKey
+        }
 
-                override fun onResponse(call: Call, response: Response) {
-                    if (response.isSuccessful) {
-                        continuation.onSuccess(Unit)
-                    } else {
-                        continuation.onError(HttpException(response))
-                    }
-                }
-            })
-        }.subscribeOn(Schedulers.io())
+        return api
+            .getUserPublicKey(body = LambdaApi.GetUserPublicKey(userId = userId))
+            .map { it.publicKey.toRSAPublicKey() }
+            .map { validate(it) }
     }
-
-    private fun download(url: URL): Single<InputStream> {
-        val request = Request.Builder().url(url).get().build()
-
-        return Single.create<InputStream> { continuation ->
-            okHttpClient.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    continuation.onError(e)
-                }
-
-                override fun onResponse(call: Call, response: Response) {
-                    if (response.isSuccessful) {
-                        continuation.onSuccess(response.body!!.byteStream())
-                    } else {
-                        continuation.onError(HttpException(response))
-                    }
-                }
-            })
-        }.subscribeOn(Schedulers.io())
-    }
-
-    class HttpException(val okHttpResponse: Response) : RuntimeException(
-        "${okHttpResponse.message} ${okHttpResponse.request.url}"
-    )
 }
 
 enum class MediaType {
