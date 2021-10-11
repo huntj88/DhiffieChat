@@ -13,7 +13,10 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.net.URL
+import java.security.PublicKey
+import java.security.interfaces.RSAPublicKey
 import javax.crypto.SecretKey
+import javax.crypto.interfaces.DHPublicKey
 
 class MessageService(
     private val identityManager: IdentityManager,
@@ -35,15 +38,16 @@ class MessageService(
         mediaType: MediaType
     ): Single<Unit> {
         return userService
-            .getUserPublicKey(recipientUserId)
+            .getUserRSAPublicKey(recipientUserId)
             .zipWith(api.getEphemeralPublicKey(
                 body = LambdaApi.EphemeralPublicKeyRequest(recipientUserId)
             ))
-            .map { (otherUsersPublicKey, otherUserEphemeral) ->
+            .observeOn(Schedulers.computation())
+            .map { (otherUsersRSAPublicKey, otherUserEphemeral) ->
                 val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
-                    otherUserEphemeral.publicKey.toBase64String(),
-                    otherUserEphemeral.signature,
-                    otherUsersPublicKey
+                    base64 = otherUserEphemeral.publicKey.toBase64String(),
+                    signatureBase64 = otherUserEphemeral.signature,
+                    publicKey = otherUsersRSAPublicKey
                 )
                 if (ephemeralCameFromCorrectUser) {
                     otherUserEphemeral.publicKey
@@ -51,9 +55,9 @@ class MessageService(
                     throw HandledException.InvalidSignature
                 }
             }
-            .flatMap { publicKey ->
+            .flatMap { ephemeralPublicKey ->
                 val sendingKeyPair = DHCrypto.genDHKeyPair()
-                val secret = DHCrypto.agreeSecretKey(sendingKeyPair.private, publicKey)
+                val secret = DHCrypto.agreeSecretKey(sendingKeyPair.private, ephemeralPublicKey)
 
                 val output = fileLocationUtil.outgoingEncryptedFile()
 
@@ -68,7 +72,7 @@ class MessageService(
                     text = encryptedText,
                     s3Key = output.toS3Key(),
                     mediaType = mediaType,
-                    ephemeralPublicKey = publicKey,
+                    ephemeralPublicKey = ephemeralPublicKey,
                     signedSendingPublicKey = LambdaApi.SignedKey(
                         publicKey = sendingKeyPair.public,
                         signature = RSACrypto.sign(
@@ -135,13 +139,13 @@ class MessageService(
             .executeAsOne()
             .toDHPrivateKey()
 
-        return userService.getUserPublicKey(userId = message.from)
-            .map { otherUsersPublicKey ->
+        return userService.getUserRSAPublicKey(userId = message.from)
+            .map { otherUsersRSAPublicKey ->
                 val sendingEphemeral = message.sendingPublicKey
                 val ephemeralCameFromCorrectUser = RSACrypto.canVerify(
                     base64 = sendingEphemeral.toBase64String(),
                     signatureBase64 = message.sendingPublicKeySignature,
-                    publicKey = otherUsersPublicKey
+                    publicKey = otherUsersRSAPublicKey
                 )
 
                 if (ephemeralCameFromCorrectUser) {

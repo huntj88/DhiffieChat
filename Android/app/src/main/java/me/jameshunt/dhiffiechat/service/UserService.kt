@@ -85,7 +85,7 @@ class UserService(
         }
     }
 
-    fun getUserPublicKey(userId: String): Single<PublicKey> {
+    fun getUserRSAPublicKey(userId: String): Single<PublicKey> {
         fun validate(publicKey: PublicKey): PublicKey {
             if (userId != publicKey.toUserId()) {
                 throw IllegalStateException("Incorrect public key given for user: $userId")
