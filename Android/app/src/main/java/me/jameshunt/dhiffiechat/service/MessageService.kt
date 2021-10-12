@@ -3,7 +3,6 @@ package me.jameshunt.dhiffiechat.service
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.kotlin.zipWith
 import io.reactivex.rxjava3.schedulers.Schedulers
-import me.jameshunt.dhiffiechat.Encryption_keyQueries
 import me.jameshunt.dhiffiechat.HandledException
 import me.jameshunt.dhiffiechat.crypto.*
 import java.io.File
@@ -14,8 +13,9 @@ class MessageService(
     private val identityManager: IdentityManager,
     private val remoteFileService: RemoteFileService,
     private val api: LambdaApi,
-    private val fileLocationUtil: FileLocationUtil,
-    private val encryptionKeyQueries: Encryption_keyQueries
+    private val outgoingEncryptedFile: File,
+    private val incomingDecryptedFile: File,
+    private val ephemeralKeyService: EphemeralKeyService
 ) {
 
     fun getMessageSummaries(): Single<List<LambdaApi.MessageSummary>> {
@@ -49,8 +49,7 @@ class MessageService(
                 val sendingKeyPair = DHCrypto.genDHKeyPair()
                 val secret = DHCrypto.agreeSecretKey(sendingKeyPair.private, ephemeralPublicKey)
 
-                val output = fileLocationUtil.outgoingEncryptedFile()
-
+                val output = outgoingEncryptedFile
                 AESCrypto.encrypt(file = file, output = output, key = secret)
 
                 val encryptedText = text
@@ -88,8 +87,7 @@ class MessageService(
                 getDecryptedFile(message, sharedSecret).map { decryptedMessage to it }
             }
             .doOnSuccess {
-                val ephemeralPublicKey = message.ephemeralPublicKey.toBase64String()
-                encryptionKeyQueries.deleteEphemeral(publicKey = ephemeralPublicKey)
+                ephemeralKeyService.deleteKeyPair(ephemeralPublicKey = message.ephemeralPublicKey)
             }
     }
 
@@ -116,18 +114,15 @@ class MessageService(
             .map {
                 AESCrypto.decrypt(
                     inputStream = it,
-                    output = fileLocationUtil.incomingDecryptedFile(),
+                    output = incomingDecryptedFile,
                     key = sharedSecret
                 )
             }
-            .map { fileLocationUtil.incomingDecryptedFile() }
+            .map { incomingDecryptedFile }
     }
 
     private fun getSharedSecretForDecryption(message: LambdaApi.Message): Single<SecretKey> {
-        val privateEphemeral = encryptionKeyQueries
-            .selectPrivate(publicKey = message.ephemeralPublicKey.toBase64String())
-            .executeAsOne()
-            .toDHPrivateKey()
+        val privateEphemeral = ephemeralKeyService.getMatchingPrivateKey(message.ephemeralPublicKey)
 
         return getUserRSAPublicKey(userId = message.from)
             .map { otherUsersRSAPublicKey ->

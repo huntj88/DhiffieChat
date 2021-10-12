@@ -77,14 +77,22 @@ class DI(val application: DhiffieChatApp) {
         .build()
 
     private val api = retrofit.create(LambdaApi::class.java)
-    private val remoteFileService = RemoteFileService(okhttp)
+    private val remoteFileService = RemoteFileServiceImpl(okhttp)
     private val userService = UserService(
         dbQueryManager.getAliasQueries(), api, authManager, identityManager, prefManager
     )
 
+    private val ephemeralKeyService = EphemeralKeyServiceImpl(
+        encryptionKeyQueries = dbQueryManager.getEncryptionKeyQueries()
+    )
+
     private val messageService = MessageService(
-        identityManager, remoteFileService, api, fileLocationUtil,
-        dbQueryManager.getEncryptionKeyQueries()
+        identityManager = identityManager,
+        remoteFileService = remoteFileService,
+        api = api,
+        outgoingEncryptedFile = fileLocationUtil.outgoingEncryptedFile(),
+        incomingDecryptedFile = fileLocationUtil.incomingDecryptedFile(),
+        ephemeralKeyService = ephemeralKeyService
     )
 
     private val ephemeralKeySyncService =
