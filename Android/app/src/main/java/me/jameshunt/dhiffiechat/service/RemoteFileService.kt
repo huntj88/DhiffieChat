@@ -10,13 +10,18 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.URL
 
-class RemoteFileService(private val okHttpClient: OkHttpClient) {
+interface RemoteFileService {
+    fun upload(url: URL, file: File): Single<Unit>
+    fun download(url: URL): Single<InputStream>
 
     class HttpException(val okHttpResponse: Response) : RuntimeException(
         "${okHttpResponse.message} ${okHttpResponse.request.url}"
     )
+}
 
-    fun upload(url: URL, file: File): Single<Unit> {
+class RemoteFileServiceImpl(private val okHttpClient: OkHttpClient): RemoteFileService {
+
+    override fun upload(url: URL, file: File): Single<Unit> {
         val request = Request.Builder()
             .url(url)
             .put(file.asRequestBody("application/octet-stream".toMediaTypeOrNull()))
@@ -32,14 +37,14 @@ class RemoteFileService(private val okHttpClient: OkHttpClient) {
                     if (response.isSuccessful) {
                         continuation.onSuccess(Unit)
                     } else {
-                        continuation.onError(HttpException(response))
+                        continuation.onError(RemoteFileService.HttpException(response))
                     }
                 }
             })
         }.subscribeOn(Schedulers.io())
     }
 
-    fun download(url: URL): Single<InputStream> {
+    override fun download(url: URL): Single<InputStream> {
         val request = Request.Builder().url(url).get().build()
 
         return Single.create<InputStream> { continuation ->
@@ -52,7 +57,7 @@ class RemoteFileService(private val okHttpClient: OkHttpClient) {
                     if (response.isSuccessful) {
                         continuation.onSuccess(response.body!!.byteStream())
                     } else {
-                        continuation.onError(HttpException(response))
+                        continuation.onError(RemoteFileService.HttpException(response))
                     }
                 }
             })
