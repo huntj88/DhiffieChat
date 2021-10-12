@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+actor       Jack
+actor       Bob
+database    Server
+
+Jack -> Bob: When bob and jack first became friends they\nexchanged RSA public keys (via QR codes)\nwith each other to identify themselves
+
+Jack -> Server: Upload enough DH ephemeral public keys\nso that the server has 100. Each key is signed\nwith the users Identity RSA Private key to prove\nwho generated the DH keypair.
+
+Bob -> Server: Bob also does this.\nEvery User does this on app startup.
+
+Jack -> Jack: Jack Decides to send Bob a message
+
+Jack -> Server: Asks the server for a signed DH ephemeral\npublic key that Bob uploaded
+
+Server -> Server: Retrieves and\ndeletes public key
+
+Jack <- Server: Gets a signed ephemeral public key that Bob uploaded
+
+Jack -> Jack: Verifies that the ephemeral key was generated\nby Bob by checking the RSA signature
+
+Jack -> Jack: Generate a new DH keypair and perform a Diffie-Hellman\nKey exchange using the private key Jack just generated\nalong with the ephemeral public key from Bob to get a\nshared secret key
+
+Jack -> Jack: Encrypt the message with AES using the shared secret\nderived from the Diffie-Hellman Key Exchange
+
+Jack -> Server: Send the encrypted message, along with which of bobs\nephemeral keys was used, and the signed public key of\nthe DH keypair Jack generated
+
+Server -> Bob: Server has an encrypted message waiting for bob
+
+Bob -> Bob: Bob chooses to open his new message
+
+Bob -> Bob: Checks the signature on the ephemeral key Jack created\nto make sure it came from Jack
+
+Bob -> Bob: Bob finds the matching private key for the ephemeral key\nthat was used when jack downloaded one of bob's keys
+
+Bob -> Bob: Performs a Diffie-Hellman Key exchange using the private\nkey that belongs to Bob along with the ephemeral\npublic key from Jack to get a shared secret key
+
+Bob -> Bob: Uses the shared secret to decrypt the AES encrypted\nmessage
+
+Bob -> Bob: Looks at the message
+
+Bob -> Jack: Sends a message back...
+@enduml
