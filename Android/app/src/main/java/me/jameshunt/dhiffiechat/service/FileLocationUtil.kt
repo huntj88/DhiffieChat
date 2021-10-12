@@ -1,12 +1,16 @@
 package me.jameshunt.dhiffiechat.service
 
+import android.content.Context
+import android.os.Environment
 import android.util.Log
 import java.io.File
 
-class FileLocationUtil(
-    private val cacheDir: File,
-    private val fileProviderDir: File
-) {
+class FileLocationUtil(context: Context) {
+    private val cacheDir: File = context.cacheDir
+    private val fileProviderDir: File = File(
+        context.getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+        "DhiffieChat"
+    )
 
     fun outgoingEncryptedFile(): File {
         val file = File(cacheDir, "send")
