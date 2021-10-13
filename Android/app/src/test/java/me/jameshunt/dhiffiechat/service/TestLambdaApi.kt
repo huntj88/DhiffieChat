@@ -2,69 +2,75 @@ package me.jameshunt.dhiffiechat.service
 
 import io.reactivex.rxjava3.core.Single
 
+fun notNeededForMock(message: String?): Nothing {
+    val messageWithExtra = "Mock should not be necessary"
+    throw IllegalStateException(message?.let { "$messageWithExtra: $it" } ?: messageWithExtra)
+}
+fun notNeededForServerMock(message: String? = null): Nothing = notNeededForMock(message)
+
 /**
  * overwrite as needed in test implementation to mock server
  */
 open class TestLambdaApi: LambdaApi {
     override fun initSingleEndpoint(type: String): Single<ResponseMessage> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun getUserPublicKey(
         type: String,
         body: LambdaApi.GetUserPublicKey
     ): Single<LambdaApi.GetUserPublicKeyResponse> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun getMessageSummaries(type: String): Single<List<LambdaApi.MessageSummary>> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun getUserRelationships(type: String): Single<LambdaApi.UserRelationships> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun createIdentity(
         type: String,
         body: LambdaApi.CreateIdentity
     ): Single<ResponseMessage> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun scanQR(type: String, body: LambdaApi.ScanQR): Single<ResponseMessage> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun sendMessage(
         type: String,
         body: LambdaApi.SendMessage
     ): Single<LambdaApi.SendMessageResponse> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun consumeMessage(
         type: String,
         body: LambdaApi.ConsumeMessage
     ): Single<LambdaApi.ConsumeMessageResponse> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun remainingEphemeralReceiveKeys(type: String): Single<LambdaApi.RemainingEphemeralReceiveKeysResponse> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun uploadEphemeralReceiveKeys(
         type: String,
         body: LambdaApi.UploadReceiveKeys
     ): Single<ResponseMessage> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 
     override fun getEphemeralPublicKey(
         type: String,
         body: LambdaApi.EphemeralPublicKeyRequest
     ): Single<LambdaApi.SignedKey> {
-        TODO("Not yet implemented")
+        notNeededForServerMock()
     }
 }
