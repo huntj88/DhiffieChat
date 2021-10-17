@@ -20,4 +20,6 @@ jobs:
           java-version: 11
 
       - name: Build and Test
-        run: ./Android/gradlew test
+        run: |
+          cd Android
+          ./gradlew test
