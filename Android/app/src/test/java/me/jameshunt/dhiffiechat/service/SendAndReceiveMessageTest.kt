@@ -144,7 +144,7 @@ class DefaultReceiverService(private val sharedResources: SharedResources) {
 
     private val remoteFileService = object : RemoteFileService {
         override fun upload(url: URL, file: File): Single<Unit> {
-            notNeededForMock("only used when sending message")
+            notNeededForServerMock("only used when sending message")
         }
 
         override fun download(url: URL): Single<InputStream> = Single.just(

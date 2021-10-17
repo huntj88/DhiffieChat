@@ -1,3 +1,5 @@
+[![Actions Status](https://github.com/huntj88/DhiffieChat/workflows/Test/badge.svg)](https://github.com/huntj88/DhiffieChat/actions)
+
 # DhiffieChat
 
 End-To-End Encrypted Private Chat - Now with ephemeral key pairs!
