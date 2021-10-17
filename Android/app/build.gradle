@@ -104,7 +104,6 @@ android {
             signingConfig signingConfigs.debug
             def configProperties = getPropertiesOrNull("stageDhiffie.properties")
             buildConfigField "String", "BASE_URL", "\"${configProperties['BASE_URL']}\""
-            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['SERVER_PUBLIC_KEY']}\""
         }
 
         release {
@@ -115,7 +114,6 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             def configProperties = getPropertiesOrNull("prodDhiffie.properties")
             buildConfigField "String", "BASE_URL", "\"${configProperties['BASE_URL']}\""
-            buildConfigField "String", "SERVER_PUBLIC_KEY", "\"${configProperties['SERVER_PUBLIC_KEY']}\""
         }
     }
     compileOptions {
