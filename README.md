@@ -60,6 +60,23 @@ Terraform helps automate creation, configuration, or execution of the following 
 * AWS S3 Buckets
 * Configuring Access and Permissions
 * Generating Config files for the app to connect to new environments
+---
+### Setup and Deploy a new environment
+
+1. Make sure you have the [AWS cli](https://aws.amazon.com/cli/) installed and that you are logged in
+2. Make sure you have [Terraform](https://www.terraform.io/) installed
+3. Move to the infrastructure directory `cd Terraform/infrastructure`
+4. Create a Terraform workspace
+* `terraform workspace new stage` corresponds to debug android build
+* `terraform workspace new prod` corresponds to release android build
+
+5. Run `terraform apply`
+
+#### Your server environment is up and running!*
+
+*users will not receive notifications without additional setup. A new firebase project needs to be created. 
+The firebase config files for android need to be updated, and the firebase admin sdk credentials need to be placed 
+in the root directory of the project using the name `firebaseConfig.json`.
 
 ---
 
