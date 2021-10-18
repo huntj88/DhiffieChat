@@ -110,7 +110,8 @@ android {
             if (releaseProperties != null) {
                 signingConfig signingConfigs.releaseLocal
             }
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             def configProperties = getPropertiesOrNull("prodDhiffie.properties")
             buildConfigField "String", "BASE_URL", "\"${configProperties['BASE_URL']}\""
